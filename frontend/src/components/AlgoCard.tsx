@@ -46,13 +46,15 @@ interface Props {
 
 export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Props) {
   const enabled = algo.is_active !== false
+  const observation = algo.is_observation === true
+  const selectable = enabled || observation
 
   const select = () => {
-    if (enabled) onSelect(algo.algo_code)
+    if (selectable) onSelect(algo.algo_code)
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!enabled) return
+    if (!selectable) return
     if (event.key !== 'Enter' && event.key !== ' ') return
     event.preventDefault()
     onSelect(algo.algo_code)
@@ -65,7 +67,7 @@ export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Prop
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         'card card-lift group relative flex h-full flex-col p-4',
-        !enabled && 'cursor-not-allowed opacity-55',
+        !selectable && 'cursor-not-allowed opacity-55',
         isActive && 'card-selected',
       )}
     >
@@ -76,14 +78,14 @@ export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Prop
 
       <div
         role="button"
-        tabIndex={enabled ? 0 : -1}
+        tabIndex={selectable ? 0 : -1}
         aria-pressed={isActive}
-        aria-disabled={!enabled}
+        aria-disabled={!selectable}
         onClick={select}
         onKeyDown={handleKeyDown}
         className={cn(
           'flex flex-1 flex-col rounded-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-          enabled && 'cursor-pointer',
+          selectable && 'cursor-pointer',
         )}
       >
       {/* 标题行 */}
@@ -91,6 +93,11 @@ export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Prop
         <div className="min-w-0">
           <p className="font-mono text-[12px] uppercase tracking-[0.16em] text-muted-foreground/70">
             {algo.algo_code}
+            {observation && (
+              <span className="ml-2 rounded-full border border-warning/40 bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium tracking-normal text-warning">
+                观察
+              </span>
+            )}
           </p>
           <h3 className="mt-1 truncate text-[13.5px] font-semibold" title={algo.algo_name}>
             {algo.algo_name}
@@ -142,7 +149,7 @@ export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Prop
         </div>
         <button
           type="button"
-          disabled={!enabled}
+          disabled={!selectable}
           onClick={select}
           aria-pressed={isActive}
           className={cn(
@@ -154,7 +161,11 @@ export default function AlgoCard({ algo, signalCount, isActive, onSelect }: Prop
             'disabled:opacity-50',
           )}
         >
-          {enabled ? (isActive ? '已选中' : '查看详情') : '未启用'}
+          {observation
+            ? (isActive ? '已选中' : '查看观察')
+            : enabled
+              ? (isActive ? '已选中' : '查看详情')
+              : '未启用'}
         </button>
       </div>
     </motion.div>

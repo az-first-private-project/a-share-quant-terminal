@@ -14,9 +14,9 @@ import type {
   WatchHitsResponse,
 } from '../types/algo'
 
-/** 算法清单（5.1） */
+/** 算法清单（5.1；含观察候选，便于选股中心展示） */
 export function fetchAlgoList(): Promise<AlgoMeta[]> {
-  return request<AlgoMeta[]>('/algo/list')
+  return request<AlgoMeta[]>('/algo/list?include_observation=true')
 }
 
 /**

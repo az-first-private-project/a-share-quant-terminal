@@ -244,6 +244,30 @@ def test_incomplete_sector_list_does_not_close_missing_sectors(monkeypatch) -> N
     assert report.ok is False
 
 
+def test_mild_incomplete_sector_list_is_warning_not_failure(monkeypatch) -> None:
+    """清单覆盖 92%：不关闭缺失区间，但只告警，不应把整轮质量判失败。"""
+    open_members = {f"S{index:03d}": {"600519"} for index in range(100)}
+    sector_info = {
+        f"S{index:03d}": {"sector_name": f"板块{index}", "sector_type": "concept"}
+        for index in range(92)
+    }
+    chain = _ScriptedChain(["ok"] * len(sector_info))
+    session, quality_calls = _patch_service(
+        monkeypatch, chain, sector_count=len(sector_info),
+        open_members=open_members, sector_info=sector_info,
+    )
+
+    result = asyncio.run(service.collect_sector_members(date(2026, 11, 16)))
+
+    assert result.detail["missing_sectors_skipped"] == 8
+    assert session.executed == []  # 缺失板块区间不关闭
+    assert result.quality_status == "ok"
+    report = quality_calls[-1][2]
+    assert report.ok is True
+    item = next(x for x in report.anomalies if x["type"] == "sector_list_incomplete")
+    assert item["severity"] == "warning"
+
+
 def test_complete_sector_list_closes_truly_missing_sector(monkeypatch) -> None:
     """清单覆盖 99%（>=98%）时，真正消失的板块仍按原逻辑关闭。"""
     open_members = {f"S{index:03d}": {"600519"} for index in range(100)}
@@ -462,3 +486,58 @@ def test_resolve_em_board_code_prefers_exact_and_skips_alias_for_industry() -> N
     assert akshare_provider.resolve_em_board_code(
         {}, {}, "不存在的概念", "concept"
     ) is None
+
+
+def test_load_sector_info_falls_back_to_latest_available_day(monkeypatch) -> None:
+    """当日板块日线未就绪时沿用最近交易日清单，而不是直接返回空。"""
+    class _Rows:
+        def all(self):
+            return [("BK0001", "煤炭", "industry"), ("BK0002", "AI", "concept")]
+
+    class _Session:
+        async def execute(self, statement):
+            return _Rows()
+
+    @asynccontextmanager
+    async def fake_scope(db):
+        yield _Session()
+
+    async def fake_scalar(db, statement):
+        return date(2026, 11, 13)
+
+    monkeypatch.setattr(service, "_scalar", fake_scalar)
+    monkeypatch.setattr(service, "_db_scope", fake_scope)
+
+    info = asyncio.run(service._load_sector_info(None, date(2026, 11, 16)))
+
+    assert info["BK0001"]["sector_name"] == "煤炭"
+    assert info["BK0002"]["sector_type"] == "concept"
+
+
+def test_industry_source_down_skips_remaining_industries_without_failing(monkeypatch) -> None:
+    """行业源不可用：跳过剩余行业但保留区间，概念成功仍判 ok，不记 failed。"""
+    sector_info = {
+        "C00": {"sector_name": "概念0", "sector_type": "concept"},
+        "C01": {"sector_name": "概念1", "sector_type": "concept"},
+        "I00": {"sector_name": "行业0", "sector_type": "industry"},
+        "I01": {"sector_name": "行业1", "sector_type": "industry"},
+    }
+    chain = _ScriptedChain(["ok", "ok", "fail"])
+    _session, quality_calls = _patch_service(
+        monkeypatch, chain, sector_count=0, sector_info=sector_info,
+    )
+
+    result = asyncio.run(service.collect_sector_members(date(2026, 11, 16)))
+
+    assert chain.calls == 3  # 行业 I01 在 I00 失败后被快速跳过
+    assert result.failed == 0
+    assert result.detail["skipped"] == 2
+    assert result.detail["industry_skipped"] == 2
+    assert result.detail["industry_source_down"] is True
+    assert result.detail["circuit_open"] is False
+    assert result.quality_status == "ok"
+    report = quality_calls[-1][2]
+    assert report.ok is True
+    types = {item["type"] for item in report.anomalies}
+    assert "industry_source_unavailable" in types
+    assert "sector_members_breaker" not in types

@@ -336,3 +336,27 @@ def test_run_task_scoped_bulk_partial_keeps_freshness(monkeypatch) -> None:
 
     assert out["status"] == "partial"
     assert failures == []
+
+
+def test_run_task_integer_skipped_count_is_not_a_skip_reason(monkeypatch) -> None:
+    """detail.skipped 是数量（如板块成分跳过 66 个）时，不能把整任务标成跳过。"""
+
+    async def fake_dispatch(task, **kwargs):
+        return FetchResult(
+            rows=7, total=442, failed=1, detail={"skipped": 66}
+        )
+
+    written: list[dict] = []
+
+    async def fake_mark_success(*args, **kwargs) -> None:
+        written.append(kwargs)
+
+    monkeypatch.setattr(pipeline, "_dispatch", fake_dispatch)
+    monkeypatch.setattr(pipeline, "mark_success", fake_mark_success)
+
+    out = asyncio.run(
+        pipeline.run_task("sector_members", trade_date=date(2026, 11, 16), db=_FakeDB())
+    )
+
+    assert out["status"] == "success"
+    assert written and written[0]["rows"] == 7

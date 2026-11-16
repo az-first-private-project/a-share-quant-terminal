@@ -317,9 +317,19 @@ def test_algo_list(client):
     resp = client.get("/api/v1/algo/list")
     assert resp.status_code == 200
     algos = resp.json()
-    assert {a["algo_code"] for a in algos} == {"a3", "a4", "b1", "b2", "b3", "b4", "b5"}
+    assert {a["algo_code"] for a in algos} == {"a3", "a4"}
     for algo in algos:
         assert algo["params_schema"]
+
+
+def test_algo_list_includes_observation_candidates(client):
+    resp = client.get("/api/v1/algo/list", params={"include_observation": "true"})
+    assert resp.status_code == 200
+    algos = {item["algo_code"]: item for item in resp.json()}
+    assert {"a3", "a4", "c1", "c2", "c3", "c4", "c5", "c6"} <= set(algos)
+    assert algos["c1"]["is_observation"] is True
+    assert algos["c1"]["is_active"] is False
+    assert algos["a3"]["is_observation"] is False
 
 
 def test_algo_consensus(client):

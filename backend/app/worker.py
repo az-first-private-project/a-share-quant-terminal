@@ -74,10 +74,48 @@ async def run_daily_pipeline_job(db) -> None:
     logger.info("盘后流水线结束 steps=%d failed=%s", len(result["steps"]), failed)
 
 
+async def run_observation_algos(db) -> list[dict]:
+    """运行观察候选策略（不进入 SPECS/API/共识），供每日推送查看。"""
+    from app.core.config import OBSERVATION_ALGOS
+    from app.strategy import runner as stg_runner
+    from app.strategy.strategies import CANDIDATE_SPECS
+
+    codes = [code for code in OBSERVATION_ALGOS if code in CANDIDATE_SPECS]
+    if not codes:
+        return []
+    trade_date = await stg_runner.latest_trade_date(db)
+    if trade_date is None:
+        logger.info("无可用交易日，跳过观察策略")
+        return []
+    results: list[dict] = []
+    for code in codes:
+        try:
+            result = await stg_runner.run_strategy(
+                code, trade_date, {"limit": 3}, force=False, db=db, is_backtest=False
+            )
+            await db.commit()
+            results.append(result)
+            logger.info("观察策略完成 algo=%s date=%s signals=%d", code, trade_date, result.get("count", 0))
+        except Exception as exc:  # noqa: BLE001 - 单策略失败不影响其余
+            await db.rollback()
+            logger.error("观察策略失败 algo=%s: %s", code, type(exc).__name__)
+    return results
+
+
 async def run_algo_job(db) -> None:
-    """单独跑四个策略（结果先落库，前端打开即热）。"""
+    """跑当前启用策略（结果先落库，前端打开即热），成功后可选推送。"""
     from app.pipeline import run_task
+
     await run_task("algos", db=db)
+    await run_observation_algos(db)
+    try:
+        from app.notify.push import push_daily_results
+
+        result = await push_daily_results(db)
+        if result.get("error"):
+            logger.error("盘后推送未完成: %s", result["error"])
+    except Exception as exc:  # noqa: BLE001 - 推送失败不得影响选股任务
+        logger.error("盘后推送异常（已隔离）: %s", type(exc).__name__)
 
 
 async def run_signal_perf_job(db) -> None:

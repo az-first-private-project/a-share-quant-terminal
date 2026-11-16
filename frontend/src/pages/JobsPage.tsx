@@ -39,6 +39,8 @@ function statusBadgeClass(status: string): string {
       return 'border-brass/45 bg-brass/[0.08] text-brass-strong dark:text-brass'
     case 'pending':
       return 'border-warning/40 bg-warning/10 text-warning'
+    case 'partial':
+      return 'border-warning/40 bg-warning/10 text-warning'
     default:
       return 'border-border bg-muted text-muted-foreground'
   }
@@ -51,9 +53,21 @@ function statusLabel(status: string): string {
     failed: '失败',
     running: '运行中',
     pending: '等待中',
+    partial: '部分成功',
     skipped: '跳过',
   }
   return labelMap[status] ?? status
+}
+
+/** 跳过类任务的说明，避免把 already_collected 等正常原因显示成红色错误 */
+function jobMessage(row: Job): { text: string; benign: boolean } {
+  if (row.status === 'skipped') {
+    if (row.error === 'already_collected') {
+      return { text: '已采集，跳过', benign: true }
+    }
+    return { text: '已跳过，无需处理', benign: true }
+  }
+  return { text: row.error ?? '—', benign: !row.error }
 }
 
 /** 任务表列定义 */
@@ -109,20 +123,34 @@ const JOB_COLUMNS: DataTableColumn<Job>[] = [
     value: (row) => row.failed,
     render: (row) =>
       row.failed !== null && row.failed > 0 ? (
-        <span className="text-alert font-medium num">{fmtInt(row.failed)}</span>
+        <span
+          className={
+            row.status === 'failed'
+              ? 'text-alert font-medium num'
+              : 'text-warning font-medium num'
+          }
+        >
+          {fmtInt(row.failed)}
+        </span>
       ) : (
         fmtInt(row.failed)
       ),
   },
   {
     key: 'error',
-    header: '错误摘要',
+    header: '错误/跳过原因',
     value: (row) => row.error,
-    render: (row) => (
-      <span className="text-alert line-clamp-1 break-all" title={row.error ?? undefined}>
-        {row.error ?? '—'}
-      </span>
-    ),
+    render: (row) => {
+      const { text, benign } = jobMessage(row)
+      return (
+        <span
+          className={benign ? 'text-muted-foreground line-clamp-1 break-all' : 'text-alert line-clamp-1 break-all'}
+          title={row.error ?? undefined}
+        >
+          {text}
+        </span>
+      )
+    },
   },
   {
     key: 'started_at',
@@ -251,6 +279,8 @@ export default function JobsPage() {
             <option value="failed">失败</option>
             <option value="running">运行中</option>
             <option value="pending">等待中</option>
+            <option value="partial">部分成功</option>
+            <option value="skipped">跳过</option>
           </select>
           <button
             onClick={() => setPaused((previous) => !previous)}

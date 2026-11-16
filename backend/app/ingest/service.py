@@ -118,8 +118,10 @@ _SECTOR_MEMBERS_MAX_CONSECUTIVE_FAILURES = 5
 _SECTOR_MEMBERS_BUDGET_SEC = 600.0
 # "消失板块"关闭门槛：当日板块清单必须覆盖已有成分板块的 98%，
 # 否则视为清单不完整（sector_daily 部分成功仍可能过质量门），
-# 跳过关闭并把本次成分更新标为不合格，防止一次残缺清单清空大量仍存在的板块。
+# 跳过关闭并保留既有区间。覆盖 90%–98% 只告警（概念板块仍会更新），
+# 低于 90% 才标记质量不合格，避免一次轻微缺口把整轮日更打成失败。
 _SECTOR_LIST_MIN_COVERAGE = 0.98
+_SECTOR_LIST_ERROR_COVERAGE = 0.90
 _SECTOR_LIST_MIN_SECTORS = 20
 
 
@@ -630,6 +632,66 @@ async def _fact_rows_on(db: AsyncSession | None, trade_date: date) -> int:
         return 0
 
 
+async def _quoted_codes(db: AsyncSession | None, trade_date: date) -> set[str]:
+    """当日有行情的代码集合（资金流缺失回补范围）。"""
+    try:
+        async with _db_scope(db) as session:
+            rows = (
+                await session.execute(
+                    select(FactStockDaily.code).where(
+                        FactStockDaily.trade_date == trade_date
+                    )
+                )
+            ).scalars().all()
+        return {str(code).zfill(6) for code in rows}
+    except Exception:  # noqa: BLE001
+        logger.warning("读取当日有行情代码失败", exc_info=True)
+        return set()
+
+
+async def _moneyflow_existing(db: AsyncSession | None, trade_date: date) -> tuple[int, set[str]]:
+    """返回当日资金流已有行数与代码集合。"""
+    try:
+        async with _db_scope(db) as session:
+            rows = (
+                await session.execute(
+                    select(FactMoneyflow.code).where(
+                        FactMoneyflow.trade_date == trade_date
+                    )
+                )
+            ).scalars().all()
+        codes = {str(code).zfill(6) for code in rows}
+        return len(codes), codes
+    except Exception:  # noqa: BLE001
+        logger.warning("读取当日资金流已有数据失败", exc_info=True)
+        return 0, set()
+
+
+async def _moneyflow_sina_fill(
+    db: AsyncSession | None, trade_date: date, existing_codes: set[str]
+) -> int:
+    """日更资金流覆盖不足时，用新浪按缺失代码补齐（每只返回最近历史）。"""
+    quoted = await _quoted_codes(db, trade_date)
+    missing = sorted(quoted - existing_codes)
+    if not missing:
+        return len(existing_codes)
+    from app.ingest.bulk_backfill import backfill_moneyflow
+
+    logger.warning(
+        "资金流日更降级到新浪：缺失 %d/%d 只，逐只补齐", len(missing), len(quoted)
+    )
+    await backfill_moneyflow(
+        start=trade_date,
+        end=trade_date,
+        codes=missing,
+        db=db,
+        force=True,
+        concurrency=6,
+    )
+    count, _ = await _moneyflow_existing(db, trade_date)
+    return count
+
+
 async def _is_trade_day(db: AsyncSession | None, day: date) -> bool:
     try:
         async with _db_scope(db) as session:
@@ -1010,6 +1072,44 @@ async def sync_stock_universe(db: AsyncSession | None = None) -> FetchResult:
             )
             report = check_universe(frame, active_before)
             if not report.ok:
+                # 数据源瞬时不可用（例如交易所 DNS 失败）时，若库内已有足够
+                # 的旧股票池，沿用旧池并记警告；不能把已有 5000+ 只的池子因为
+                # 本次只拿到 3800 只就标成 quality_failed，导致所有下游显示未就绪。
+                if active_before >= int(config.QUALITY_MIN_UNIVERSE):
+                    fallback = QualityReport(
+                        dataset=dataset,
+                        rows=active_before,
+                        expected=active_before,
+                        coverage=1.0,
+                    )
+                    fallback.add(
+                        "universe_source_incomplete",
+                        count=report.rows,
+                        severity="warning",
+                        message=(
+                            f"股票池源本次仅返回 {report.rows} 只"
+                            f"（<{config.QUALITY_MIN_UNIVERSE}），沿用库内 "
+                            f"{active_before} 只，未写库"
+                        ),
+                    )
+                    async with _db_scope(db) as session:
+                        await record_quality(
+                            session, dataset, fallback, _today_cn(), QualityStatus.OK
+                        )
+                    elapsed = int((time.perf_counter() - started) * 1000)
+                    await job.finish("skipped", error="universe_source_incomplete")
+                    return FetchResult(
+                        rows=0,
+                        total=active_before,
+                        elapsed_ms=elapsed,
+                        quality_status=QualityStatus.OK.value,
+                        detail={
+                            "source": "existing",
+                            "existing": active_before,
+                            "fetched": report.rows,
+                            "skipped": "universe_source_incomplete",
+                        },
+                    )
                 await _record_quality_isolated(
                     dataset, report, None, QualityStatus.QUALITY_FAILED
                 )
@@ -1701,20 +1801,35 @@ async def collect_sector_members(
 
             open_members = await _load_open_members(db)
             partial_members = await _load_partial_members(db)
-            sectors = sorted(sector_info.keys())
+            sectors = sorted(
+                sector_info.items(),
+                key=lambda item: (
+                    str(item[1].get("sector_type") or "concept") != "concept",
+                    item[0],
+                ),
+            )
             await job.update(total=len(sectors))
 
             chain = get_provider_chain()
+            providers = getattr(chain, "providers", None)
+            concept_chain = (
+                ProviderChain([SinaProvider()], name="sina-concept")
+                if providers
+                else chain  # 测试注入的脚本链没有 providers，直接复用
+            )
             fetched_sets: dict[str, set[str] | None] = {}
             failed = 0
             skipped = 0
             unmatched = 0
+            industry_skipped = 0
+            industry_source_down = False
             unmatched_sectors: list[str] = []
             circuit_open = False
             budget_exceeded = False
             consecutive_failures = 0
             deadline = started + _SECTOR_MEMBERS_BUDGET_SEC
-            for index, sector_code in enumerate(sectors, start=1):
+            for index, (sector_code, info) in enumerate(sectors, start=1):
+                sector_type = str(info.get("sector_type") or "concept")
                 if circuit_open or budget_exceeded or time.perf_counter() >= deadline:
                     if not circuit_open and not budget_exceeded:
                         budget_exceeded = True
@@ -1723,15 +1838,23 @@ async def collect_sector_members(
                             _SECTOR_MEMBERS_BUDGET_SEC, len(sectors) - index + 1,
                         )
                     skipped += 1
+                    if sector_type != "concept":
+                        industry_skipped += 1
+                    fetched_sets[sector_code] = None
+                elif sector_type != "concept" and industry_source_down:
+                    skipped += 1
+                    industry_skipped += 1
                     fetched_sets[sector_code] = None
                 else:
-                    info = sector_info[sector_code]
                     try:
                         await HISTORY_LIMITER.acquire()
-                        fetched = await chain.fetch_sector_members(
+                        active_chain = (
+                            concept_chain if sector_type == "concept" else chain
+                        )
+                        fetched = await active_chain.fetch_sector_members(
                             sector_code,
                             info["sector_name"],
-                            info["sector_type"],
+                            sector_type,
                             timeout=config.FETCH_TIMEOUT_SEC,
                         )
                         if fetched.detail.get("skip_reason"):
@@ -1740,6 +1863,18 @@ async def collect_sector_members(
                             unmatched += 1
                             unmatched_sectors.append(str(info["sector_name"]))
                             fetched_sets[sector_code] = None
+                            if sector_type != "concept":
+                                industry_skipped += 1
+                                attempts = fetched.detail.get("attempts") or []
+                                if any(
+                                    attempt.get("status") == "failed"
+                                    for attempt in attempts
+                                ):
+                                    industry_source_down = True
+                                    logger.warning(
+                                        "行业板块成分主源不可用，剩余行业板块本次跳过"
+                                        "（已有成分保持）"
+                                    )
                         else:
                             member_codes = {
                                 str(record.get("stock_code")).zfill(6)
@@ -1756,17 +1891,30 @@ async def collect_sector_members(
                             fetched_sets[sector_code] = member_codes
                             consecutive_failures = 0
                     except Exception as exc:  # noqa: BLE001 —— 单板块失败保持现状
-                        failed += 1
-                        fetched_sets[sector_code] = None
-                        consecutive_failures += 1
-                        logger.warning("板块成分获取失败 sector=%s：%s", sector_code, exc)
-                        if consecutive_failures >= _SECTOR_MEMBERS_MAX_CONSECUTIVE_FAILURES:
-                            circuit_open = True
-                            logger.error(
-                                "板块成分连续 %d 个抓取失败，熔断：剩余 %d 个板块本次跳过"
-                                "（已有成分保持不变）",
-                                consecutive_failures, len(sectors) - index,
+                        if sector_type != "concept":
+                            # 行业板块没有可用的实时兜底源：首个失败后快速跳过剩余
+                            # 行业板块，保留已有区间，不让 90 个行业拖垮整轮任务。
+                            industry_source_down = True
+                            skipped += 1
+                            industry_skipped += 1
+                            fetched_sets[sector_code] = None
+                            logger.warning(
+                                "行业板块成分源不可用，剩余行业板块本次跳过"
+                                "（已有成分保持）: %s",
+                                exc,
                             )
+                        else:
+                            failed += 1
+                            fetched_sets[sector_code] = None
+                            consecutive_failures += 1
+                            logger.warning("板块成分获取失败 sector=%s：%s", sector_code, exc)
+                            if consecutive_failures >= _SECTOR_MEMBERS_MAX_CONSECUTIVE_FAILURES:
+                                circuit_open = True
+                                logger.error(
+                                    "板块成分连续 %d 个抓取失败，熔断：剩余 %d 个板块本次跳过"
+                                    "（已有成分保持不变）",
+                                    consecutive_failures, len(sectors) - index,
+                                )
 
                 if index % _BACKFILL_CHECKPOINT_EVERY == 0 or index == len(sectors):
                     logger.info(
@@ -1916,28 +2064,44 @@ async def collect_sector_members(
                             "（未改动其区间，重跑可补）"
                         ),
                     )
-                if circuit_open or budget_exceeded:
-                    # 结构性中止（源整体不可用/超预算）：即使有部分板块成功，
-                    # 本次也只更新了一小部分，必须标为不合格，不能让新鲜度显示 ok。
+                if industry_skipped:
                     report.add(
-                        "sector_members_breaker",
-                        count=skipped,
-                        severity="error",
+                        "industry_source_unavailable",
+                        count=industry_skipped,
+                        severity="warning",
                         message=(
-                            "板块成分抓取因连续失败/超预算提前中止，本次仅更新部分板块"
-                            "（已有成分未动，重跑可补）"
+                            f"{industry_skipped} 个行业板块因成分源不可用本次跳过"
+                            "（已有行业成分保持不变，概念板块已更新）"
                         ),
                     )
+                if circuit_open or budget_exceeded:
+                    # 概念板块已先处理；若剩余只是无法获取的行业板块，按警告处理，
+                    # 保留已有行业成分，不把整轮概念更新标成失败。
+                    if not (industry_skipped and failed == 0):
+                        report.add(
+                            "sector_members_breaker",
+                            count=skipped,
+                            severity="error",
+                            message=(
+                                "板块成分抓取因连续失败/超预算提前中止，本次仅更新部分板块"
+                                "（已有成分未动，重跑可补）"
+                            ),
+                        )
                 if success_count == 0:
                     report.add(
                         "no_sector_fetched", severity="error",
                         message="所有板块成分抓取失败",
                     )
                 if sector_list_incomplete:
+                    severity = (
+                        "error"
+                        if sector_list_coverage < _SECTOR_LIST_ERROR_COVERAGE
+                        else "warning"
+                    )
                     report.add(
                         "sector_list_incomplete",
                         count=len(missing_sectors),
-                        severity="error",
+                        severity=severity,
                         message=(
                             f"当日板块清单仅覆盖已有成分板块的 "
                             f"{sector_list_coverage:.1%}，{len(missing_sectors)} 个缺失板块"
@@ -1962,6 +2126,8 @@ async def collect_sector_members(
                     "unmatched": unmatched,
                     "unmatched_sectors": sorted(unmatched_sectors)[:10],
                     "skipped": skipped,
+                    "industry_skipped": industry_skipped,
+                    "industry_source_down": industry_source_down,
                     "circuit_open": circuit_open,
                     "budget_exceeded": budget_exceeded,
                     "missing_sectors_skipped": (
@@ -1992,20 +2158,32 @@ async def collect_sector_members(
 async def _load_sector_info(
     db: AsyncSession | None, trade_date: date
 ) -> dict[str, dict[str, Any]]:
-    """读取当日板块清单（fact_sector_daily 有则用，否则空）。"""
+    """读取板块清单：当日未就绪时沿用最近一个交易日的清单。"""
     try:
+        latest = await _scalar(
+            db,
+            select(func.max(FactSectorDaily.trade_date)).where(
+                FactSectorDaily.trade_date <= trade_date
+            ),
+        )
+        if latest is None:
+            return {}
+        if latest != trade_date:
+            logger.warning(
+                "板块清单未就绪（目标 %s），沿用 %s 的清单", trade_date, latest
+            )
         async with _db_scope(db) as session:
             stmt = select(
                 FactSectorDaily.sector_code,
                 FactSectorDaily.sector_name,
                 FactSectorDaily.sector_type,
-            ).where(FactSectorDaily.trade_date == trade_date)
+            ).where(FactSectorDaily.trade_date == latest)
             return {
                 row[0]: {"sector_name": row[1], "sector_type": row[2]}
                 for row in (await session.execute(stmt)).all()
             }
     except Exception:  # noqa: BLE001
-        logger.warning("读取当日板块清单失败", exc_info=True)
+        logger.warning("读取板块清单失败", exc_info=True)
         return {}
 
 
@@ -2078,15 +2256,94 @@ async def collect_moneyflow(
                     task, not_ready, trade_date=trade_date.isoformat()
                 )
 
-            chain = get_provider_chain()
-            fetched = await chain.fetch_moneyflow(
-                trade_date, timeout=config.SNAPSHOT_FETCH_TIMEOUT_SEC
-            )
-            frame = fetched.detail.get("data")
-            rows = _moneyflow_rows(frame, trade_date)
+            quoted_count = await _fact_rows_on(db, trade_date)
+            expected = max(quoted_count, config.QUALITY_MIN_SNAPSHOT_ROWS)
+            existing_count, existing_codes = await _moneyflow_existing(db, trade_date)
+            if existing_count:
+                coverage = (
+                    round(min(existing_count / expected, 1.0), 4) if expected else 0.0
+                )
+                if coverage >= config.QUALITY_MIN_COVERAGE:
+                    report = QualityReport(
+                        dataset=dataset,
+                        rows=existing_count,
+                        expected=expected,
+                        coverage=coverage,
+                    )
+                    async with _db_scope(db) as session:
+                        await record_quality(
+                            session, dataset, report, trade_date, QualityStatus.OK
+                        )
+                    elapsed = int((time.perf_counter() - started) * 1000)
+                    await job.finish("skipped", error="already_collected")
+                    return FetchResult(
+                        rows=0,
+                        total=expected,
+                        elapsed_ms=elapsed,
+                        quality_status=QualityStatus.OK.value,
+                        detail={
+                            "source": "existing",
+                            "coverage": coverage,
+                            "already_collected": True,
+                        },
+                    )
 
-            active_count = await _active_stock_count(db)
-            expected = max(active_count, config.QUALITY_MIN_SNAPSHOT_ROWS)
+            chain = get_provider_chain()
+            try:
+                fetched = await chain.fetch_moneyflow(
+                    trade_date, timeout=config.SNAPSHOT_FETCH_TIMEOUT_SEC
+                )
+                frame = fetched.detail.get("data")
+                rows = _moneyflow_rows(frame, trade_date)
+            except Exception as provider_exc:  # noqa: BLE001 —— 东财/同花顺都不可用时走新浪
+                logger.warning(
+                    "资金流 provider 链不可用，尝试新浪回补：%s", provider_exc
+                )
+                try:
+                    existing_count = await _moneyflow_sina_fill(
+                        db, trade_date, existing_codes
+                    )
+                except Exception as fallback_exc:  # noqa: BLE001
+                    logger.warning("新浪资金流回补失败：%s", fallback_exc)
+                    raise provider_exc
+                coverage = (
+                    round(min(existing_count / expected, 1.0), 4) if expected else 0.0
+                )
+                report = QualityReport(
+                    dataset=dataset,
+                    rows=existing_count,
+                    expected=expected,
+                    coverage=coverage,
+                )
+                if coverage < config.QUALITY_MIN_COVERAGE:
+                    report.add(
+                        "coverage_below_threshold",
+                        count=existing_count,
+                        severity="error",
+                        message=f"资金流覆盖率 {coverage:.2%} < "
+                                f"{config.QUALITY_MIN_COVERAGE:.0%}",
+                    )
+                if not report.ok:
+                    await _record_quality_isolated(
+                        dataset, report, trade_date, QualityStatus.QUALITY_FAILED
+                    )
+                    raise QualityBlockedError(
+                        f"资金流质量不合格：{report.error_text()}",
+                        detail=report.to_detail(),
+                    )
+                async with _db_scope(db) as session:
+                    await record_quality(
+                        session, dataset, report, trade_date, QualityStatus.OK
+                    )
+                elapsed = int((time.perf_counter() - started) * 1000)
+                await job.finish("success", done=0, rows_written=0)
+                return FetchResult(
+                    rows=0,
+                    total=expected,
+                    elapsed_ms=elapsed,
+                    quality_status=QualityStatus.OK.value,
+                    detail={"source": "sina-fallback", "coverage": coverage},
+                )
             report = QualityReport(
                 dataset=dataset,
                 rows=len(rows),

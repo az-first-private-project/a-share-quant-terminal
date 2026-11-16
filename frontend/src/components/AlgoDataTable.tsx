@@ -157,12 +157,17 @@ function fmtGateValue(value: number | null | undefined): string {
 /** 市场门槛提示：未通过或指数缺失时才返回文案 */
 function marketGateNotice(algo: string | undefined, gate?: MarketGate | null): string | null {
   if (!gate) return null
+  if (algo === 'a4') {
+    if (gate.passed !== false) return null
+    return `当前市场阶段为 ${gate.regime_label ?? gate.regime_code ?? '未知'}，未满足防御型门槛（震荡筑底/向下调整/避险下跌），本次不产生信号。`
+  }
   if (gate.available === false) {
     return '沪深300 指数数据缺失，市场门槛按放行处理。'
   }
   if (gate.passed !== false) return null
-  if (algo === 'b4') {
-    return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} < MA20 × 0.995 = ${fmtGateValue(gate.threshold)}，本次不产生信号。`
+  if (algo === 'b4' || algo === 'c6') {
+    const b4Threshold = typeof gate.threshold === 'number' ? gate.threshold : null
+    return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} < MA20 × 0.995 = ${fmtGateValue(b4Threshold)}，本次不产生信号。`
   }
   if (algo === 'b5') {
     return `市场环境要求未满足：沪深300 当日涨跌幅 ${fmtGateValue(gate.pct_chg)}% ≤ -2%，本次不产生信号。`

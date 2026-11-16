@@ -1,0 +1,227 @@
+"""V8 W2 候选策略（c1–c4）纯函数测试：窗口特征 + 策略掩码。"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from app.core.errors import InvalidParamError  # noqa: E402
+from app.strategy.strategies import (  # noqa: E402
+    _validate_params,
+    _window_features,
+    rank_signals,
+)
+
+
+def _bars(**overrides) -> pd.DataFrame:
+    count = len(next(iter(overrides.values()))) if overrides else 1
+    base = {
+        "open": [10.0] * count,
+        "high": [10.0] * count,
+        "low": [9.0] * count,
+        "close": [10.0] * count,
+        "volume": [100.0] * count,
+        "amount": [1.0e8] * count,
+        "adj_factor": [1.0] * count,
+        "is_limit_up": [False] * count,
+    }
+    base.update(overrides)
+    return pd.DataFrame(base)
+
+
+def test_window_features_c1_breakout_and_insufficient_bars() -> None:
+    high = [10.0] * 20 + [31.0]
+    close = [10.0] * 20 + [31.0]
+    bars = _bars(high=high, close=close, open=[10.0] * 21)
+    features = _window_features(bars, "c1", 20)
+    assert features is not None
+    assert features["high20_prev"] == pytest.approx(10.0)
+    assert features["adj_close"] == pytest.approx(31.0)
+    assert features["prev_adj_close"] == pytest.approx(10.0)
+    assert _window_features(bars.tail(20), "c1", 20) is None
+
+
+def test_window_features_c2_high_tight_flag() -> None:
+    high = [20.0] * 30 + [19.0] * 10
+    low = [10.0] * 30 + [17.5] * 10
+    volume = [100.0] * 39 + [50.0]
+    bars = _bars(high=high, low=low, volume=volume)
+    features = _window_features(bars, "c2", 40)
+    assert features is not None
+    assert features["range40_ratio"] == pytest.approx(2.0)
+    assert features["high10"] == pytest.approx(19.0)
+    assert features["low10"] == pytest.approx(17.5)
+    assert features["vol_ma20_prev"] == pytest.approx(100.0)
+
+
+def test_window_features_c3_rps_window() -> None:
+    closes = np.linspace(10.0, 12.0, 121)
+    bars = _bars(
+        open=closes,
+        close=closes,
+        high=closes * 1.01,
+        low=closes * 0.99,
+    )
+    features = _window_features(bars, "c3", 120)
+    assert features is not None
+    assert features["roc120"] == pytest.approx(0.2, abs=1e-9)
+    assert features["high120"] == pytest.approx(12.12, abs=1e-6)
+    assert _window_features(bars.tail(120), "c3", 120) is None
+
+
+def test_window_features_c4_limit_up_shakeout() -> None:
+    bars = _bars(
+        open=[10.0, 10.5],
+        high=[10.0, 10.6],
+        low=[9.0, 10.0],
+        close=[10.0, 10.2],
+        volume=[100.0, 250.0],
+        is_limit_up=[True, False],
+    )
+    features = _window_features(bars, "c4", 0)
+    assert features is not None
+    assert features["prev_is_limit_up"] is True
+    assert features["prev_volume"] == pytest.approx(100.0)
+    assert features["adj_low"] >= features["prev_adj_close"]
+
+
+def _candidate_frame(codes: list[str]) -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "code": codes,
+            "name": [f"股票{index}" for index in range(len(codes))],
+            "close": [10.0] * len(codes),
+            "pct_chg": [1.0] * len(codes),
+            "industry_l1": ["电子"] * len(codes),
+            "amount": [1.0e8] * len(codes),
+            "amount_ma20": [1.0e8] * len(codes),
+            "volume": [200.0] * len(codes),
+            "float_cap": [1.0e9] * len(codes),
+        }
+    )
+
+
+def test_rank_signals_c1_turtle() -> None:
+    frame = _candidate_frame(["600001", "600002", "600003"])
+    frame["float_cap"] = [3.0e9, 1.0e9, 2.0e9]
+    frame["adj_close"] = [11.0, 12.0, 9.0]
+    frame["adj_open"] = [10.0, 11.0, 8.0]
+    frame["prev_adj_close"] = [10.0, 10.0, 9.5]
+    frame["high20_prev"] = [10.0, 11.0, 8.5]
+    result = rank_signals("c1", frame, {})
+    assert list(result["code"]) == ["600001", "600002"]
+    assert result["float_cap"].is_monotonic_decreasing
+
+
+def test_rank_signals_c2_high_tight_flag() -> None:
+    frame = _candidate_frame(["600011", "600012"])
+    frame["range40_ratio"] = [2.0, 1.2]
+    frame["high40"] = [20.0, 20.0]
+    frame["high10"] = [19.0, 19.0]
+    frame["low10"] = [17.5, 15.0]
+    frame["vol_ma20_prev"] = [100.0, 100.0]
+    frame["volume"] = [50.0, 50.0]
+    result = rank_signals("c2", frame, {})
+    assert list(result["code"]) == ["600011"]
+
+
+def test_rank_signals_c3_rps_breakout() -> None:
+    frame = _candidate_frame(["600021", "600022"])
+    frame["rps"] = [95.0, 50.0]
+    frame["roc120"] = [0.30, 0.10]
+    frame["adj_close"] = [12.0, 11.0]
+    frame["high120"] = [12.5, 12.0]
+    result = rank_signals("c3", frame, {})
+    assert list(result["code"]) == ["600021"]
+
+
+def test_rank_signals_c4_limit_up_shakeout() -> None:
+    frame = _candidate_frame(["600031", "600032"])
+    frame["prev_is_limit_up"] = [True, False]
+    frame["adj_close"] = [10.2, 10.2]
+    frame["adj_open"] = [10.5, 10.5]
+    frame["adj_low"] = [10.0, 10.0]
+    frame["prev_adj_close"] = [10.0, 10.0]
+    frame["prev_volume"] = [100.0, 100.0]
+    frame["volume"] = [250.0, 250.0]
+    frame["amount"] = [2.0e8, 1.0e8]
+    result = rank_signals("c4", frame, {})
+    assert list(result["code"]) == ["600031"]
+
+
+def test_window_features_c5_ma_volume_cross() -> None:
+    closes = [10.0] * 15 + [9.0] * 5 + [20.0]
+    volume = [100.0] * 20 + [200.0]
+    bars = _bars(open=closes, close=closes, high=closes, low=closes, volume=volume)
+    features = _window_features(bars, "c5", 20)
+    assert features is not None
+    assert features["ma5_prev"] == pytest.approx(9.0)
+    assert features["ma20_prev"] == pytest.approx(9.75)
+    assert features["ma5_today"] > features["ma20_today"]
+    assert features["vol_ratio_20"] == pytest.approx(2.0)
+
+
+def test_rank_signals_c5_ma_volume() -> None:
+    frame = _candidate_frame(["600051", "600052"])
+    frame["ma5_prev"] = [9.0, 10.5]
+    frame["ma20_prev"] = [9.75, 10.0]
+    frame["ma5_today"] = [11.2, 10.0]
+    frame["ma20_today"] = [10.75, 10.2]
+    frame["vol_ma20_prev"] = [100.0, 100.0]
+    frame["vol_ratio_20"] = [2.0, 0.8]
+    frame["volume"] = [200.0, 80.0]
+    result = rank_signals("c5", frame, {})
+    assert list(result["code"]) == ["600051"]
+
+
+def test_rank_signals_c6_boll_squeeze() -> None:
+    frame = _candidate_frame(["600061", "600062"])
+    frame["boll_width_pct60"] = [10.0, 40.0]
+    frame["boll_upper"] = [9.8, 9.8]
+    frame["high20_close"] = [9.9, 9.9]
+    frame["vol_ma5"] = [100.0, 100.0]
+    frame["volume"] = [160.0, 160.0]
+    frame["range20_pct"] = [8.0, 8.0]
+    frame["amount_ma20"] = [3.0e8, 3.0e8]
+    market = {"available": True, "b4_ok": True}
+    frame.attrs["market"] = market
+    result = rank_signals("c6", frame, {})
+    assert list(result["code"]) == ["600061"]
+
+    blocked = frame.copy()
+    blocked.attrs["market"] = {"available": True, "b4_ok": False}
+    assert len(rank_signals("c6", blocked, {})) == 0
+
+
+def test_candidate_backtest_params_accepts_candidates() -> None:
+    """V8：候选策略回测参数收集不能再走 SPECS[algo_code]，否则 KeyError。"""
+    from app.api.v1.backtest import _collect_strategy_params
+
+    params = _collect_strategy_params(
+        "c2", {"lookback": "40", "mom_min": "1.6", "high_level": "0.8"}
+    )
+    assert params["lookback"] == 40
+    assert params["mom_min"] == pytest.approx(1.6)
+    assert params["high_level"] == pytest.approx(0.8)
+
+
+def test_candidate_param_bounds() -> None:
+    assert _validate_params("c1", {"lookback": 30})["lookback"] == 30
+    with pytest.raises(InvalidParamError):
+        _validate_params("c1", {"lookback": 0})
+    with pytest.raises(InvalidParamError):
+        _validate_params("c2", {"mom_min": 0.5})
+    with pytest.raises(InvalidParamError):
+        _validate_params("c3", {"rps_threshold": 120})
+    with pytest.raises(InvalidParamError):
+        _validate_params("c4", {"vol_mult": 0})
+    assert _validate_params("c5", {"vol_mult": 1.5})["vol_mult"] == 1.5
+    with pytest.raises(InvalidParamError):
+        _validate_params("c6", {"squeeze_pct": 0})

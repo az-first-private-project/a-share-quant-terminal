@@ -136,6 +136,7 @@ def _b1_frame() -> pd.DataFrame:
     return frame
 
 
+@pytest.mark.skip(reason="b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip")
 def test_b1_triggered_matches_condition_specs_count() -> None:
     frame = _b1_frame()
     result = rank_signals("b1", frame, {"limit": 20})
@@ -148,6 +149,7 @@ def test_b1_triggered_matches_condition_specs_count() -> None:
     json.dumps(result["metrics"].iloc[0], ensure_ascii=False, allow_nan=False)
 
 
+@pytest.mark.skip(reason="b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip")
 def test_b4_market_condition_is_separate_scope() -> None:
     frame = pd.DataFrame(
         {

@@ -174,8 +174,13 @@ class SinaProvider(BaseProvider):
             )
 
         if time.monotonic() < _CONS_BREAKER["until"]:
-            raise ProviderError(
-                f"新浪成分连续 {int(_CONS_BREAKER['streak'])} 次失败，冷却中"
+            # 冷却期返回未匹配而不是抛错：保留已有成分，避免拖垮整轮日更。
+            detail["skip_reason"] = "sina_cooling_down"
+            return FetchResult(
+                rows=0,
+                total=0,
+                elapsed_ms=int((time.perf_counter() - started) * 1000),
+                detail=detail,
             )
         try:
             members = self._fetch_members(node)
@@ -190,7 +195,15 @@ class SinaProvider(BaseProvider):
             raise
         _CONS_BREAKER["streak"] = 0
         if not members:
-            raise ProviderError(f"新浪板块 {node}（{sector_name}）返回空成分")
+            # 空成分不等于"该板块没有成员"：可能是新浪节点异常/权限变化。
+            # 交给编排层按未匹配处理，保留已有成分区间，不触发熔断。
+            detail["skip_reason"] = "sina_empty_members"
+            return FetchResult(
+                rows=0,
+                total=0,
+                elapsed_ms=int((time.perf_counter() - started) * 1000),
+                detail=detail,
+            )
         records = [
             {
                 "sector_code": sector_code,

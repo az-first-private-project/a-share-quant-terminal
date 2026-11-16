@@ -37,8 +37,8 @@ class StgRun(Base):
 
     data_version: Mapped[str | None] = mapped_column(String(32), comment="数据版本(最新交易日+行数指纹)")
     signal_schema: Mapped[int] = mapped_column(
-        SmallInteger, default=2, server_default="2",
-        comment="信号快照 schema：1=旧版无结构化依据，2=当前（triggered/score_breakdown）",
+        SmallInteger, default=3, server_default="3",
+        comment="信号快照 schema：1=旧版，2=triggered/score_breakdown，3=V8 M1 a4 防御门槛",
     )
     is_backtest: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(16), default="success",
@@ -69,7 +69,7 @@ class StgSignal(Base):
     code: Mapped[str] = mapped_column(String(6), nullable=False)
     name: Mapped[str | None] = mapped_column(String(64))
     rank: Mapped[int] = mapped_column(Integer, default=0)
-    score: Mapped[float | None] = mapped_column(Numeric(12, 4))
+    score: Mapped[float | None] = mapped_column(Numeric(20, 4))
     metrics: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="信号依据：各指标值")
 
 
@@ -97,7 +97,7 @@ class StgSignalPerf(Base):
     code: Mapped[str] = mapped_column(String(6))
 
     rank: Mapped[int | None] = mapped_column(Integer)
-    score: Mapped[float | None] = mapped_column(Numeric(12, 4))
+    score: Mapped[float | None] = mapped_column(Numeric(20, 4))
 
     entry_date: Mapped[date | None] = mapped_column(Date, comment="T+1 交易日")
     entry_price: Mapped[float | None] = mapped_column(

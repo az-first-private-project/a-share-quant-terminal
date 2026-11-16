@@ -181,7 +181,7 @@ def test_node_refresh_failure_uses_stale_cache_with_cooldown(monkeypatch) -> Non
 
 
 def test_consecutive_failures_open_breaker(monkeypatch) -> None:
-    """源整体不可用时快速失败：连续 3 次失败后不再发请求，把预算留给东财。"""
+    """源整体不可用时快速跳过：连续 3 次失败后冷却期内不再发请求，也不记采集失败。"""
     fake = _FakeSina(
         _nodes(["光热发电", "", "chgn_701026"]),
         {1: [ConnectionError("连接被重置")]},
@@ -193,8 +193,9 @@ def test_consecutive_failures_open_breaker(monkeypatch) -> None:
         with pytest.raises(ConnectionError):
             provider.fetch_sector_members("885002", "光热发电", "concept")
 
-    with pytest.raises(ProviderError, match="冷却中"):
-        provider.fetch_sector_members("885002", "光热发电", "concept")
+    result = provider.fetch_sector_members("885002", "光热发电", "concept")
+    assert result.rows == 0
+    assert result.detail["skip_reason"] == "sina_cooling_down"
     assert fake.calls == [1, 1, 1]
 
 

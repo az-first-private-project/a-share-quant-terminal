@@ -35,6 +35,8 @@ export interface AlgoMeta {
   params_schema: AlgoParamDef[]
   /** 契约 5.1 为布尔；兼容后端 0/1 时按 truthy 判断 */
   is_active: boolean
+  /** 观察候选：可查看/执行，但不进入共识与正式统计 */
+  is_observation?: boolean
   sort_order: number
 }
 
@@ -189,7 +191,7 @@ export interface WatchHitsResponse extends PaginationMeta {
   days?: number
 }
 
-/** run 级市场门槛摘要（仅 B4/B5，0 信号时解释原因） */
+/** run 级市场门槛摘要（A4/B4/B5，0 信号时解释原因） */
 export interface MarketGate {
   index_code: string | null
   available: boolean
@@ -198,7 +200,13 @@ export interface MarketGate {
   pct_chg: number | null
   passed: boolean | null
   rule?: string | null
-  threshold?: number | null
+  threshold?: number | string[] | null
+  regime_code?: string | null
+  regime_label?: string | null
+  regime_trade_date?: string | null
+  regime_since?: string | null
+  regime_days?: number | null
+  regime_available?: boolean
 }
 
 /** GET /api/v1/algo/{algo_code} 响应（5.2，C1 追加分页元信息） */
@@ -207,7 +215,7 @@ export interface AlgoResult extends PaginationMeta {
   algo_name: string
   trade_date: string
   run: AlgoRun
-  /** B4/B5 的市场环境要求（其他策略不返回） */
+  /** A4/B4/B5 的市场环境要求（其他策略不返回） */
   market_gate?: MarketGate | null
   from_cache: boolean
   /** 本次返回条数（分页后），全量命中数见 total */

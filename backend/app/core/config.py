@@ -175,10 +175,28 @@ PAPER_ENABLED_ALGOS: tuple[str, ...] = tuple(
     if item.strip()
 )
 
-# 策略默认参数（A1/A2 已下线，B1–B5 为短线策略）
+# 策略默认参数（A1/A2 已下线；V8 起 B1–B5 停用，代码保留）
 STRATEGY_DEFAULTS = {
     "a3": {"limit": 20, "min_score": 6.0},     # 0–10 分制（不是 0–100！）
-    "a4": {"limit": 20, "pe_max": 15.0, "div_min": 4.0},
+    "a4": {
+        "limit": 20, "pe_max": 15.0, "div_min": 4.0, "dv_max": 15.0,
+        "pb_max": 2.5, "min_score": 5.0, "min_amount": 5.0e7, "trend_dev": 0.9,
+    },
+    "c1": {"limit": 20, "lookback": 20, "min_amount": 1.0e8},
+    "c2": {
+        "limit": 20, "lookback": 40, "mom_min": 1.6, "tight_max": 1.15,
+        "high_level": 0.8, "shrink_max": 0.6, "min_amount": 5.0e7,
+    },
+    "c3": {
+        "limit": 20, "lookback": 120, "rps_threshold": 90.0,
+        "near_high_ratio": 0.9, "min_amount": 1.0e8,
+    },
+    "c4": {"limit": 20, "vol_mult": 2.0, "min_amount": 5.0e7},
+    "c5": {"limit": 20, "lookback": 20, "vol_mult": 1.5, "min_amount": 5.0e7},
+    "c6": {
+        "limit": 20, "squeeze_pct": 20.0, "vol_mult": 1.5,
+        "range_max": 10.0, "min_amount": 2.0e8,
+    },
     "b1": {"limit": 20, "min_vol_ratio": 1.0, "min_amount": 2.0e8},
     "b2": {
         "limit": 20, "rsi_max": 20.0, "amp_min": 15.0,
@@ -234,6 +252,23 @@ CATCH_UP_MAX_DAYS = _env_int("CATCH_UP_MAX_DAYS", 5)
 CATCH_UP_SCAN_DAYS = _env_int("CATCH_UP_SCAN_DAYS", 5)
 CATCH_UP_DELAY_SEC = _env_float("CATCH_UP_DELAY_SEC", 15.0)
 
+# ==================== 盘后推送 ====================
+PUSH_ENABLED = _env_bool("PUSH_ENABLED", False)
+PUSH_CHANNEL = _env("PUSH_CHANNEL", "wecom")
+WECOM_WEBHOOK_URL = _env("WECOM_WEBHOOK_URL", "")
+PUSH_ALGOS = tuple(
+    item.strip() for item in _env("PUSH_ALGOS", "").split(",") if item.strip()
+)
+PUSH_TOP_N = _env_int("PUSH_TOP_N", 10)
+PUSH_MODE = _env("PUSH_MODE", "always")
+PUSH_DRY_RUN = _env_bool("PUSH_DRY_RUN", False)
+PUSH_FRONTEND_URL = _env("PUSH_FRONTEND_URL", "http://127.0.0.1:5173/algo")
+# 观察策略：每日运行/推送，但不进入 SPECS/API/共识
+OBSERVATION_ALGOS = tuple(
+    item.strip() for item in _env("OBSERVATION_ALGOS", "").split(",") if item.strip()
+)
+PUSH_OBSERVATION = _env_bool("PUSH_OBSERVATION", False)
+
 # 允许的 CORS 来源（默认放开给本地开发；生产用环境变量收紧）
 CORS_ORIGINS = [
     o.strip() for o in _env("CORS_ORIGINS", "*").split(",") if o.strip()
@@ -242,4 +277,7 @@ CORS_ORIGINS = [
 __all__ = [
     "DATABASE_URL", "DATABASE_URL_SYNC", "TIMEZONE", "BACKTEST",
     "STRATEGY_DEFAULTS", "BACKEND_DIR", "PROJECT_DIR",
+    "PUSH_ENABLED", "PUSH_CHANNEL", "WECOM_WEBHOOK_URL", "PUSH_ALGOS",
+    "PUSH_TOP_N", "PUSH_MODE", "PUSH_DRY_RUN", "PUSH_FRONTEND_URL",
+    "OBSERVATION_ALGOS", "PUSH_OBSERVATION",
 ]

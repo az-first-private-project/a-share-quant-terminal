@@ -52,8 +52,8 @@ from app.strategy import strategies as strat
 
 logger = logging.getLogger(__name__)
 
-#: 信号快照 schema：1=旧版无结构化依据，2=当前（triggered/score_breakdown）
-SIGNAL_SCHEMA_VERSION = 2
+#: 信号快照 schema：1=旧版无结构化依据，2=triggered/score_breakdown，3=V8 M1 a4 防御门槛
+SIGNAL_SCHEMA_VERSION = 3
 
 #: 缓存查找时回看的历史 run 条数（同一 (algo, date) 下参数组合通常远小于该值）
 _CACHE_LOOKBACK = 50
@@ -425,6 +425,8 @@ async def get_cached_run(
     candidates = list(result.scalars().all())
     for run in candidates:
         stored_params = run.params or {}
+        if int(run.signal_schema or 1) != SIGNAL_SCHEMA_VERSION:
+            continue
         if params_fingerprint(spec.code, stored_params) != fingerprint:
             continue
         if run.data_version != version:
@@ -435,7 +437,7 @@ async def get_cached_run(
             spec.code, trade_date, run.run_id, fingerprint,
         )
         market_gate = None
-        if spec.code in {"b4", "b5"}:
+        if spec.code in {"a4", "b4", "b5", "c6"}:
             market_gate = strat.market_gate_payload(
                 await strat.load_market_context(db, trade_date), spec.code
             )
@@ -634,7 +636,7 @@ async def get_run(run_id: str) -> dict | None:
             )
         signals = await _load_signal_rows(db, run.run_id)
         market_gate = None
-        if run.algo_code in {"b4", "b5"}:
+        if run.algo_code in {"a4", "b4", "b5", "c6"}:
             market_gate = strat.market_gate_payload(
                 await strat.load_market_context(db, run.trade_date), run.algo_code
             )

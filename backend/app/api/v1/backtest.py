@@ -31,7 +31,7 @@ from app.db.session import get_db
 from app.engine.backtest_view import build_backtest_extras
 from app.strategy.backtest import run_backtest
 from app.strategy.grid import create_grid, execute_grid, get_grid, requeue_failed_cells
-from app.strategy.strategies import SPECS
+from app.strategy.strategies import CANDIDATE_SPECS, SPECS, get_spec
 
 router = APIRouter(prefix="/api/v1/backtest", tags=["回测"])
 logger = get_logger(__name__)
@@ -101,7 +101,7 @@ async def _default_end_date(db: AsyncSession) -> date:
 def _collect_strategy_params(algo_code: str, query: dict) -> dict:
     """按策略 schema 从 query string 收集策略参数（不传则用策略默认值）。"""
     params: dict = {}
-    for field in SPECS[algo_code].params_schema:
+    for field in get_spec(algo_code).params_schema:
         key = field["key"]
         raw = query.get(key)
         if raw is None or raw == "":
@@ -223,7 +223,7 @@ async def create_backtest(
     落 ``backtest_run.status=failed``，由前端轮询 GET 获取。策略参数从 query string
     按该策略的 `params_schema` 收集（B1–B5 参数各异）。
     """
-    if algo_code not in SPECS:
+    if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
         raise UnknownAlgoError(f"未知策略: {algo_code}",
                                detail={"available": sorted(SPECS.keys())})
 
@@ -302,7 +302,7 @@ async def create_backtest_grid(
 
     每格复用单次回测引擎（同一代码路径），命中同参数成功记录时直接复用不重算。
     """
-    if algo_code not in SPECS:
+    if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
         raise UnknownAlgoError(f"未知策略: {algo_code}",
                                detail={"available": sorted(SPECS.keys())})
 

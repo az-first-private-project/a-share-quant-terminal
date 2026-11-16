@@ -54,13 +54,19 @@ from app.strategy.condition import (  # noqa: E402
 from app.strategy.metrics import compute_metrics  # noqa: E402
 from app.strategy.runner import params_fingerprint  # noqa: E402
 from app.strategy.strategies import (  # noqa: E402
+    CANDIDATE_SPECS,
+    CONDITION_SPECS,
+    SPECS,
     _assert_data_ready,
     _score_breakdown,
     _validate_params,
     apply_common_filters,
+    list_specs,
     market_gate_payload,
     rank_signals,
 )
+
+_B_DISABLED_REASON = "b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip"
 
 
 # =====================================================================
@@ -141,6 +147,8 @@ def _strategy_frame() -> pd.DataFrame:
             "ps_ttm": [3.0] * count,
             "dv_ttm": [6.0, 3.0, 1.0, 5.0, 2.0, 9.0, 10.0, 0.5, 4.0, 4.0],
             "close": [10.0] * count,
+            "amount_ma20": [1.0e8] * count,
+            "ma120": [8.0] * count,
             "pct_chg": [1.0] * count,
             "ma_bullish": [True, True, False, True, True, False, True, True, True, True],
             "ma5": [11.0] * count,
@@ -163,6 +171,24 @@ def _strategy_frame() -> pd.DataFrame:
                           "央企", "央企", "央企", "央企"],
             "industry_l1": ["电子", "计算机", "银行", "电子", "食品",
                             "计算机", "电子", "银行", "食品", "电子"],
+        }
+    )
+
+
+def _a4_upgrade_frame() -> pd.DataFrame:
+    """A4 升级过滤专用横截面：每行只违反一个新增条件。"""
+    return pd.DataFrame(
+        {
+            "code": ["600100", "600101", "600102", "600103", "600104", "600105", "600106"],
+            "name": [f"高股息{index}" for index in range(7)],
+            "pe_ttm": [10.0] * 7,
+            "dv_ttm": [6.0, 6.0, 6.0, 6.0, 6.0, 16.0, 4.0],
+            "pb": [2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0],
+            "composite_score": [7.0, 7.0, 4.0, 7.0, 7.0, 7.0, 7.0],
+            "amount_ma20": [1.0e8, 1.0e8, 1.0e8, 1.0e7, 1.0e8, 1.0e8, 1.0e8],
+            "ma120": [8.0] * 7,
+            "close": [10.0, 10.0, 10.0, 10.0, 7.0, 10.0, 10.0],
+            "industry_l1": ["银行"] * 7,
         }
     )
 
@@ -277,33 +303,39 @@ def test_condition_describe_and_types() -> None:
 
 def test_params_fingerprint_stable_and_sensitive() -> None:
     """key 顺序无关；参数值/策略不同则指纹不同。"""
-    fingerprint_a = params_fingerprint("b1", {"min_vol_ratio": 1.5, "limit": 20})
-    fingerprint_b = params_fingerprint("b1", {"limit": 20, "min_vol_ratio": 1.5})
+    fingerprint_a = params_fingerprint("a4", {"pe_max": 15, "limit": 20})
+    fingerprint_b = params_fingerprint("a4", {"limit": 20, "pe_max": 15})
     assert fingerprint_a == fingerprint_b
 
-    assert params_fingerprint("b1", {"min_vol_ratio": 1.5}) != params_fingerprint(
-        "b1", {"min_vol_ratio": 2.0}
+    assert params_fingerprint("a4", {"pe_max": 15}) != params_fingerprint(
+        "a4", {"pe_max": 8}
     )
-    assert params_fingerprint("b1", {"min_vol_ratio": 1.5}) != params_fingerprint(
-        "b2", {"min_vol_ratio": 1.5}
+    assert params_fingerprint("a4", {"pe_max": 15}) != params_fingerprint(
+        "a3", {"pe_max": 15}
     )
     assert len(fingerprint_a) == 16
 
 
 def test_validate_params_defaults_and_bounds() -> None:
     """默认值补齐 + 越界/未知参数抛错。"""
-    normalized = _validate_params("b1", {})
-    assert normalized == {"limit": 20, "min_vol_ratio": 1.0, "min_amount": 2.0e8}
+    normalized = _validate_params("a4", {})
+    assert normalized == {
+        "limit": 20, "pe_max": 15.0, "div_min": 4.0,
+        "dv_max": 15.0, "pb_max": 2.5, "min_score": 5.0,
+        "min_amount": 5.0e7, "trend_dev": 0.9,
+    }
 
-    normalized = _validate_params("b2", {"rsi_max": "18"})
-    assert normalized["rsi_max"] == 18.0
+    normalized = _validate_params("a4", {"pe_max": "8"})
+    assert normalized["pe_max"] == 8.0
 
     with pytest.raises(InvalidParamError):
-        _validate_params("b1", {"min_vol_ratio": -1})
+        _validate_params("a4", {"pb_max": 0})
     with pytest.raises(InvalidParamError):
-        _validate_params("b1", {"unknown_param": 1})
+        _validate_params("a4", {"trend_dev": 2.0})
     with pytest.raises(InvalidParamError):
-        _validate_params("b1", {"min_vol_ratio": "abc"})
+        _validate_params("a4", {"unknown_param": 1})
+    with pytest.raises(InvalidParamError):
+        _validate_params("a4", {"pe_max": "abc"})
 
 
 def test_a3_min_score_is_zero_to_ten_with_legacy_fallback() -> None:
@@ -340,6 +372,106 @@ def test_list_runs_excludes_backtest_by_default() -> None:
 # D2 四策略排序
 # =====================================================================
 
+def test_v8_enabled_specs_current() -> None:
+    """V8：启用清单为 a3/a4；c1–c4 在候选注册表，回测达标后才加入。"""
+    assert set(SPECS) == {"a3", "a4"}
+    assert set(CANDIDATE_SPECS) == {"c1", "c2", "c3", "c4", "c5", "c6"}
+    assert {item.code for item in list_specs()} == {"a3", "a4"}
+    assert CONDITION_SPECS == {}
+
+
+def test_rank_signals_a4_upgrade_filters() -> None:
+    """A4 升级：股息上限、PB 上限、质量评分、流动性、趋势过滤均生效。"""
+    frame = _a4_upgrade_frame()
+
+    # 默认参数：600101(PB)、600102(评分)、600103(成交额)、600104(趋势)、600105(股息上限) 出局
+    result = rank_signals("a4", frame, {})
+    assert list(result["code"]) == ["600100", "600106"]
+    assert result["dv_ttm"].is_monotonic_decreasing
+
+    assert list(rank_signals("a4", frame, {"pb_max": 3.5})["code"]) == [
+        "600100", "600101", "600106",
+    ]
+    assert list(rank_signals("a4", frame, {"min_score": 3.0})["code"]) == [
+        "600100", "600102", "600106",
+    ]
+    assert list(rank_signals("a4", frame, {"min_amount": 1.0e7})["code"]) == [
+        "600100", "600103", "600106",
+    ]
+    assert list(rank_signals("a4", frame, {"trend_dev": 0.8})["code"]) == [
+        "600100", "600104", "600106",
+    ]
+    assert list(rank_signals("a4", frame, {"dv_max": 20.0})["code"]) == [
+        "600105", "600100", "600106",
+    ]
+    assert list(rank_signals("a4", frame, {"div_min": 5.0})["code"]) == ["600100"]
+
+
+def test_rank_signals_a4_defensive_regime_gate() -> None:
+    """A4 防御型门槛：仅 bottoming/pull_down/risk_off 放行；阶段缺失放行。"""
+    frame = _a4_upgrade_frame()
+
+    for regime in ("bottoming", "pull_down", "risk_off"):
+        gated = frame.copy()
+        gated.attrs["market"] = {
+            "regime_available": True,
+            "regime_code": regime,
+            "regime_label": regime,
+            "regime_days": 5,
+            "regime_since": "2026-11-01",
+        }
+        assert list(rank_signals("a4", gated, {})["code"]) == ["600100", "600106"]
+
+    for regime in ("trend_up", "repair_up"):
+        gated = frame.copy()
+        gated.attrs["market"] = {
+            "regime_available": True,
+            "regime_code": regime,
+            "regime_label": regime,
+        }
+        assert len(rank_signals("a4", gated, {})) == 0
+
+    missing = frame.copy()
+    missing.attrs["market"] = {"regime_available": False}
+    assert len(rank_signals("a4", missing, {})) == 2
+
+
+def test_market_gate_payload_a4_regime() -> None:
+    """A4 的 run 级门槛摘要：防御型状态通过，非防御型阻塞，缺失放行。"""
+    base = {
+        "available": True,
+        "index_code": "000300",
+        "close": 4000.0,
+        "ma20": 3900.0,
+        "pct_chg": -1.0,
+        "regime_available": True,
+        "regime_code": "risk_off",
+        "regime_label": "避险下跌",
+        "regime_trade_date": "2026-11-13",
+        "regime_since": "2026-10-01",
+        "regime_days": 30,
+    }
+    passed = market_gate_payload(base, "a4")
+    assert passed is not None
+    assert passed["passed"] is True
+    assert passed["regime_code"] == "risk_off"
+
+    blocked = market_gate_payload(
+        {**base, "regime_code": "trend_up", "regime_label": "趋势上攻"}, "a4"
+    )
+    assert blocked is not None
+    assert blocked["passed"] is False
+    assert blocked["regime_code"] == "trend_up"
+
+    missing = market_gate_payload(
+        {"available": False, "regime_available": False}, "a4"
+    )
+    assert missing is not None
+    assert missing["passed"] is True
+    assert "放行" in missing["rule"]
+
+
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_rank_signals_b1_dual_ema_momentum() -> None:
     """B1：EMA 近 3 日金叉 + 放量 + MA60 之上，按 ROC10 降序。"""
     frame = _short_frame()
@@ -355,6 +487,7 @@ def test_rank_signals_b1_dual_ema_momentum() -> None:
     assert len(strict) == 0
 
 
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_rank_signals_b2_rsi_oversold_reversal() -> None:
     """B2：RSI6 超卖 + 止跌 K 线 + MA120 趋势，按 RSI6 升序。"""
     frame = _short_frame()
@@ -368,6 +501,7 @@ def test_rank_signals_b2_rsi_oversold_reversal() -> None:
     assert list(strict["code"]) == ["600002"]
 
 
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_rank_signals_b3_kdj_low_golden_cross() -> None:
     """B3：J 值低位 + K 上穿 D + EMA60 之上，按 J 值升序。"""
     frame = _short_frame()
@@ -380,6 +514,7 @@ def test_rank_signals_b3_kdj_low_golden_cross() -> None:
     assert list(strict["code"]) == ["600004"]
 
 
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_rank_signals_b4_boll_squeeze_breakout() -> None:
     """B4：带宽低分位 + 突破上轨新高 + 放量 + 区间收窄，按带宽分位升序。"""
     frame = _short_frame()
@@ -391,6 +526,7 @@ def test_rank_signals_b4_boll_squeeze_breakout() -> None:
     assert list(strict["code"]) == ["600000"]
 
 
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_rank_signals_b5_boll_lower_kdj_reversal() -> None:
     """B5：触及布林下轨 + J 超卖 + 缩量止跌，按 J 值升序。"""
     frame = _short_frame()
@@ -403,6 +539,7 @@ def test_rank_signals_b5_boll_lower_kdj_reversal() -> None:
     assert list(strict["code"]) == ["600004"]
 
 
+@pytest.mark.skip(reason=_B_DISABLED_REASON)
 def test_b4_b5_market_gate_blocks_signals() -> None:
     """市场状态门槛：沪深300 不满足时 B4/B5 必须空结果（attrs 由 build_candidates 注入）。"""
     frame = _short_frame()
@@ -418,9 +555,9 @@ def test_b4_b5_market_gate_blocks_signals() -> None:
 
 
 def test_rank_signals_a4_dividend_and_pe_filters() -> None:
-    """A4：PE>0 且 <pe_max 且 dv_ttm>=div_min，按股息率降序。"""
+    """A4：PE>0 且 <pe_max、股息率在 [div_min, dv_max]、PB/评分/流动性/趋势过滤，按股息率降序。"""
     frame = _strategy_frame()
-    result = rank_signals("a4", frame, {"limit": 20, "pe_max": 15, "div_min": 4})
+    result = rank_signals("a4", frame, {})
     # 命中：pe=10/dv=6, pe=12/dv=10, pe=8/dv=4（pe=15 不满足严格 <15）
     assert list(result["code"]) == ["600006", "600000", "600009"]
     assert (result["pe_ttm"] > 0).all()
@@ -542,27 +679,17 @@ def test_market_gate_payload_for_run_level_hint() -> None:
 # =====================================================================
 
 def test_score_semantics_is_raw_sort_metric() -> None:
-    """score = 排序指标原始值：A3=综合分、A4=股息率、B1=ROC10、B2=RSI6、B3=J。"""
+    """score = 排序指标原始值：A4=股息率（B 策略已停用，不再断言）。"""
     frame = _strategy_frame()
-    short = _short_frame()
 
-    a4 = rank_signals("a4", frame, {"limit": 20, "pe_max": 15, "div_min": 4})
+    a4 = rank_signals("a4", frame, {})
     assert list(a4["score"]) == pytest.approx(list(a4["dv_ttm"]))
-
-    b1 = rank_signals("b1", short, {"limit": 20})
-    assert list(b1["score"]) == pytest.approx(list(b1["roc10"]))
-
-    b2 = rank_signals("b2", short, {"limit": 20})
-    assert list(b2["score"]) == pytest.approx(list(b2["rsi6"]))
-
-    b3 = rank_signals("b3", short, {"limit": 20})
-    assert list(b3["score"]) == pytest.approx(list(b3["kdj_j"]))
 
 
 def test_signal_items_have_composite_score_top_level() -> None:
     """契约 5.2 data[] 顶层必须带 composite_score（0–10）；metrics 覆盖策略字段。"""
     frame = _strategy_frame()
-    signals = rank_signals("a4", frame, {"limit": 20, "pe_max": 15, "div_min": 4})
+    signals = rank_signals("a4", frame, {})
     items = runner_module._items_from_frame(signals)  # noqa: SLF001 - 契约序列化测试
     assert items, "示例数据应有信号"
     for item in items:
@@ -576,22 +703,22 @@ def test_signal_items_have_composite_score_top_level() -> None:
 
 def test_rank_signals_accepts_decimal_columns() -> None:
     """asyncpg Numeric 返回 Decimal：rank_signals 内部必须转 float 后再比较。"""
-    frame = _short_frame()
+    frame = _strategy_frame()
     decimal_frame = frame.copy()
-    for column in ("close", "volume", "vol_ma5", "amount_ma20", "ema20", "ema5", "ma60", "roc10"):
+    for column in ("pe_ttm", "dv_ttm", "pb", "composite_score", "amount_ma20", "ma120", "close"):
         decimal_frame[column] = [
-            None if value is None else Decimal(str(value)) for value in decimal_frame[column]
+            None if pd.isna(value) else Decimal(str(value)) for value in decimal_frame[column]
         ]
-    result = rank_signals("b1", decimal_frame, {"limit": 20})
-    assert len(result) == 2
-    assert result["roc10"].dtype == "float64"
-    assert list(result["code"]) == ["600000", "600002"]
+    result = rank_signals("a4", decimal_frame, {})
+    assert len(result) == 3
+    assert result["dv_ttm"].dtype == "float64"
+    assert list(result["code"]) == ["600006", "600000", "600009"]
 
 
 def test_rank_signals_empty_input() -> None:
     """空候选池返回结构完整的空表（API 不 500）。"""
     empty = pd.DataFrame(columns=["code", "name"])
-    result = rank_signals("b1", empty, {})
+    result = rank_signals("a4", empty, {})
     assert len(result) == 0
     assert {"code", "name", "rank", "score", "metrics"} <= set(result.columns)
 
@@ -634,22 +761,26 @@ def test_apply_common_filters() -> None:
     assert "000001" not in set(filtered_missing["code"])
 
 
-def test_b_ready_requires_feature_coverage() -> None:
+def test_a4_ready_requires_feature_coverage() -> None:
     """回填到一半（覆盖率 <50%）必须拒绝执行，而不是用少数股票生成信号并缓存。"""
     from app.core.errors import DataUnavailableError
 
     frame = pd.DataFrame(
         {
-            "ema20": [1.0, None, None, None, None, None],
-            "amount_ma20": [1.0] * 6,
+            "pe_ttm": [10.0] * 6,
+            "dv_ttm": [6.0] * 6,
+            "pb": [2.0] * 6,
+            "composite_score": [7.0] * 6,
+            "amount_ma20": [1.0, None, None, None, None, None],
+            "ma120": [8.0] * 6,
         }
     )
     frame.attrs["trade_date"] = date(2026, 10, 26)
     with pytest.raises(DataUnavailableError, match="覆盖不足"):
-        _assert_data_ready("b1", frame)
+        _assert_data_ready("a4", frame)
 
-    frame.loc[1:2, "ema20"] = 1.0  # 3/6 = 50%，达到门槛
-    _assert_data_ready("b1", frame)
+    frame.loc[1:2, "amount_ma20"] = 1.0  # 3/6 = 50%，达到门槛
+    _assert_data_ready("a4", frame)
 
 
 # =====================================================================

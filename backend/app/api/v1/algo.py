@@ -29,7 +29,7 @@ from app.core.errors import InvalidParamError, NotFoundError, UnknownAlgoError
 from app.core.pagination import pagination_meta
 from app.db.session import get_db
 from app.strategy.runner import count_runs, get_run, list_runs, run_strategy
-from app.strategy.strategies import SPECS, list_specs
+from app.strategy.strategies import CANDIDATE_SPECS, SPECS, get_spec, list_specs
 
 router = APIRouter(prefix="/api/v1/algo", tags=["选股"])
 
@@ -51,7 +51,7 @@ def _collect_params(
     query: dict[str, Any],
 ) -> dict[str, Any]:
     """把 HTTP query 里属于该策略 schema 的参数收集起来。"""
-    spec = SPECS.get(algo_code)
+    spec = get_spec(algo_code)
     params: dict[str, Any] = {"limit": limit}
     if spec is None:
         return params
@@ -86,11 +86,12 @@ def _collect_params(
 
 
 def _ensure_algo(algo_code: str) -> None:
-    if algo_code not in SPECS:
-        raise UnknownAlgoError(
-            f"未知策略: {algo_code}，可用: {sorted(SPECS.keys())}",
-            detail={"available": sorted(SPECS.keys())},
-        )
+    if algo_code in SPECS or algo_code in CANDIDATE_SPECS:
+        return
+    raise UnknownAlgoError(
+        f"未知策略: {algo_code}，可用: {sorted(SPECS.keys())}",
+        detail={"available": sorted(SPECS.keys())},
+    )
 
 
 # ============================================================
@@ -98,9 +99,17 @@ def _ensure_algo(algo_code: str) -> None:
 # ============================================================
 
 @router.get("/list")
-async def get_algo_list() -> list[dict]:
+async def get_algo_list(
+    include_observation: bool = Query(False, description="是否包含观察候选"),
+) -> list[dict]:
     """策略清单。参数 schema 由后端单一维护，前端据此渲染表单。"""
-    return [spec.as_algo_item() for spec in list_specs()]
+    items = [spec.as_algo_item() for spec in list_specs()]
+    if include_observation:
+        items.extend(
+            spec.as_algo_item(is_active=False, is_observation=True)
+            for spec in CANDIDATE_SPECS.values()
+        )
+    return sorted(items, key=lambda item: item["sort_order"])
 
 
 @router.get("/health")

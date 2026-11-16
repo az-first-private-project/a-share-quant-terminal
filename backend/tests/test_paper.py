@@ -455,23 +455,23 @@ def test_sync_all_isolates_single_failure(monkeypatch) -> None:
 
     async def fake_sync(db, algo_code):
         calls.append(algo_code)
-        if algo_code == "b3":
+        if algo_code == "a4":
             raise RuntimeError("boom")
         return {"algo": algo_code, "status": "active"}
 
     async def fake_mark_failed(db, algo_code, error):
         failed_marks.append(algo_code)
 
-    monkeypatch.setattr(paper_module, "enabled_algos", lambda: ["a3", "b3"])
+    monkeypatch.setattr(paper_module, "enabled_algos", lambda: ["a3", "a4"])
     monkeypatch.setattr(paper_module, "sync_paper_portfolio", fake_sync)
     monkeypatch.setattr(paper_module, "_mark_failed", fake_mark_failed)
     db = _DummySession()
 
     results = asyncio.run(paper_module.sync_all_paper_portfolios(db))
 
-    assert calls == ["a3", "b3"]
+    assert calls == ["a3", "a4"]
     assert [item["status"] for item in results] == ["active", "failed"]
-    assert failed_marks == ["b3"]
+    assert failed_marks == ["a4"]
     assert db.rollbacks == 1
     assert db.commits == 2  # a3 成功 + b3 失败状态落库
 
@@ -497,9 +497,9 @@ def test_run_paper_job_skips_non_trade_day(monkeypatch, caplog) -> None:
 
 
 def test_enabled_algos_env_override_and_fallback(monkeypatch) -> None:
-    monkeypatch.setattr(paper_module, "PAPER_ENABLED_ALGOS", ("b1", "nope"))
-    assert paper_module.enabled_algos() == ["b1"]
-    assert paper_module.is_enabled("b1")
+    monkeypatch.setattr(paper_module, "PAPER_ENABLED_ALGOS", ("a4", "nope"))
+    assert paper_module.enabled_algos() == ["a4"]
+    assert paper_module.is_enabled("a4")
     assert not paper_module.is_enabled("a3")
 
     monkeypatch.setattr(paper_module, "PAPER_ENABLED_ALGOS", ())

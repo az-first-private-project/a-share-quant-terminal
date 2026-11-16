@@ -247,8 +247,16 @@ async def run_task(
         coverage = stats.get("coverage")
         if coverage is None and detail is not None:
             coverage = detail.get("coverage")
-        # 跳过标记：FetchResult 放在 detail.skipped，引擎层 dict 放在顶层 skipped
+        # 跳过标记：FetchResult 放在 detail.skipped，引擎层 dict 放在顶层 skipped。
+        # 注意 detail["skipped"] 也可能是数量（例如板块成分的跳过板块数），
+        # 只有字符串/布尔标记才是“整任务跳过”，不能把数量当成跳过原因。
         skipped_reason = stats.get("skipped") or (detail or {}).get("skipped")
+        if isinstance(skipped_reason, bool):
+            skipped_reason = (
+                stats.get("reason") or (detail or {}).get("reason") or "skipped"
+            )
+        elif not isinstance(skipped_reason, str):
+            skipped_reason = None
         if task != "calendar":
             if scoped:
                 logger.info("定向回补（codes 非空）不更新数据集 %s 的新鲜度", dataset)

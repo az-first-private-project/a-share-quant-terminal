@@ -1,7 +1,7 @@
 /**
  * 选股中心（契约第 5、6 节）
  * ===========================
- * - 算法卡片（/algo/list，参数 schema 驱动，A3/A4 + B1–B5）；
+ * - 算法卡片（/algo/list，参数 schema 驱动，A3/A4 正式启用 + c1–c6 观察候选）；
  * - 参数面板修改不自动请求，「执行算法」按钮触发 useMutation；
  * - 结果区：Run 元信息（run_id/耗时/universe/signal/data_version/参数快照/from_cache）、
  *   动态列结果表格、Top10 评分图、CSV 导出、历史 run 切换；
@@ -145,6 +145,15 @@ export default function AlgoCenter() {
   const selectedAlgo = useMemo<AlgoMeta | null>(
     () => algoList.find((algo) => algo.algo_code === selectedCode) ?? null,
     [algoList, selectedCode],
+  )
+
+  const activeAlgos = useMemo(
+    () => algoList.filter((algo) => algo.is_active !== false),
+    [algoList],
+  )
+  const observationAlgos = useMemo(
+    () => algoList.filter((algo) => algo.is_observation === true),
+    [algoList],
   )
 
   // 列表加载后：校验启动时恢复的策略；失效时回落到 URL 指定或第一个启用中的算法
@@ -629,9 +638,9 @@ export default function AlgoCenter() {
       {/* ========== 策略天梯（信号级前瞻收益） ========== */}
       <StrategyLadder onSelectAlgo={handleLadderSelect} selectedCode={selectedCode} />
 
-      {/* ========== 算法卡片 ========== */}
+      {/* ========== 算法卡片（正式启用） ========== */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-        {algoList.map((algo) => (
+        {activeAlgos.map((algo) => (
           <AlgoCard
             key={algo.algo_code}
             algo={algo}
@@ -645,6 +654,33 @@ export default function AlgoCenter() {
           />
         ))}
       </div>
+
+      {/* ========== 观察候选（不进共识/正式统计） ========== */}
+      {observationAlgos.length > 0 && (
+        <div className="mt-6">
+          <div className="mb-3 flex flex-wrap items-baseline gap-2">
+            <h2 className="text-[13px] font-semibold tracking-wide">观察候选</h2>
+            <span className="rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] text-warning">
+              未通过回测 · 仅供观察
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+            {observationAlgos.map((algo) => (
+              <AlgoCard
+                key={algo.algo_code}
+                algo={algo}
+                signalCount={
+                  result && result.algo === algo.algo_code
+                    ? (result.total ?? result.count)
+                    : null
+                }
+                isActive={algo.algo_code === selectedCode}
+                onSelect={handleSelect}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ========== 多策略共识榜（默认折叠） ========== */}
       <ConsensusBoard onOpenAlgo={handleLadderSelect} />
