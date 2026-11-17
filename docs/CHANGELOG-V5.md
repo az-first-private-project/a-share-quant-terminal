@@ -64,6 +64,15 @@
 
 ---
 
+## 0. V9 修复：单日缺口补跑走当日流水线（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 缺口仅最新交易日且已收盘时，跳过 `history_fast / valuation_fast / moneyflow_history` 逐股区间回补，直接走当日快照流水线（避免启动补跑耗时数十分钟且任务监控无记录） | `backend/app/catch_up.py` |
+| 补跑单测覆盖“今天已收盘不走向区间回补” | `backend/tests/test_catch_up.py` |
+
+---
+
 ## 0. V9 Batch E：推送归因与自选关联（2026-11-17）
 
 | 变更 | 文件 |

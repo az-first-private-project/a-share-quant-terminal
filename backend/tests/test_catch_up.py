@@ -180,14 +180,16 @@ def test_history_day_steps_backfill_margin_after_same_day_outputs() -> None:
 
 
 def test_execute_today_uses_snapshot_pipeline(monkeypatch) -> None:
-    """缺口日就是今天且已收盘 → 快照口径的完整流水线，不逐日跑历史步骤。"""
+    """缺口日就是今天且已收盘 → 快照口径的完整流水线，不做逐股区间回补。"""
     calls = _patch_pipeline(monkeypatch)
 
     summary = asyncio.run(
         cu._execute_catch_up([D2], object(), today=D2, snapshot_ok=True)
     )
     tasks = [c["task"] for c in calls]
-    assert tasks == [*cu.RANGE_STEPS, "daily_pipeline", "signal_perf"]
+    assert tasks == ["daily_pipeline", "signal_perf"]
+    for step in cu.RANGE_STEPS:
+        assert step not in tasks
     assert summary["status"] == "success"
 
 

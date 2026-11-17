@@ -324,12 +324,19 @@ async def _execute_catch_up(
 
     if stock_complete is None:
         stock_complete = await _stock_days_complete(db, days)
-    range_steps = (
-        tuple(step for step in RANGE_STEPS if step != "history_fast")
-        if stock_complete else RANGE_STEPS
-    )
-    if stock_complete:
-        logger.info("行情日线已完整，跳过 history_fast 区间回补，直接补下游数据集")
+    # 缺口仅为「今天且已收盘」时，走当日快照流水线即可补全行情/估值/资金流；
+    # 区间回补会逐只股票重拉全市场历史（约 5000 次请求），单日缺口也要跑几十分钟。
+    latest_day_only = len(days) == 1 and days[0] == today and snapshot_ok
+    range_steps: tuple[str, ...] = ()
+    if latest_day_only:
+        logger.info("缺口仅为最新交易日，跳过逐股区间回补，走当日快照流水线")
+    else:
+        range_steps = (
+            tuple(step for step in RANGE_STEPS if step != "history_fast")
+            if stock_complete else RANGE_STEPS
+        )
+        if stock_complete:
+            logger.info("行情日线已完整，跳过 history_fast 区间回补，直接补下游数据集")
 
     for step in range_steps:
         results[step] = await run_task(step, start=first, end=last, db=db)
