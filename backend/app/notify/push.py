@@ -25,10 +25,12 @@ from app.core.config import (
     PUSH_MODE,
     PUSH_OBSERVATION,
     PUSH_TOP_N,
+    PUSH_WATCHLIST_ONLY,
     WECOM_WEBHOOK_URL,
 )
 from app.db.models.push import PushLog
 from app.db.models.strategy import StgRun, StgSignal
+from app.engine.watch_state import load_watchlist_state
 from app.strategy.strategies import CANDIDATE_SPECS, SPECS, get_spec
 
 logger = logging.getLogger(__name__)
@@ -91,11 +93,57 @@ def _truncate_utf8(text: str, limit: int = _MAX_BYTES) -> str:
     return data[: max(0, limit - 24)].decode("utf-8", errors="ignore") + "\n…（已截断）"
 
 
+def _fmt_reason_value(value: Any) -> str:
+    number = _num(value)
+    if number is not None:
+        return f"{number:g}"
+    return str(value)
+
+
+def _one_line_reason(item: dict[str, Any]) -> str:
+    """从 metrics.triggered / score_breakdown 复述条件，缺失则“归因缺失”。"""
+    metrics = item.get("metrics") or {}
+    parts: list[str] = []
+    triggered = metrics.get("triggered")
+    if isinstance(triggered, list):
+        for condition in triggered:
+            if not isinstance(condition, dict) or not condition.get("passed"):
+                continue
+            label = str(condition.get("label") or condition.get("key") or "").strip()
+            if not label:
+                continue
+            actual = condition.get("actual")
+            op = condition.get("op")
+            threshold = condition.get("threshold")
+            if actual is not None and op and threshold is not None:
+                text = f"{label}（{_fmt_reason_value(actual)} {op} {_fmt_reason_value(threshold)}）"
+            elif actual is not None:
+                text = f"{label}（{_fmt_reason_value(actual)}）"
+            else:
+                text = label
+            parts.append(text)
+            if len(parts) >= 2:
+                break
+    if not parts:
+        breakdown = metrics.get("score_breakdown")
+        if isinstance(breakdown, dict):
+            for part in (breakdown.get("parts") or [])[:2]:
+                if not isinstance(part, dict):
+                    continue
+                name = str(part.get("name") or "").strip()
+                score = _num(part.get("score"))
+                if name and score is not None:
+                    parts.append(f"{name} {score:.1f}")
+    return ("；".join(parts) or "归因缺失")[:50]
+
+
 def build_message(
     trade_date: date,
     sections: list[dict[str, Any]],
     frontend_url: str = PUSH_FRONTEND_URL,
+    watchlist_codes: set[str] | None = None,
 ) -> str:
+    watchlist = watchlist_codes or set()
     lines = [f"## GFNA 选股播报 | {trade_date.isoformat()}", ""]
     for section in sections:
         name = section.get("algo_name") or section["algo_code"]
@@ -107,12 +155,19 @@ def build_message(
             lines.append("无信号")
         else:
             for item in items:
+                reason = _one_line_reason(item)
+                marker = " [自选]" if str(item.get("code")) in watchlist else ""
                 lines.append(
-                    f"{item['rank']}. {item['name']}({item['code']}) {item['summary']}"
+                    f"{item['rank']}. {item['name']}({item['code']}) "
+                    f"{item['summary']} — {reason}{marker}"
                 )
         lines.append("")
     lines.append(f"查看：{frontend_url}")
-    return _truncate_utf8("\n".join(lines))
+    footer = "\n\n条件复述，非投资建议"
+    body = _truncate_utf8(
+        "\n".join(lines), _MAX_BYTES - len(footer.encode("utf-8")) - 32
+    )
+    return body + footer
 
 
 class WeComResponseError(RuntimeError):
@@ -166,8 +221,20 @@ def _signal_item(algo_code: str, row: StgSignal) -> dict[str, Any]:
     }
 
 
+async def _load_watchlist_codes(db: AsyncSession) -> set[str]:
+    try:
+        state = await load_watchlist_state(db)
+        return {str(code).zfill(6) for code in (state.get("codes") or [])}
+    except Exception:  # noqa: BLE001 - 自选读取失败不阻断推送
+        logger.warning("读取自选失败，按空集处理", exc_info=True)
+        return set()
+
+
 async def _load_sections(
-    db: AsyncSession, trade_date: date, algos: list[str]
+    db: AsyncSession,
+    trade_date: date,
+    algos: list[str],
+    watchlist_codes: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     sections: list[dict[str, Any]] = []
     for code in algos:
@@ -194,12 +261,19 @@ async def _load_sections(
                 )
             ).scalars().all()
             items = [_signal_item(code, row) for row in rows]
+        if PUSH_WATCHLIST_ONLY:
+            watchlist = watchlist_codes or set()
+            items = [item for item in items if str(item["code"]) in watchlist]
         sections.append(
             {
                 "algo_code": code,
                 "algo_name": spec.name,
                 "run_id": run.run_id if run is not None else None,
-                "signal_count": int(getattr(run, "signal_count", 0) or 0),
+                "signal_count": (
+                    len(items)
+                    if PUSH_WATCHLIST_ONLY
+                    else int(getattr(run, "signal_count", 0) or 0)
+                ),
                 "items": items,
                 "observed": observed,
             }
@@ -248,9 +322,16 @@ async def push_daily_results(
             trade_date = await _latest_trade_date(db, algos)
         if trade_date is None:
             return {"error": "没有可推送的选股 run"}
-        sections = await _load_sections(db, trade_date, algos)
+        watchlist_codes = await _load_watchlist_codes(db)
+        sections = await _load_sections(db, trade_date, algos, watchlist_codes)
         if PUSH_MODE == "signals_only":
             sections = [item for item in sections if item["signal_count"] > 0]
+        if PUSH_WATCHLIST_ONLY and not any(item["signal_count"] for item in sections):
+            return {
+                "skipped": "自选无命中",
+                "trade_date": trade_date.isoformat(),
+                "watchlist_count": len(watchlist_codes),
+            }
         if not sections:
             return {"skipped": "没有满足推送模式的策略", "trade_date": trade_date.isoformat()}
 
@@ -282,7 +363,9 @@ async def push_daily_results(
         if not pending_sections:
             return {"skipped": "全部已推送", "trade_date": trade_date.isoformat()}
 
-        message = build_message(trade_date, pending_sections)
+        message = build_message(
+            trade_date, pending_sections, watchlist_codes=watchlist_codes
+        )
         if dry:
             await db.rollback()
             return {

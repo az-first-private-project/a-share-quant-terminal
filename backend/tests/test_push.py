@@ -60,7 +60,59 @@ def test_build_message_truncates_to_wecom_limit() -> None:
     ]
     message = push.build_message(date(2026, 11, 13), sections)
     assert len(message.encode("utf-8")) <= push._MAX_BYTES  # noqa: SLF001
-    assert message.endswith("已截断）")
+    assert "已截断）" in message
+    assert message.endswith("条件复述，非投资建议")
+
+
+def test_one_line_reason_from_triggered_and_breakdown() -> None:
+    triggered = push._one_line_reason(  # noqa: SLF001
+        {
+            "metrics": {
+                "triggered": [
+                    {"label": "PE_TTM < 20", "passed": True, "actual": 12.3, "op": "lt", "threshold": 20},
+                    {"label": "股息率 ≥ 4%", "passed": True, "actual": 5.1},
+                    {"label": "未通过条件", "passed": False, "actual": 1},
+                ]
+            }
+        }
+    )
+    assert "PE_TTM < 20" in triggered
+    assert "股息率 ≥ 4%" in triggered
+    assert "未通过条件" not in triggered
+
+    breakdown = push._one_line_reason(  # noqa: SLF001
+        {"metrics": {"score_breakdown": {"parts": [{"name": "价值", "score": 8.2}]}}}
+    )
+    assert "价值 8.2" in breakdown
+    assert push._one_line_reason({"metrics": {}}) == "归因缺失"  # noqa: SLF001
+
+
+def test_build_message_marks_watchlist_and_disclaimer() -> None:
+    sections = [
+        {
+            "algo_code": "a3",
+            "algo_name": "央企 × 综合评分TOP",
+            "run_id": "run-a3",
+            "signal_count": 1,
+            "items": [
+                {
+                    "rank": 1,
+                    "code": "601668",
+                    "name": "中国建筑",
+                    "summary": "评分 8.10",
+                    "metrics": {"triggered": [{"label": "综合评分 ≥ 6", "passed": True, "actual": 8.1}]},
+                }
+            ],
+        }
+    ]
+    message = push.build_message(
+        date(2026, 11, 13), sections, watchlist_codes={"601668"}
+    )
+    assert "[自选]" in message
+    assert "综合评分 ≥ 6" in message
+    assert "条件复述，非投资建议" in message
+    for forbidden in ("建议买入", "值得买"):
+        assert forbidden not in message
 
 
 def test_build_message_marks_observed_candidates() -> None:

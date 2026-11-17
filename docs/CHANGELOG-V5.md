@@ -64,6 +64,20 @@
 
 ---
 
+## 0. V9 Batch E：推送归因与自选关联（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 每条信号追加一句话归因（优先 `metrics.triggered` 条件，其次 `score_breakdown.parts`，缺失标注「归因缺失」） | `backend/app/notify/push.py`（`_one_line_reason`） |
+| 自选命中追加 `[自选]`；新增 `PUSH_WATCHLIST_ONLY=1` 只推送自选命中 | `push.py`、`backend/app/core/config.py`、`backend/.env.example` |
+| 消息尾注「条件复述，非投资建议」，截断预算预留尾注空间 | `push.py` |
+| 测试 | `backend/tests/test_push.py`、`backend/tests/integration/test_push_watchlist.py`（新增） |
+| README 推送配置与示例同步 | `README.md` |
+
+验收：`pytest tests/test_push.py` 11 passed；`PUSH_WATCHLIST_ONLY` 集成测试 1 passed。
+
+---
+
 ## 0. V5.1 增补（2026-10-22）
 
 本轮解决三件事：**容器首次启动空数据**、**历史估值缺失**、**板块/资金流无兜底**。
