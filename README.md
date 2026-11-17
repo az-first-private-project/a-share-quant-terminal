@@ -2,7 +2,7 @@
 
 # A-Share Quant Terminal
 
-**A 股行情采集 · 因子评分 · 条件选股 · 回测与纸面跟踪**
+**A 股行情采集 · 因子评分 · 条件选股 · 回测验证 · 机器人播报**
 
 把「数据 → 指标 → 信号 → 验证」做成一条可复现的本地闭环。
 
@@ -13,7 +13,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[快速开始](#快速开始) · [核心能力](#核心能力) · [架构](#架构) · [当前策略](#当前策略) · [界面一览](#界面一览) · [文档](#文档)
+[快速开始](#快速开始) · [核心能力](#核心能力) · [架构](#架构) · [当前策略](#当前策略) · [机器人推送](#机器人推送) · [界面一览](#界面一览) · [文档](#文档)
 
 </div>
 
@@ -21,7 +21,7 @@
 
 ![盘后分析](docs/assets/dashboard.png)
 
-<p align="center"><sub>盘后分析：市场温度、指数多周期、板块热力图、两融与 AI 复盘</sub></p>
+<p align="center"><sub>盘后分析：市场状态、持仓配置建议、一周市场温度计与数据新鲜度</sub></p>
 
 ---
 
@@ -33,6 +33,7 @@
 - **计算本地化**：指标、六维因子、市场温度、市场状态、板块评分都在本地库完成，接口请求不访问外部数据源；
 - **结果可复现**：每次选股都带 `run_id`、参数快照与数据版本，改参数必然产生新 run；
 - **验证闭环**：同一套成交规则支持回测、参数敏感性矩阵与纸面组合跟踪；
+- **结论到手**：每个交易日选股完成后，企业微信机器人自动把各策略 TOP N 推到群里，不用守着页面；
 - **诚实表达**：缺失数据保留 `NULL`，不补 0；数据新鲜度由前端徽标显式标注。
 
 > 回测 ≠ 实盘。系统价值在于让决策过程可追溯，而不是承诺收益。
@@ -49,7 +50,8 @@
 | **条件选股** | AND/OR 条件树，支持比较、区间、集合、排名分位、行业约束；参数进入计算、缓存键与 run 快照 |
 | **回测与验证** | T+1 开盘成交、佣金/印花税/滑点、涨跌停/停牌不可成交、后复权收益；参数矩阵与纸面组合复用同一引擎 |
 | **市场与板块** | 市场温度计（7 子项）、五态市场状态与配置建议、板块三面评分、风格轮动、6 宽基牛熊估值 |
-| **服务与展示** | FastAPI + React；统一错误码、数据新鲜度徽标、任务监控、CSV 导出、企业微信盘后推送 |
+| **服务与展示** | FastAPI + React；统一错误码、数据新鲜度徽标、任务监控、CSV 导出 |
+| **机器人推送** | 选股任务完成后自动推送当日各策略 TOP N 到企业微信群机器人；幂等去重、失败重试、dry-run 预览 |
 
 ---
 
@@ -96,7 +98,71 @@ api/ ──────────────► strategy/ ──► engine/ �
 
 ---
 
+## 机器人推送
+
+每个交易日 **16:30 选股任务完成后**，系统自动把当日结果推送到企业微信群机器人。推送由后端定时任务触发，不依赖前端页面是否打开。
+
+**推送内容**
+
+- 只取指定交易日（默认最近一次成功选股日）、非回测、`status=success` 的最新 run；
+- 只推送当前启用策略（`SPECS`：A3 / A4，可用 `PUSH_ALGOS` 再收窄），每个策略默认前 `PUSH_TOP_N=10` 只；
+- 观察候选（C1–C6）默认不推送；开启 `PUSH_OBSERVATION=1` 后附带「观察·未通过回测」标注；
+- Markdown 消息超过 4 KB 自动截断，末尾附前端查看链接。
+
+示例：
+
+```text
+## GFNA 选股播报 | 2026-11-16
+
+**央企 × 综合评分TOP（a3）**（2 只）
+1. 中国建筑(601668) 评分 8.10
+2. 中国石化(600028) 评分 7.90
+
+**高股息质量 × 低估值（a4）**（0 只）
+无信号
+
+查看：http://127.0.0.1:5173/algo
+```
+
+**配置**（写入 `backend/.env`，模板见 [.env.example](backend/.env.example#L86-L105)）
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `PUSH_ENABLED` | `0` | 总开关；配置 Webhook 后设为 `1` |
+| `WECOM_WEBHOOK_URL` | 空 | 企业微信群机器人 Webhook；只存本地 `.env`，日志不输出完整地址 |
+| `PUSH_ALGOS` | 空 | 推送策略，逗号分隔（如 `a3,a4`）；空=全部启用策略 |
+| `PUSH_TOP_N` | `10` | 每个策略推送前 N 只 |
+| `PUSH_MODE` | `always` | `always`=无信号也推送；`signals_only`=仅有信号时推送 |
+| `PUSH_DRY_RUN` | `0` | `1`=只生成消息不发送 |
+| `PUSH_OBSERVATION` | `0` | 是否推送观察候选（C1–C6） |
+| `OBSERVATION_ALGOS` | 空 | 每日运行并入库的观察候选（如 `c1,c2`），与 `PUSH_OBSERVATION` 配合使用 |
+| `PUSH_FRONTEND_URL` | `http://127.0.0.1:5173/algo` | 消息末尾的查看链接 |
+
+**手动触发**
+
+```bash
+cd backend
+python scripts/push_cli.py --dry-run                  # 只打印消息，不发送
+python scripts/push_cli.py --date 2026-11-16          # 补发指定交易日
+```
+
+**可靠性与边界**
+
+| 机制 | 说明 |
+|---|---|
+| 幂等 | `push_log` 对 `(run_id, channel)` 唯一；状态为 `sent` 的 run 不会重复推送 |
+| 重试 | 单次推送最多 3 次、指数退避；仍失败则记 `failed` 与脱敏错误，后续可再次触发 |
+| 隔离 | 推送异常只记日志，不影响选股与采集主流程 |
+| 安全 | Webhook 仅从环境变量读取，不提交仓库、不写入日志 |
+
+---
+
 ## 界面一览
+
+| 盘后分析 | 量化选股 |
+|---|---|
+| ![盘后分析](docs/assets/dashboard.png) | ![量化选股](docs/assets/algo-center.png) |
+| 市场状态、配置建议、一周温度计 | 策略天梯、信号前瞻、参数与 run 复用 |
 
 | 新闻情报 | 个股详情 |
 |---|---|
@@ -182,6 +248,8 @@ python scripts/pipeline_cli.py moneyflow_history # 新浪资金流历史
 python scripts/pipeline_cli.py valuation_fast --start 2018-01-01 # 东财历史估值
 python scripts/pipeline_cli.py all               # 最新交易日全链路
 python scripts/pipeline_cli.py backtest a3 --start 2025-10-21 --end 2026-10-21
+python scripts/push_cli.py --dry-run             # 预览当日选股播报
+python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 ```
 
 顺序硬约束：**日线 → 估值 → 指标 → 因子 → 选股**。
@@ -226,6 +294,8 @@ python scripts/pipeline_cli.py backtest a3 --start 2025-10-21 --end 2026-10-21
 | GET | `/api/v1/meta/freshness` | 数据集新鲜度 |
 | POST | `/api/v1/admin/ingest/{task}` | 手动触发采集（需 `X-Admin-Key`） |
 
+> 机器人推送由定时任务在选股完成后触发，不暴露 HTTP 接口；手动预览/补发用 [`backend/scripts/push_cli.py`](backend/scripts/push_cli.py)。
+
 统一错误体：
 
 ```json
@@ -260,7 +330,7 @@ backend/
 │   ├── engine/            指标 / 因子 / 评分 / 市场 / 板块 / 信号 / 纸面
 │   ├── strategy/          条件树、策略、runner、回测、参数矩阵
 │   ├── services/          新鲜度、LLM、新闻、日报、任务恢复
-│   ├── notify/            企业微信推送
+│   ├── notify/            企业微信群机器人（选股播报）
 │   └── quality/           数据不变量巡检
 ├── alembic/               数据库迁移
 ├── scripts/               bootstrap / pipeline_cli / 回补 / 运维
@@ -340,6 +410,7 @@ CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、�
 | 管理接口 403 | 未配置 `ADMIN_API_KEY` 且非本机访问 |
 | A4 无结果 | A4 仅在防御型市场阶段启用；确认 `market_regime` 已就绪 |
 | 已有库缺 `push_log` / score 精度 | `cd backend && python -m alembic upgrade head` |
+| 没有收到企业微信推送 | 确认 `PUSH_ENABLED=1`、`WECOM_WEBHOOK_URL` 已填、`PUSH_DRY_RUN=0`；先用 `push_cli.py --dry-run` 预览；同一 `run_id` 已推送不会重发 |
 | 回测一直 `running` | 后台任务；启动时会清理僵尸任务，失败格可在矩阵内重试 |
 
 更多排障见 [Code Wiki · 运行与部署](docs/wiki/08-operations.md)。
