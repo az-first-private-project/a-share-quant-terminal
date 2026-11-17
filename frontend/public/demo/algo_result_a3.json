@@ -1,0 +1,705 @@
+{
+  "algo": "a3",
+  "algo_name": "央企 × 综合评分TOP",
+  "trade_date": "2026-11-17",
+  "run": {
+    "run_id": "0bbb3aef-7610-4a68-bdeb-d461678ba64a",
+    "created_at": "2026-11-17T04:46:34.197326+00:00",
+    "elapsed_ms": 50,
+    "universe_count": 42,
+    "signal_count": 6,
+    "data_version": "2026-11-17:cbfb0d34d7ea7846",
+    "signal_schema": 3,
+    "params": {
+      "limit": 20,
+      "min_score": 6.0
+    },
+    "status": "success"
+  },
+  "from_cache": true,
+  "count": 6,
+  "data": [
+    {
+      "code": "601088",
+      "name": "中国神华",
+      "rank": 1,
+      "score": 6.98,
+      "close": 100.597,
+      "pct_chg": -1.974,
+      "pe_ttm": 47.0756,
+      "pb": 2.4103,
+      "ps_ttm": 6.0766,
+      "dv_ttm": 4.6312,
+      "macd_dif": 0.578683,
+      "macd_dea": 0.95764,
+      "rsi14": 42.6656,
+      "composite_score": 6.98,
+      "metrics": {
+        "pb": 2.4103,
+        "close": 100.597,
+        "rsi14": 42.6656,
+        "dv_ttm": 4.6312,
+        "pe_ttm": 47.0756,
+        "ps_ttm": 6.0766,
+        "pct_chg": -1.974,
+        "macd_dea": 0.95764,
+        "macd_dif": 0.578683,
+        "ownership": "央企",
+        "industry_l1": "人工智能",
+        "value_score": 4.57,
+        "quality_score": 8.48,
+        "momentum_score": 7.62,
+        "composite_score": 6.98,
+        "liquidity_score": 6.9,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.4571,
+              "key": "value",
+              "raw": {
+                "pb": 2.4103,
+                "pe_ttm": 47.0756,
+                "ps_ttm": 6.0766
+              },
+              "name": "价值",
+              "score": 4.57,
+              "weight": 0.2,
+              "contribution": 0.914
+            },
+            {
+              "z": 0.8476,
+              "key": "quality",
+              "raw": {
+                "pb": 2.4103,
+                "dv_ttm": 4.6312
+              },
+              "name": "质量",
+              "score": 8.48,
+              "weight": 0.15,
+              "contribution": 1.272
+            },
+            {
+              "z": 0.7619,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": 1.3398,
+                "momentum_60": 5.9496
+              },
+              "name": "动量",
+              "score": 7.62,
+              "weight": 0.25,
+              "contribution": 1.905
+            },
+            {
+              "z": 0.9048,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 21.3772
+              },
+              "name": "波动",
+              "score": 9.05,
+              "weight": 0.15,
+              "contribution": 1.3575
+            },
+            {
+              "z": 0.6905,
+              "key": "liquidity",
+              "raw": {
+                "amount": 374129397.33,
+                "amount_ma20": 1228978235.69
+              },
+              "name": "流动性",
+              "score": 6.9,
+              "weight": 0.15,
+              "contribution": 1.035
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.98,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 9.05
+      }
+    },
+    {
+      "code": "601988",
+      "name": "中国银行",
+      "rank": 2,
+      "score": 6.81,
+      "close": 106.37,
+      "pct_chg": 0.413,
+      "pe_ttm": 29.8356,
+      "pb": 1.6059,
+      "ps_ttm": 4.9758,
+      "dv_ttm": 0.5503,
+      "macd_dif": -0.715791,
+      "macd_dea": -1.197274,
+      "rsi14": 56.337,
+      "composite_score": 6.81,
+      "metrics": {
+        "pb": 1.6059,
+        "close": 106.37,
+        "rsi14": 56.337,
+        "dv_ttm": 0.5503,
+        "pe_ttm": 29.8356,
+        "ps_ttm": 4.9758,
+        "pct_chg": 0.413,
+        "macd_dea": -1.197274,
+        "macd_dif": -0.715791,
+        "ownership": "央企",
+        "industry_l1": "汽车",
+        "value_score": 7.62,
+        "quality_score": 5.81,
+        "momentum_score": 5.24,
+        "composite_score": 6.81,
+        "liquidity_score": 7.62,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.7619,
+              "key": "value",
+              "raw": {
+                "pb": 1.6059,
+                "pe_ttm": 29.8356,
+                "ps_ttm": 4.9758
+              },
+              "name": "价值",
+              "score": 7.62,
+              "weight": 0.2,
+              "contribution": 1.524
+            },
+            {
+              "z": 0.581,
+              "key": "quality",
+              "raw": {
+                "pb": 1.6059,
+                "dv_ttm": 0.5503
+              },
+              "name": "质量",
+              "score": 5.81,
+              "weight": 0.15,
+              "contribution": 0.8715
+            },
+            {
+              "z": 0.5238,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": -3.5376,
+                "momentum_60": -9.5139
+              },
+              "name": "动量",
+              "score": 5.24,
+              "weight": 0.25,
+              "contribution": 1.31
+            },
+            {
+              "z": 0.9762,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 18.4552
+              },
+              "name": "波动",
+              "score": 9.76,
+              "weight": 0.15,
+              "contribution": 1.464
+            },
+            {
+              "z": 0.7619,
+              "key": "liquidity",
+              "raw": {
+                "amount": 955049214.46,
+                "amount_ma20": 1391044822.03
+              },
+              "name": "流动性",
+              "score": 7.62,
+              "weight": 0.15,
+              "contribution": 1.143
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.81,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 9.76
+      }
+    },
+    {
+      "code": "000831",
+      "name": "中国稀土",
+      "rank": 3,
+      "score": 6.77,
+      "close": 138.887,
+      "pct_chg": -2.37,
+      "pe_ttm": 21.0552,
+      "pb": 0.7843,
+      "ps_ttm": 6.0071,
+      "dv_ttm": 3.2415,
+      "macd_dif": -3.543103,
+      "macd_dea": -3.787818,
+      "rsi14": 44.4638,
+      "composite_score": 6.77,
+      "metrics": {
+        "pb": 0.7843,
+        "close": 138.887,
+        "rsi14": 44.4638,
+        "dv_ttm": 3.2415,
+        "pe_ttm": 21.0552,
+        "ps_ttm": 6.0071,
+        "pct_chg": -2.37,
+        "macd_dea": -3.787818,
+        "macd_dif": -3.543103,
+        "ownership": "央企",
+        "industry_l1": "军工",
+        "value_score": 7.95,
+        "quality_score": 8.81,
+        "momentum_score": 5.71,
+        "composite_score": 6.77,
+        "liquidity_score": 8.57,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.7952,
+              "key": "value",
+              "raw": {
+                "pb": 0.7843,
+                "pe_ttm": 21.0552,
+                "ps_ttm": 6.0071
+              },
+              "name": "价值",
+              "score": 7.95,
+              "weight": 0.2,
+              "contribution": 1.59
+            },
+            {
+              "z": 0.881,
+              "key": "quality",
+              "raw": {
+                "pb": 0.7843,
+                "dv_ttm": 3.2415
+              },
+              "name": "质量",
+              "score": 8.81,
+              "weight": 0.15,
+              "contribution": 1.3215
+            },
+            {
+              "z": 0.5714,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": -12.6486,
+                "momentum_60": 10.4346
+              },
+              "name": "动量",
+              "score": 5.71,
+              "weight": 0.25,
+              "contribution": 1.4275
+            },
+            {
+              "z": 0.4286,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 37.1642
+              },
+              "name": "波动",
+              "score": 4.29,
+              "weight": 0.15,
+              "contribution": 0.6435
+            },
+            {
+              "z": 0.8571,
+              "key": "liquidity",
+              "raw": {
+                "amount": 2010886818.23,
+                "amount_ma20": 1773156718.83
+              },
+              "name": "流动性",
+              "score": 8.57,
+              "weight": 0.15,
+              "contribution": 1.2855
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.77,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 4.29
+      }
+    },
+    {
+      "code": "601318",
+      "name": "中国平安",
+      "rank": 4,
+      "score": 6.31,
+      "close": 224.632,
+      "pct_chg": 2.935,
+      "pe_ttm": 8.1438,
+      "pb": 3.0021,
+      "ps_ttm": 6.1927,
+      "dv_ttm": 3.746,
+      "macd_dif": -8.097116,
+      "macd_dea": -7.236622,
+      "rsi14": 39.9806,
+      "composite_score": 6.31,
+      "metrics": {
+        "pb": 3.0021,
+        "close": 224.632,
+        "rsi14": 39.9806,
+        "dv_ttm": 3.746,
+        "pe_ttm": 8.1438,
+        "ps_ttm": 6.1927,
+        "pct_chg": 2.935,
+        "macd_dea": -7.236622,
+        "macd_dif": -8.097116,
+        "ownership": "央企",
+        "industry_l1": "医药",
+        "value_score": 6.98,
+        "quality_score": 6.43,
+        "momentum_score": 4.52,
+        "composite_score": 6.31,
+        "liquidity_score": 9.52,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.6976,
+              "key": "value",
+              "raw": {
+                "pb": 3.0021,
+                "pe_ttm": 8.1438,
+                "ps_ttm": 6.1927
+              },
+              "name": "价值",
+              "score": 6.98,
+              "weight": 0.2,
+              "contribution": 1.396
+            },
+            {
+              "z": 0.6429,
+              "key": "quality",
+              "raw": {
+                "pb": 3.0021,
+                "dv_ttm": 3.746
+              },
+              "name": "质量",
+              "score": 6.43,
+              "weight": 0.15,
+              "contribution": 0.9645
+            },
+            {
+              "z": 0.4524,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": -7.0378,
+                "momentum_60": -7.4484
+              },
+              "name": "动量",
+              "score": 4.52,
+              "weight": 0.25,
+              "contribution": 1.13
+            },
+            {
+              "z": 0.5952,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 30.358
+              },
+              "name": "波动",
+              "score": 5.95,
+              "weight": 0.15,
+              "contribution": 0.8925
+            },
+            {
+              "z": 0.9524,
+              "key": "liquidity",
+              "raw": {
+                "amount": 3366748250.25,
+                "amount_ma20": 2737779211.78
+              },
+              "name": "流动性",
+              "score": 9.52,
+              "weight": 0.15,
+              "contribution": 1.428
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.31,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 5.95
+      }
+    },
+    {
+      "code": "600050",
+      "name": "中国联通",
+      "rank": 5,
+      "score": 6.19,
+      "close": 84.132,
+      "pct_chg": 2.311,
+      "pe_ttm": 32.2809,
+      "pb": 2.0167,
+      "ps_ttm": 5.2997,
+      "dv_ttm": 2.6335,
+      "macd_dif": 1.575823,
+      "macd_dea": 0.053521,
+      "rsi14": 65.6374,
+      "composite_score": 6.19,
+      "metrics": {
+        "pb": 2.0167,
+        "close": 84.132,
+        "rsi14": 65.6374,
+        "dv_ttm": 2.6335,
+        "pe_ttm": 32.2809,
+        "ps_ttm": 5.2997,
+        "pct_chg": 2.311,
+        "macd_dea": 0.053521,
+        "macd_dif": 1.575823,
+        "ownership": "央企",
+        "industry_l1": "地产",
+        "value_score": 6.67,
+        "quality_score": 7.48,
+        "momentum_score": 9.52,
+        "composite_score": 6.19,
+        "liquidity_score": 3.33,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.6667,
+              "key": "value",
+              "raw": {
+                "pb": 2.0167,
+                "pe_ttm": 32.2809,
+                "ps_ttm": 5.2997
+              },
+              "name": "价值",
+              "score": 6.67,
+              "weight": 0.2,
+              "contribution": 1.334
+            },
+            {
+              "z": 0.7476,
+              "key": "quality",
+              "raw": {
+                "pb": 2.0167,
+                "dv_ttm": 2.6335
+              },
+              "name": "质量",
+              "score": 7.48,
+              "weight": 0.15,
+              "contribution": 1.122
+            },
+            {
+              "z": 0.9524,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": 26.1747,
+                "momentum_60": 4.7786
+              },
+              "name": "动量",
+              "score": 9.52,
+              "weight": 0.25,
+              "contribution": 2.38
+            },
+            {
+              "z": 0.2381,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 49.7937
+              },
+              "name": "波动",
+              "score": 2.38,
+              "weight": 0.15,
+              "contribution": 0.357
+            },
+            {
+              "z": 0.3333,
+              "key": "liquidity",
+              "raw": {
+                "amount": 899466738.08,
+                "amount_ma20": 738711703.0
+              },
+              "name": "流动性",
+              "score": 3.33,
+              "weight": 0.15,
+              "contribution": 0.4995
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.19,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 2.38
+      }
+    },
+    {
+      "code": "601127",
+      "name": "赛力斯",
+      "rank": 6,
+      "score": 6.03,
+      "close": 162.633,
+      "pct_chg": 1.85,
+      "pe_ttm": 34.4838,
+      "pb": 1.6414,
+      "ps_ttm": 7.6615,
+      "dv_ttm": 3.8585,
+      "macd_dif": -3.062687,
+      "macd_dea": -2.3933,
+      "rsi14": 37.5257,
+      "composite_score": 6.03,
+      "metrics": {
+        "pb": 1.6414,
+        "close": 162.633,
+        "rsi14": 37.5257,
+        "dv_ttm": 3.8585,
+        "pe_ttm": 34.4838,
+        "ps_ttm": 7.6615,
+        "pct_chg": 1.85,
+        "macd_dea": -2.3933,
+        "macd_dif": -3.062687,
+        "ownership": "央企",
+        "industry_l1": "半导体",
+        "value_score": 5.17,
+        "quality_score": 8.52,
+        "momentum_score": 4.29,
+        "composite_score": 6.03,
+        "liquidity_score": 8.81,
+        "score_breakdown": {
+          "parts": [
+            {
+              "z": 0.5167,
+              "key": "value",
+              "raw": {
+                "pb": 1.6414,
+                "pe_ttm": 34.4838,
+                "ps_ttm": 7.6615
+              },
+              "name": "价值",
+              "score": 5.17,
+              "weight": 0.2,
+              "contribution": 1.034
+            },
+            {
+              "z": 0.8524,
+              "key": "quality",
+              "raw": {
+                "pb": 1.6414,
+                "dv_ttm": 3.8585
+              },
+              "name": "质量",
+              "score": 8.52,
+              "weight": 0.15,
+              "contribution": 1.278
+            },
+            {
+              "z": 0.4286,
+              "key": "momentum",
+              "raw": {
+                "momentum_20": -3.801,
+                "momentum_60": -14.1679
+              },
+              "name": "动量",
+              "score": 4.29,
+              "weight": 0.25,
+              "contribution": 1.0725
+            },
+            {
+              "z": 0.5476,
+              "key": "volatility",
+              "raw": {
+                "volatility_20": 31.7549
+              },
+              "name": "波动",
+              "score": 5.48,
+              "weight": 0.15,
+              "contribution": 0.822
+            },
+            {
+              "z": 0.881,
+              "key": "liquidity",
+              "raw": {
+                "amount": 2115366780.47,
+                "amount_ma20": 2072871828.9
+              },
+              "name": "流动性",
+              "score": 8.81,
+              "weight": 0.15,
+              "contribution": 1.3215
+            },
+            {
+              "z": 0.5,
+              "key": "sentiment",
+              "raw": {},
+              "name": "情绪",
+              "score": 5.0,
+              "weight": 0.1,
+              "contribution": 0.5
+            }
+          ],
+          "formula": "综合分 = 10 × Σ(分位 × 权重) / Σ(当日可用权重)；贡献 = 分项得分 × 权重 / Σ(当日可用权重)，逐项贡献之和 ≈ 综合分（±0.01）",
+          "composite": 6.03,
+          "weight_sum": 1.0,
+          "sentiment_source": "neutral"
+        },
+        "sentiment_score": 5.0,
+        "volatility_score": 5.48
+      }
+    }
+  ],
+  "total": 6,
+  "has_more": false,
+  "page": 1,
+  "page_size": 20
+}

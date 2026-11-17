@@ -1,0 +1,24 @@
+{
+  "trade_date": "2026-11-17",
+  "items": [],
+  "total_algos_evaluated": 2,
+  "total": 0,
+  "has_more": false,
+  "page": 1,
+  "page_size": 100,
+  "min_count": 2,
+  "freshness": {
+    "dataset": "algo_run",
+    "display_name": "选股任务",
+    "status": "ok",
+    "is_critical": false,
+    "last_success_at": "2026-11-17T04:46:34.297461+00:00",
+    "last_attempt_at": "2026-11-17T04:46:34.297461+00:00",
+    "last_trade_date": null,
+    "rows": 6,
+    "coverage": null,
+    "anomalies": 0,
+    "error": null
+  },
+  "note": "各策略评分量纲不同，榜单按命中策略数排序，不做跨策略分数平均。"
+}

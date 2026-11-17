@@ -1,0 +1,29 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "新浪财经",
+      "country": null,
+      "language": "zh",
+      "is_active": true,
+      "article_count": 2
+    },
+    {
+      "id": 2,
+      "name": "同花顺",
+      "country": null,
+      "language": "zh",
+      "is_active": true,
+      "article_count": 2
+    },
+    {
+      "id": 3,
+      "name": "华尔街见闻",
+      "country": null,
+      "language": "zh",
+      "is_active": true,
+      "article_count": 1
+    }
+  ],
+  "total": 3
+}

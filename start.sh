@@ -18,6 +18,15 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# 只读演示站：不需要后端/数据库
+if [ "${1:-}" = "demo" ] || [ "${1:-}" = "--demo" ]; then
+  cd "$SCRIPT_DIR/frontend"
+  npm install
+  npm run build:demo
+  npm run preview -- --outDir dist-demo --host 127.0.0.1
+  exit 0
+fi
+
 echo -e "${BLUE}============================================================${NC}"
 echo -e "${BLUE}   GFNA V5 · A 股行情与量化选股 · 启动脚本${NC}"
 echo -e "${BLUE}============================================================${NC}"

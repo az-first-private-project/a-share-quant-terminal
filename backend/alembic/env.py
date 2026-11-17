@@ -22,6 +22,16 @@ from app.core.config import DATABASE_URL_SYNC  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db import models  # noqa: F401,E402  —— 注册全部表
 
+# 演示快照必须与生产库隔离：显式带 GFNA_DEMO_DATABASE_NAME 时，无论 .env
+# 指向哪里，都把库名切到以 _demo 结尾的独立库。
+_demo_name = os.getenv("GFNA_DEMO_DATABASE_NAME", "").strip()
+if _demo_name:
+    if not _demo_name.endswith("_demo"):
+        raise RuntimeError("演示库名必须以 _demo 结尾")
+    DATABASE_URL_SYNC = make_url(DATABASE_URL_SYNC).set(
+        database=_demo_name
+    ).render_as_string(hide_password=False)
+
 # 集成测试必须与生产库隔离：显式带 GFNA_TEST_DB=1 时，无论 .env 指向哪里，
 # 都把库名切到以 _test 结尾的独立库。
 if os.getenv("GFNA_TEST_DB", "").strip().lower() in {"1", "true", "yes", "on"}:

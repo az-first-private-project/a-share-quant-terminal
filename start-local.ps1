@@ -10,6 +10,7 @@
 param(
     [switch]$Stop,
     [switch]$Demo,
+    [switch]$DemoSite,
     [int]$BackendPort = 8000,
     [int]$FrontendPort = 5173
 )
@@ -32,6 +33,19 @@ function Stop-Port([int]$port) {
 if ($Stop) {
     Stop-Port $BackendPort
     Stop-Port $FrontendPort
+    return
+}
+
+# 只读演示站：不需要后端/数据库，只构建并预览静态快照
+if ($DemoSite) {
+    Push-Location (Join-Path $root 'frontend')
+    try {
+        npm install
+        npm run build:demo
+        npm run preview -- --outDir dist-demo --host 127.0.0.1 --port $FrontendPort
+    } finally {
+        Pop-Location
+    }
     return
 }
 

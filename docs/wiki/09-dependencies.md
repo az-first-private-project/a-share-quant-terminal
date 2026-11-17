@@ -291,3 +291,19 @@ news_collector.collect_news
 - [07-前端应用](./07-frontend.md)
 - [08-运行与部署](./08-operations.md)
 - 仓库根 `README.md`、`docs/V5-API-CONTRACT.md`、`docs/architecture.md`、`docs/evidence/`
+
+---
+
+## 9. 3 分钟体验路径（只读演示）
+
+不装 PostgreSQL / Docker，只用 Node：
+
+```bash
+cd frontend
+npm install
+npm run build:demo
+npm run preview
+```
+
+打开终端提示的地址即可浏览盘后分析、选股中心、新闻情报、个股详情、关于页。
+数据来自 `backend/scripts/export_demo_snapshot.py` 生成的 `frontend/public/demo/`，顶部有只读横幅；完整采集、选股写入、回测仍需 PostgreSQL。发布与更新说明见 [08-operations.md](./08-operations.md#13-演示站发布与更新)。

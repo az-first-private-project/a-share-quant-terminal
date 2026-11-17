@@ -9,6 +9,7 @@
  *  5. 文件下载（CSV）封装。
  */
 import type { ApiErrorBody, ListPage } from '../types/common'
+import { DEMO_MODE, demoPath } from './demo'
 
 /** API 前缀：由 Vite dev proxy / nginx 转发到后端，组件与页面不得自行拼域名 */
 export const BASE_URL = '/api/v1'
@@ -227,10 +228,67 @@ async function requestOnce<T>(url: string, options: RequestOptions): Promise<T> 
   }
 }
 
+/**
+ * 演示模式请求：GET 读取 public/demo 快照；写操作拒绝。
+ * `/algo/hits` 语义是只读查询（POST 仅因 codes 可能很长），在演示模式返回空列表。
+ */
+async function demoRequest<T>(
+  path: string,
+  method: HttpMethod,
+  options: RequestOptions,
+): Promise<T> {
+  const clean = path.split('?')[0].replace(/\/+$/, '') || '/'
+  if (method !== 'GET') {
+    if (method === 'POST' && clean === '/algo/hits') {
+      const days = (options.body as { days?: number } | undefined)?.days ?? 10
+      return { items: [], days } as T
+    }
+    throw new ApiError({
+      code: 'DEMO_READONLY',
+      message: '演示模式为只读，写操作已禁用',
+      status: 403,
+    })
+  }
+
+  const file = demoPath(clean)
+  if (!file) {
+    throw new ApiError({
+      code: 'DEMO_DATA_MISSING',
+      message: `演示快照缺少接口：${path}`,
+      status: 404,
+    })
+  }
+
+  let response: Response
+  try {
+    response = await fetch(`/demo/${file}`)
+  } catch (error) {
+    throw new ApiError({
+      code: 'DEMO_DATA_MISSING',
+      message: `演示快照加载失败：${file}`,
+      status: 0,
+      detail: error instanceof Error ? error.message : String(error),
+    })
+  }
+  if (!response.ok) {
+    throw new ApiError({
+      code: 'DEMO_DATA_MISSING',
+      message: `演示快照不存在：${file}`,
+      status: response.status,
+    })
+  }
+  return (await response.json()) as T
+}
+
 /** 统一请求入口：自动重试（5xx / 网络错误，最多 1 次） */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const url = buildUrl(path, options.query, options.baseUrl ?? BASE_URL)
   const method = options.method ?? 'GET'
+
+  if (DEMO_MODE) {
+    return demoRequest<T>(path, method, options)
+  }
+
+  const url = buildUrl(path, options.query, options.baseUrl ?? BASE_URL)
   const maxRetry = options.retry ?? (method === 'GET' ? 1 : 0)
   let lastError: unknown
 
@@ -325,6 +383,13 @@ export async function downloadCsv(
   fallbackFilename = 'export.csv',
   options?: { timeoutMs?: number },
 ): Promise<void> {
+  if (DEMO_MODE) {
+    throw new ApiError({
+      code: 'DEMO_READONLY',
+      message: '演示模式为只读，CSV 导出已禁用',
+      status: 403,
+    })
+  }
   const url = buildUrl(path, query)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), options?.timeoutMs ?? DEFAULT_TIMEOUT_MS)

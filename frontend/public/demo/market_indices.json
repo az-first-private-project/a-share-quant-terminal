@@ -1,0 +1,2165 @@
+{
+  "trade_date": "2026-11-17",
+  "series": {
+    "sh000001": [
+      {
+        "trade_date": "2026-09-18",
+        "open": 3155.283,
+        "high": 3183.709,
+        "low": 3133.173,
+        "close": 3158.441,
+        "pct_chg": -2.071,
+        "volume": 29022157150,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-21",
+        "open": 3120.871,
+        "high": 3148.987,
+        "low": 3099.003,
+        "close": 3123.995,
+        "pct_chg": -1.091,
+        "volume": 26997427271,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-22",
+        "open": 3088.284,
+        "high": 3116.106,
+        "low": 3066.644,
+        "close": 3091.375,
+        "pct_chg": -1.044,
+        "volume": 34811274547,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-23",
+        "open": 3001.299,
+        "high": 3028.337,
+        "low": 2980.269,
+        "close": 3004.303,
+        "pct_chg": -2.817,
+        "volume": 31593322001,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-24",
+        "open": 3036.008,
+        "high": 3063.359,
+        "low": 3014.735,
+        "close": 3039.047,
+        "pct_chg": 1.156,
+        "volume": 31606354809,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-25",
+        "open": 2986.289,
+        "high": 3013.192,
+        "low": 2965.364,
+        "close": 2989.278,
+        "pct_chg": -1.638,
+        "volume": 27366163158,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-28",
+        "open": 2960.429,
+        "high": 2987.099,
+        "low": 2939.685,
+        "close": 2963.392,
+        "pct_chg": -0.866,
+        "volume": 27382937391,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-29",
+        "open": 2944.467,
+        "high": 2970.993,
+        "low": 2923.835,
+        "close": 2947.414,
+        "pct_chg": -0.539,
+        "volume": 27434827772,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-30",
+        "open": 2960.044,
+        "high": 2986.711,
+        "low": 2939.303,
+        "close": 2963.007,
+        "pct_chg": 0.529,
+        "volume": 26841324494,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-01",
+        "open": 2958.809,
+        "high": 2985.465,
+        "low": 2938.077,
+        "close": 2961.771,
+        "pct_chg": -0.042,
+        "volume": 22714084036,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-02",
+        "open": 2929.991,
+        "high": 2956.387,
+        "low": 2909.461,
+        "close": 2932.924,
+        "pct_chg": -0.974,
+        "volume": 32802160072,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-05",
+        "open": 2968.209,
+        "high": 2994.949,
+        "low": 2947.411,
+        "close": 2971.18,
+        "pct_chg": 1.304,
+        "volume": 31043234255,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-06",
+        "open": 2974.664,
+        "high": 3001.463,
+        "low": 2953.821,
+        "close": 2977.642,
+        "pct_chg": 0.217,
+        "volume": 34066669965,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-07",
+        "open": 2968.454,
+        "high": 2995.196,
+        "low": 2947.654,
+        "close": 2971.425,
+        "pct_chg": -0.209,
+        "volume": 30398813405,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-08",
+        "open": 2988.224,
+        "high": 3015.145,
+        "low": 2967.285,
+        "close": 2991.215,
+        "pct_chg": 0.666,
+        "volume": 22616981386,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-09",
+        "open": 2976.684,
+        "high": 3003.501,
+        "low": 2955.827,
+        "close": 2979.664,
+        "pct_chg": -0.386,
+        "volume": 30705216641,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-12",
+        "open": 3028.894,
+        "high": 3056.181,
+        "low": 3007.671,
+        "close": 3031.926,
+        "pct_chg": 1.754,
+        "volume": 24984905166,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-13",
+        "open": 3037.365,
+        "high": 3064.728,
+        "low": 3016.082,
+        "close": 3040.405,
+        "pct_chg": 0.28,
+        "volume": 34599008107,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-14",
+        "open": 3038.462,
+        "high": 3065.836,
+        "low": 3017.172,
+        "close": 3041.504,
+        "pct_chg": 0.036,
+        "volume": 27145697527,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-15",
+        "open": 3083.515,
+        "high": 3111.295,
+        "low": 3061.909,
+        "close": 3086.602,
+        "pct_chg": 1.483,
+        "volume": 29983303518,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-16",
+        "open": 3115.483,
+        "high": 3143.551,
+        "low": 3093.653,
+        "close": 3118.602,
+        "pct_chg": 1.037,
+        "volume": 30955431846,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-19",
+        "open": 3120.016,
+        "high": 3148.124,
+        "low": 3098.154,
+        "close": 3123.139,
+        "pct_chg": 0.145,
+        "volume": 27304957365,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-20",
+        "open": 3094.56,
+        "high": 3122.439,
+        "low": 3072.877,
+        "close": 3097.658,
+        "pct_chg": -0.816,
+        "volume": 24662472815,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-21",
+        "open": 3089.989,
+        "high": 3117.827,
+        "low": 3068.337,
+        "close": 3093.082,
+        "pct_chg": -0.148,
+        "volume": 30522292895,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-22",
+        "open": 3125.879,
+        "high": 3154.04,
+        "low": 3103.976,
+        "close": 3129.008,
+        "pct_chg": 1.161,
+        "volume": 30256673052,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-23",
+        "open": 3059.954,
+        "high": 3087.521,
+        "low": 3038.513,
+        "close": 3063.017,
+        "pct_chg": -2.109,
+        "volume": 28594579047,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-26",
+        "open": 3044.85,
+        "high": 3072.281,
+        "low": 3023.515,
+        "close": 3047.898,
+        "pct_chg": -0.494,
+        "volume": 27742902411,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-27",
+        "open": 3048.697,
+        "high": 3076.163,
+        "low": 3027.335,
+        "close": 3051.749,
+        "pct_chg": 0.126,
+        "volume": 33736067749,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-28",
+        "open": 3047.995,
+        "high": 3075.454,
+        "low": 3026.638,
+        "close": 3051.046,
+        "pct_chg": -0.023,
+        "volume": 25219560576,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-29",
+        "open": 3048.554,
+        "high": 3076.019,
+        "low": 3027.193,
+        "close": 3051.606,
+        "pct_chg": 0.018,
+        "volume": 26639953915,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-30",
+        "open": 2991.117,
+        "high": 3018.064,
+        "low": 2970.158,
+        "close": 2994.111,
+        "pct_chg": -1.884,
+        "volume": 29581523875,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-02",
+        "open": 3019.679,
+        "high": 3046.884,
+        "low": 2998.52,
+        "close": 3022.702,
+        "pct_chg": 0.955,
+        "volume": 28188271656,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-03",
+        "open": 3058.171,
+        "high": 3085.722,
+        "low": 3036.742,
+        "close": 3061.232,
+        "pct_chg": 1.275,
+        "volume": 19747547027,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-04",
+        "open": 3058.849,
+        "high": 3086.406,
+        "low": 3037.416,
+        "close": 3061.911,
+        "pct_chg": 0.022,
+        "volume": 27563156331,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-05",
+        "open": 3037.033,
+        "high": 3064.394,
+        "low": 3015.752,
+        "close": 3040.073,
+        "pct_chg": -0.713,
+        "volume": 32994244575,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-06",
+        "open": 3060.012,
+        "high": 3087.58,
+        "low": 3038.57,
+        "close": 3063.075,
+        "pct_chg": 0.757,
+        "volume": 21069981498,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-09",
+        "open": 3089.832,
+        "high": 3117.668,
+        "low": 3068.182,
+        "close": 3092.925,
+        "pct_chg": 0.975,
+        "volume": 34324168642,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-10",
+        "open": 3037.32,
+        "high": 3064.683,
+        "low": 3016.037,
+        "close": 3040.36,
+        "pct_chg": -1.7,
+        "volume": 32550715798,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-11",
+        "open": 3018.2,
+        "high": 3045.391,
+        "low": 2997.051,
+        "close": 3021.221,
+        "pct_chg": -0.629,
+        "volume": 22840835458,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-12",
+        "open": 3066.165,
+        "high": 3093.788,
+        "low": 3044.68,
+        "close": 3069.234,
+        "pct_chg": 1.589,
+        "volume": 23873780856,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-13",
+        "open": 3092.4,
+        "high": 3120.259,
+        "low": 3070.731,
+        "close": 3095.495,
+        "pct_chg": 0.856,
+        "volume": 30932572836,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-16",
+        "open": 3052.502,
+        "high": 3080.002,
+        "low": 3031.114,
+        "close": 3055.558,
+        "pct_chg": -1.29,
+        "volume": 31749748675,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-17",
+        "open": 3064.392,
+        "high": 3091.999,
+        "low": 3042.919,
+        "close": 3067.459,
+        "pct_chg": 0.389,
+        "volume": 27676713744,
+        "amount": null
+      }
+    ],
+    "sz399001": [
+      {
+        "trade_date": "2026-09-18",
+        "open": 13711.124,
+        "high": 13834.648,
+        "low": 13615.05,
+        "close": 13724.849,
+        "pct_chg": 0.152,
+        "volume": 29738350005,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-21",
+        "open": 13782.377,
+        "high": 13906.542,
+        "low": 13685.804,
+        "close": 13796.173,
+        "pct_chg": 0.52,
+        "volume": 25413191887,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-22",
+        "open": 13798.809,
+        "high": 13923.123,
+        "low": 13702.121,
+        "close": 13812.622,
+        "pct_chg": 0.119,
+        "volume": 25629523737,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-23",
+        "open": 13678.923,
+        "high": 13802.157,
+        "low": 13583.075,
+        "close": 13692.616,
+        "pct_chg": -0.869,
+        "volume": 33749750411,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-24",
+        "open": 13849.483,
+        "high": 13974.253,
+        "low": 13752.439,
+        "close": 13863.346,
+        "pct_chg": 1.247,
+        "volume": 34200806740,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-25",
+        "open": 13795.525,
+        "high": 13919.809,
+        "low": 13698.859,
+        "close": 13809.334,
+        "pct_chg": -0.39,
+        "volume": 33419453409,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-28",
+        "open": 13955.274,
+        "high": 14080.997,
+        "low": 13857.489,
+        "close": 13969.243,
+        "pct_chg": 1.158,
+        "volume": 28122699080,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-29",
+        "open": 14029.934,
+        "high": 14156.33,
+        "low": 13931.626,
+        "close": 14043.978,
+        "pct_chg": 0.535,
+        "volume": 29248134185,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-30",
+        "open": 14237.424,
+        "high": 14365.689,
+        "low": 14137.663,
+        "close": 14251.676,
+        "pct_chg": 1.479,
+        "volume": 19530200433,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-01",
+        "open": 14297.45,
+        "high": 14426.256,
+        "low": 14197.268,
+        "close": 14311.762,
+        "pct_chg": 0.422,
+        "volume": 35923497199,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-02",
+        "open": 14553.926,
+        "high": 14685.042,
+        "low": 14451.946,
+        "close": 14568.494,
+        "pct_chg": 1.794,
+        "volume": 37386995648,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-05",
+        "open": 14552.792,
+        "high": 14683.898,
+        "low": 14450.82,
+        "close": 14567.359,
+        "pct_chg": -0.008,
+        "volume": 35767870865,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-06",
+        "open": 14412.875,
+        "high": 14542.72,
+        "low": 14311.884,
+        "close": 14427.302,
+        "pct_chg": -0.961,
+        "volume": 29228021288,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-07",
+        "open": 14617.127,
+        "high": 14748.813,
+        "low": 14514.705,
+        "close": 14631.759,
+        "pct_chg": 1.417,
+        "volume": 32548355271,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-08",
+        "open": 14447.791,
+        "high": 14577.951,
+        "low": 14346.555,
+        "close": 14462.253,
+        "pct_chg": -1.158,
+        "volume": 29693280838,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-09",
+        "open": 14399.047,
+        "high": 14528.768,
+        "low": 14298.152,
+        "close": 14413.46,
+        "pct_chg": -0.337,
+        "volume": 38340491162,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-12",
+        "open": 14301.371,
+        "high": 14430.212,
+        "low": 14201.162,
+        "close": 14315.687,
+        "pct_chg": -0.678,
+        "volume": 29452088395,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-13",
+        "open": 14401.739,
+        "high": 14531.484,
+        "low": 14300.826,
+        "close": 14416.155,
+        "pct_chg": 0.702,
+        "volume": 34107090471,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-14",
+        "open": 14144.535,
+        "high": 14271.964,
+        "low": 14045.424,
+        "close": 14158.694,
+        "pct_chg": -1.786,
+        "volume": 22763096866,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-15",
+        "open": 14100.425,
+        "high": 14227.456,
+        "low": 14001.624,
+        "close": 14114.54,
+        "pct_chg": -0.312,
+        "volume": 29189081185,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-16",
+        "open": 13937.671,
+        "high": 14063.236,
+        "low": 13840.01,
+        "close": 13951.623,
+        "pct_chg": -1.154,
+        "volume": 36330593762,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-19",
+        "open": 14052.104,
+        "high": 14178.699,
+        "low": 13953.641,
+        "close": 14066.17,
+        "pct_chg": 0.821,
+        "volume": 32350963832,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-20",
+        "open": 13903.039,
+        "high": 14028.292,
+        "low": 13805.62,
+        "close": 13916.956,
+        "pct_chg": -1.061,
+        "volume": 36364291451,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-21",
+        "open": 13662.53,
+        "high": 13785.616,
+        "low": 13566.796,
+        "close": 13676.206,
+        "pct_chg": -1.73,
+        "volume": 31003744184,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-22",
+        "open": 13894.751,
+        "high": 14019.929,
+        "low": 13797.391,
+        "close": 13908.66,
+        "pct_chg": 1.7,
+        "volume": 30317756094,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-23",
+        "open": 13630.862,
+        "high": 13753.663,
+        "low": 13535.351,
+        "close": 13644.507,
+        "pct_chg": -1.899,
+        "volume": 18216548637,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-26",
+        "open": 13673.158,
+        "high": 13796.34,
+        "low": 13577.35,
+        "close": 13686.845,
+        "pct_chg": 0.31,
+        "volume": 28156486790,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-27",
+        "open": 13611.67,
+        "high": 13734.297,
+        "low": 13516.293,
+        "close": 13625.295,
+        "pct_chg": -0.45,
+        "volume": 29515815656,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-28",
+        "open": 13765.598,
+        "high": 13889.612,
+        "low": 13669.142,
+        "close": 13779.377,
+        "pct_chg": 1.131,
+        "volume": 31693405174,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-29",
+        "open": 13717.738,
+        "high": 13841.321,
+        "low": 13621.617,
+        "close": 13731.469,
+        "pct_chg": -0.348,
+        "volume": 23816795771,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-30",
+        "open": 13744.876,
+        "high": 13868.704,
+        "low": 13648.566,
+        "close": 13758.635,
+        "pct_chg": 0.198,
+        "volume": 28449763718,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-02",
+        "open": 13740.227,
+        "high": 13864.013,
+        "low": 13643.949,
+        "close": 13753.981,
+        "pct_chg": -0.034,
+        "volume": 29863686602,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-03",
+        "open": 13933.879,
+        "high": 14059.41,
+        "low": 13836.244,
+        "close": 13947.827,
+        "pct_chg": 1.409,
+        "volume": 33205189703,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-04",
+        "open": 14041.827,
+        "high": 14168.33,
+        "low": 13943.436,
+        "close": 14055.883,
+        "pct_chg": 0.775,
+        "volume": 36451060063,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-05",
+        "open": 14013.745,
+        "high": 14139.995,
+        "low": 13915.551,
+        "close": 14027.773,
+        "pct_chg": -0.2,
+        "volume": 35177150723,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-06",
+        "open": 14231.796,
+        "high": 14360.01,
+        "low": 14132.074,
+        "close": 14246.042,
+        "pct_chg": 1.556,
+        "volume": 25400442179,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-09",
+        "open": 14291.318,
+        "high": 14420.069,
+        "low": 14191.179,
+        "close": 14305.624,
+        "pct_chg": 0.418,
+        "volume": 31002080994,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-10",
+        "open": 14174.303,
+        "high": 14301.999,
+        "low": 14074.983,
+        "close": 14188.491,
+        "pct_chg": -0.819,
+        "volume": 30812067894,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-11",
+        "open": 14153.254,
+        "high": 14280.76,
+        "low": 14054.082,
+        "close": 14167.421,
+        "pct_chg": -0.149,
+        "volume": 23167875833,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-12",
+        "open": 14108.506,
+        "high": 14235.61,
+        "low": 14009.648,
+        "close": 14122.629,
+        "pct_chg": -0.316,
+        "volume": 22249701295,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-13",
+        "open": 14199.428,
+        "high": 14327.351,
+        "low": 14099.933,
+        "close": 14213.642,
+        "pct_chg": 0.644,
+        "volume": 34220906988,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-16",
+        "open": 14383.441,
+        "high": 14513.022,
+        "low": 14282.656,
+        "close": 14397.839,
+        "pct_chg": 1.296,
+        "volume": 32045784770,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-17",
+        "open": 14232.433,
+        "high": 14360.653,
+        "low": 14132.707,
+        "close": 14246.68,
+        "pct_chg": -1.05,
+        "volume": 30542134242,
+        "amount": null
+      }
+    ],
+    "sh000300": [
+      {
+        "trade_date": "2026-09-18",
+        "open": 11523.552,
+        "high": 11627.368,
+        "low": 11442.806,
+        "close": 11535.087,
+        "pct_chg": -0.091,
+        "volume": 24935861628,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-21",
+        "open": 11362.465,
+        "high": 11464.83,
+        "low": 11282.848,
+        "close": 11373.839,
+        "pct_chg": -1.398,
+        "volume": 33582533189,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-22",
+        "open": 11370.781,
+        "high": 11473.22,
+        "low": 11291.106,
+        "close": 11382.163,
+        "pct_chg": 0.073,
+        "volume": 24875789518,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-23",
+        "open": 11355.941,
+        "high": 11458.246,
+        "low": 11276.37,
+        "close": 11367.308,
+        "pct_chg": -0.131,
+        "volume": 25862213682,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-24",
+        "open": 11395.772,
+        "high": 11498.436,
+        "low": 11315.922,
+        "close": 11407.179,
+        "pct_chg": 0.351,
+        "volume": 32575886221,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-25",
+        "open": 11306.378,
+        "high": 11408.238,
+        "low": 11227.154,
+        "close": 11317.696,
+        "pct_chg": -0.784,
+        "volume": 28631970469,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-28",
+        "open": 11304.4,
+        "high": 11406.242,
+        "low": 11225.19,
+        "close": 11315.716,
+        "pct_chg": -0.017,
+        "volume": 23609408248,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-29",
+        "open": 11554.162,
+        "high": 11658.254,
+        "low": 11473.202,
+        "close": 11565.728,
+        "pct_chg": 2.209,
+        "volume": 37014309043,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-30",
+        "open": 11403.644,
+        "high": 11506.379,
+        "low": 11323.739,
+        "close": 11415.059,
+        "pct_chg": -1.303,
+        "volume": 34671892832,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-01",
+        "open": 11435.644,
+        "high": 11538.668,
+        "low": 11355.514,
+        "close": 11447.091,
+        "pct_chg": 0.281,
+        "volume": 35157611837,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-02",
+        "open": 11392.343,
+        "high": 11494.977,
+        "low": 11312.517,
+        "close": 11403.747,
+        "pct_chg": -0.379,
+        "volume": 29262601287,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-05",
+        "open": 11339.629,
+        "high": 11441.788,
+        "low": 11260.172,
+        "close": 11350.98,
+        "pct_chg": -0.463,
+        "volume": 29711444262,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-06",
+        "open": 11267.583,
+        "high": 11369.093,
+        "low": 11188.631,
+        "close": 11278.862,
+        "pct_chg": -0.635,
+        "volume": 31890847675,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-07",
+        "open": 11216.03,
+        "high": 11317.075,
+        "low": 11137.439,
+        "close": 11227.257,
+        "pct_chg": -0.458,
+        "volume": 26703440952,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-08",
+        "open": 11218.795,
+        "high": 11319.865,
+        "low": 11140.185,
+        "close": 11230.025,
+        "pct_chg": 0.025,
+        "volume": 27400897766,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-09",
+        "open": 11311.143,
+        "high": 11413.045,
+        "low": 11231.885,
+        "close": 11322.465,
+        "pct_chg": 0.823,
+        "volume": 28403526941,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-12",
+        "open": 11291.119,
+        "high": 11392.84,
+        "low": 11212.002,
+        "close": 11302.421,
+        "pct_chg": -0.177,
+        "volume": 35396093475,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-13",
+        "open": 11270.31,
+        "high": 11371.845,
+        "low": 11191.339,
+        "close": 11281.592,
+        "pct_chg": -0.184,
+        "volume": 25291831537,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-14",
+        "open": 11241.828,
+        "high": 11343.106,
+        "low": 11163.056,
+        "close": 11253.081,
+        "pct_chg": -0.253,
+        "volume": 30918912663,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-15",
+        "open": 11053.845,
+        "high": 11153.429,
+        "low": 10976.391,
+        "close": 11064.91,
+        "pct_chg": -1.672,
+        "volume": 26217378575,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-16",
+        "open": 11032.105,
+        "high": 11131.493,
+        "low": 10954.803,
+        "close": 11043.148,
+        "pct_chg": -0.197,
+        "volume": 25328077803,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-19",
+        "open": 11085.581,
+        "high": 11185.451,
+        "low": 11007.905,
+        "close": 11096.678,
+        "pct_chg": 0.485,
+        "volume": 16388416217,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-20",
+        "open": 10968.166,
+        "high": 11066.978,
+        "low": 10891.312,
+        "close": 10979.145,
+        "pct_chg": -1.059,
+        "volume": 22735181382,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-21",
+        "open": 10988.454,
+        "high": 11087.449,
+        "low": 10911.457,
+        "close": 10999.453,
+        "pct_chg": 0.185,
+        "volume": 22649000017,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-22",
+        "open": 11016.916,
+        "high": 11116.168,
+        "low": 10939.72,
+        "close": 11027.944,
+        "pct_chg": 0.259,
+        "volume": 23108144102,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-23",
+        "open": 10927.412,
+        "high": 11025.857,
+        "low": 10850.843,
+        "close": 10938.35,
+        "pct_chg": -0.812,
+        "volume": 32850407142,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-26",
+        "open": 11099.245,
+        "high": 11199.238,
+        "low": 11021.472,
+        "close": 11110.355,
+        "pct_chg": 1.572,
+        "volume": 32566093940,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-27",
+        "open": 11012.404,
+        "high": 11111.614,
+        "low": 10935.24,
+        "close": 11023.427,
+        "pct_chg": -0.782,
+        "volume": 19663045100,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-28",
+        "open": 10821.535,
+        "high": 10919.026,
+        "low": 10745.708,
+        "close": 10832.367,
+        "pct_chg": -1.733,
+        "volume": 28964330982,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-29",
+        "open": 10889.836,
+        "high": 10987.943,
+        "low": 10813.531,
+        "close": 10900.737,
+        "pct_chg": 0.631,
+        "volume": 29998891663,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-30",
+        "open": 10863.908,
+        "high": 10961.781,
+        "low": 10787.785,
+        "close": 10874.783,
+        "pct_chg": -0.238,
+        "volume": 34808099168,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-02",
+        "open": 10723.887,
+        "high": 10820.499,
+        "low": 10648.745,
+        "close": 10734.622,
+        "pct_chg": -1.289,
+        "volume": 35693234488,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-03",
+        "open": 10660.558,
+        "high": 10756.599,
+        "low": 10585.859,
+        "close": 10671.229,
+        "pct_chg": -0.591,
+        "volume": 35759051510,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-04",
+        "open": 10685.487,
+        "high": 10781.752,
+        "low": 10610.614,
+        "close": 10696.183,
+        "pct_chg": 0.234,
+        "volume": 26516137527,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-05",
+        "open": 10715.159,
+        "high": 10811.692,
+        "low": 10640.078,
+        "close": 10725.885,
+        "pct_chg": 0.278,
+        "volume": 28532915341,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-06",
+        "open": 10810.469,
+        "high": 10907.86,
+        "low": 10734.72,
+        "close": 10821.29,
+        "pct_chg": 0.889,
+        "volume": 22357530652,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-09",
+        "open": 10808.371,
+        "high": 10905.744,
+        "low": 10732.636,
+        "close": 10819.19,
+        "pct_chg": -0.019,
+        "volume": 34558431007,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-10",
+        "open": 10801.917,
+        "high": 10899.232,
+        "low": 10726.228,
+        "close": 10812.73,
+        "pct_chg": -0.06,
+        "volume": 25724712956,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-11",
+        "open": 10877.681,
+        "high": 10975.679,
+        "low": 10801.461,
+        "close": 10888.57,
+        "pct_chg": 0.701,
+        "volume": 36351468448,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-12",
+        "open": 10791.622,
+        "high": 10888.843,
+        "low": 10716.005,
+        "close": 10802.424,
+        "pct_chg": -0.791,
+        "volume": 27979011052,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-13",
+        "open": 10808.95,
+        "high": 10906.328,
+        "low": 10733.212,
+        "close": 10819.77,
+        "pct_chg": 0.161,
+        "volume": 26703223559,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-16",
+        "open": 10750.368,
+        "high": 10847.218,
+        "low": 10675.04,
+        "close": 10761.129,
+        "pct_chg": -0.542,
+        "volume": 23188192037,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-17",
+        "open": 10717.596,
+        "high": 10814.151,
+        "low": 10642.497,
+        "close": 10728.324,
+        "pct_chg": -0.305,
+        "volume": 25768088907,
+        "amount": null
+      }
+    ],
+    "sz399006": [
+      {
+        "trade_date": "2026-09-18",
+        "open": 11253.728,
+        "high": 11355.113,
+        "low": 11174.873,
+        "close": 11264.993,
+        "pct_chg": -0.639,
+        "volume": 27730917094,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-21",
+        "open": 11223.677,
+        "high": 11324.791,
+        "low": 11145.033,
+        "close": 11234.912,
+        "pct_chg": -0.267,
+        "volume": 34633486845,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-22",
+        "open": 11116.269,
+        "high": 11216.415,
+        "low": 11038.377,
+        "close": 11127.396,
+        "pct_chg": -0.957,
+        "volume": 28508584367,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-23",
+        "open": 11211.196,
+        "high": 11312.197,
+        "low": 11132.639,
+        "close": 11222.418,
+        "pct_chg": 0.854,
+        "volume": 26581626334,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-24",
+        "open": 11031.285,
+        "high": 11130.666,
+        "low": 10953.988,
+        "close": 11042.327,
+        "pct_chg": -1.605,
+        "volume": 36407980352,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-25",
+        "open": 11030.798,
+        "high": 11130.175,
+        "low": 10953.505,
+        "close": 11041.84,
+        "pct_chg": -0.004,
+        "volume": 30829187243,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-28",
+        "open": 11079.866,
+        "high": 11179.685,
+        "low": 11002.229,
+        "close": 11090.957,
+        "pct_chg": 0.445,
+        "volume": 28789202453,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-29",
+        "open": 10983.532,
+        "high": 11082.483,
+        "low": 10906.571,
+        "close": 10994.527,
+        "pct_chg": -0.869,
+        "volume": 27796982627,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-30",
+        "open": 11049.439,
+        "high": 11148.983,
+        "low": 10972.015,
+        "close": 11060.499,
+        "pct_chg": 0.6,
+        "volume": 29808104443,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-01",
+        "open": 11045.831,
+        "high": 11145.343,
+        "low": 10968.433,
+        "close": 11056.888,
+        "pct_chg": -0.033,
+        "volume": 33514515793,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-02",
+        "open": 11064.618,
+        "high": 11164.3,
+        "low": 10987.088,
+        "close": 11075.694,
+        "pct_chg": 0.17,
+        "volume": 37908516294,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-05",
+        "open": 11188.724,
+        "high": 11289.523,
+        "low": 11110.325,
+        "close": 11199.924,
+        "pct_chg": 1.122,
+        "volume": 34389830186,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-06",
+        "open": 11161.451,
+        "high": 11262.005,
+        "low": 11083.243,
+        "close": 11172.624,
+        "pct_chg": -0.244,
+        "volume": 35619190940,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-07",
+        "open": 11206.858,
+        "high": 11307.821,
+        "low": 11128.331,
+        "close": 11218.076,
+        "pct_chg": 0.407,
+        "volume": 21979862691,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-08",
+        "open": 11160.434,
+        "high": 11260.979,
+        "low": 11082.233,
+        "close": 11171.606,
+        "pct_chg": -0.414,
+        "volume": 23554923855,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-09",
+        "open": 11252.903,
+        "high": 11354.28,
+        "low": 11174.054,
+        "close": 11264.167,
+        "pct_chg": 0.829,
+        "volume": 32815160413,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-12",
+        "open": 11242.013,
+        "high": 11343.292,
+        "low": 11163.24,
+        "close": 11253.266,
+        "pct_chg": -0.097,
+        "volume": 33971642515,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-13",
+        "open": 11414.63,
+        "high": 11517.464,
+        "low": 11334.648,
+        "close": 11426.056,
+        "pct_chg": 1.535,
+        "volume": 18031478384,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-14",
+        "open": 11397.929,
+        "high": 11500.613,
+        "low": 11318.063,
+        "close": 11409.338,
+        "pct_chg": -0.146,
+        "volume": 27602584073,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-15",
+        "open": 11531.642,
+        "high": 11635.53,
+        "low": 11450.84,
+        "close": 11543.185,
+        "pct_chg": 1.173,
+        "volume": 21829913031,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-16",
+        "open": 11334.173,
+        "high": 11436.283,
+        "low": 11254.755,
+        "close": 11345.519,
+        "pct_chg": -1.712,
+        "volume": 34777331038,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-19",
+        "open": 11348.498,
+        "high": 11450.737,
+        "low": 11268.979,
+        "close": 11359.858,
+        "pct_chg": 0.126,
+        "volume": 26878583310,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-20",
+        "open": 11273.036,
+        "high": 11374.595,
+        "low": 11194.045,
+        "close": 11284.32,
+        "pct_chg": -0.665,
+        "volume": 33308523316,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-21",
+        "open": 11297.513,
+        "high": 11399.293,
+        "low": 11218.351,
+        "close": 11308.822,
+        "pct_chg": 0.217,
+        "volume": 35799386393,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-22",
+        "open": 11200.989,
+        "high": 11301.899,
+        "low": 11122.503,
+        "close": 11212.201,
+        "pct_chg": -0.854,
+        "volume": 29737781460,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-23",
+        "open": 11226.648,
+        "high": 11327.789,
+        "low": 11147.983,
+        "close": 11237.886,
+        "pct_chg": 0.229,
+        "volume": 35572366503,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-26",
+        "open": 11365.207,
+        "high": 11467.597,
+        "low": 11285.571,
+        "close": 11376.584,
+        "pct_chg": 1.234,
+        "volume": 29410125119,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-27",
+        "open": 11381.439,
+        "high": 11483.975,
+        "low": 11301.689,
+        "close": 11392.832,
+        "pct_chg": 0.143,
+        "volume": 30883874640,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-28",
+        "open": 11331.134,
+        "high": 11433.216,
+        "low": 11251.736,
+        "close": 11342.476,
+        "pct_chg": -0.442,
+        "volume": 27840447595,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-29",
+        "open": 11369.413,
+        "high": 11471.84,
+        "low": 11289.748,
+        "close": 11380.794,
+        "pct_chg": 0.338,
+        "volume": 29626481696,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-30",
+        "open": 11302.673,
+        "high": 11404.499,
+        "low": 11223.475,
+        "close": 11313.987,
+        "pct_chg": -0.587,
+        "volume": 30326959965,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-02",
+        "open": 11146.437,
+        "high": 11246.856,
+        "low": 11068.334,
+        "close": 11157.595,
+        "pct_chg": -1.382,
+        "volume": 27662007338,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-03",
+        "open": 11226.24,
+        "high": 11327.377,
+        "low": 11147.577,
+        "close": 11237.477,
+        "pct_chg": 0.716,
+        "volume": 30181820564,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-04",
+        "open": 11234.564,
+        "high": 11335.776,
+        "low": 11155.844,
+        "close": 11245.81,
+        "pct_chg": 0.074,
+        "volume": 28830058326,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-05",
+        "open": 11325.624,
+        "high": 11427.657,
+        "low": 11246.265,
+        "close": 11336.961,
+        "pct_chg": 0.811,
+        "volume": 28223321662,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-06",
+        "open": 11325.356,
+        "high": 11427.387,
+        "low": 11245.999,
+        "close": 11336.693,
+        "pct_chg": -0.002,
+        "volume": 35481865246,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-09",
+        "open": 11296.183,
+        "high": 11397.95,
+        "low": 11217.03,
+        "close": 11307.49,
+        "pct_chg": -0.258,
+        "volume": 30518260276,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-10",
+        "open": 11310.343,
+        "high": 11412.238,
+        "low": 11231.092,
+        "close": 11321.665,
+        "pct_chg": 0.125,
+        "volume": 31592522264,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-11",
+        "open": 11261.604,
+        "high": 11363.06,
+        "low": 11182.694,
+        "close": 11272.877,
+        "pct_chg": -0.431,
+        "volume": 27558386175,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-12",
+        "open": 11352.237,
+        "high": 11454.51,
+        "low": 11272.692,
+        "close": 11363.601,
+        "pct_chg": 0.805,
+        "volume": 27994335008,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-13",
+        "open": 11285.566,
+        "high": 11387.238,
+        "low": 11206.488,
+        "close": 11296.863,
+        "pct_chg": -0.587,
+        "volume": 32820921230,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-16",
+        "open": 11389.139,
+        "high": 11491.744,
+        "low": 11309.336,
+        "close": 11400.54,
+        "pct_chg": 0.918,
+        "volume": 31081854218,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-17",
+        "open": 11384.811,
+        "high": 11487.377,
+        "low": 11305.037,
+        "close": 11396.207,
+        "pct_chg": -0.038,
+        "volume": 24241483765,
+        "amount": null
+      }
+    ],
+    "sh000688": [
+      {
+        "trade_date": "2026-09-18",
+        "open": 11819.713,
+        "high": 11926.197,
+        "low": 11736.893,
+        "close": 11831.545,
+        "pct_chg": -0.078,
+        "volume": 23912675248,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-21",
+        "open": 11809.432,
+        "high": 11915.823,
+        "low": 11726.683,
+        "close": 11821.253,
+        "pct_chg": -0.087,
+        "volume": 25359961150,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-22",
+        "open": 11968.663,
+        "high": 12076.489,
+        "low": 11884.799,
+        "close": 11980.644,
+        "pct_chg": 1.348,
+        "volume": 32147282233,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-23",
+        "open": 11865.487,
+        "high": 11972.383,
+        "low": 11782.345,
+        "close": 11877.364,
+        "pct_chg": -0.862,
+        "volume": 30032495111,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-24",
+        "open": 11730.936,
+        "high": 11836.62,
+        "low": 11648.738,
+        "close": 11742.679,
+        "pct_chg": -1.134,
+        "volume": 22200526628,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-25",
+        "open": 11961.06,
+        "high": 12068.817,
+        "low": 11877.249,
+        "close": 11973.033,
+        "pct_chg": 1.962,
+        "volume": 27601312462,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-28",
+        "open": 12198.477,
+        "high": 12308.374,
+        "low": 12113.002,
+        "close": 12210.688,
+        "pct_chg": 1.985,
+        "volume": 20779600776,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-29",
+        "open": 12323.815,
+        "high": 12434.84,
+        "low": 12237.462,
+        "close": 12336.151,
+        "pct_chg": 1.027,
+        "volume": 24336902367,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-09-30",
+        "open": 12376.025,
+        "high": 12487.52,
+        "low": 12289.306,
+        "close": 12388.413,
+        "pct_chg": 0.424,
+        "volume": 30771235097,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-01",
+        "open": 12304.878,
+        "high": 12415.733,
+        "low": 12218.657,
+        "close": 12317.195,
+        "pct_chg": -0.575,
+        "volume": 21942392736,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-02",
+        "open": 12257.09,
+        "high": 12367.514,
+        "low": 12171.204,
+        "close": 12269.359,
+        "pct_chg": -0.388,
+        "volume": 32440345383,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-05",
+        "open": 12273.326,
+        "high": 12383.897,
+        "low": 12187.327,
+        "close": 12285.612,
+        "pct_chg": 0.132,
+        "volume": 22545250640,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-06",
+        "open": 12206.103,
+        "high": 12316.068,
+        "low": 12120.574,
+        "close": 12218.321,
+        "pct_chg": -0.548,
+        "volume": 23487560830,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-07",
+        "open": 12132.499,
+        "high": 12241.801,
+        "low": 12047.487,
+        "close": 12144.644,
+        "pct_chg": -0.603,
+        "volume": 35380542592,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-08",
+        "open": 12043.978,
+        "high": 12152.482,
+        "low": 11959.586,
+        "close": 12056.034,
+        "pct_chg": -0.73,
+        "volume": 31945636300,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-09",
+        "open": 11827.907,
+        "high": 11934.465,
+        "low": 11745.029,
+        "close": 11839.747,
+        "pct_chg": -1.794,
+        "volume": 17217575101,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-12",
+        "open": 11670.204,
+        "high": 11775.341,
+        "low": 11588.431,
+        "close": 11681.886,
+        "pct_chg": -1.333,
+        "volume": 42130497193,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-13",
+        "open": 11688.365,
+        "high": 11793.666,
+        "low": 11606.464,
+        "close": 11700.065,
+        "pct_chg": 0.156,
+        "volume": 19609716293,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-14",
+        "open": 11655.523,
+        "high": 11760.528,
+        "low": 11573.852,
+        "close": 11667.19,
+        "pct_chg": -0.281,
+        "volume": 32646256323,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-15",
+        "open": 11681.966,
+        "high": 11787.209,
+        "low": 11600.111,
+        "close": 11693.66,
+        "pct_chg": 0.227,
+        "volume": 29218252532,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-16",
+        "open": 11655.682,
+        "high": 11760.688,
+        "low": 11574.01,
+        "close": 11667.349,
+        "pct_chg": -0.225,
+        "volume": 21103215986,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-19",
+        "open": 11669.807,
+        "high": 11774.94,
+        "low": 11588.036,
+        "close": 11681.488,
+        "pct_chg": 0.121,
+        "volume": 31999637895,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-20",
+        "open": 11714.853,
+        "high": 11820.393,
+        "low": 11632.767,
+        "close": 11726.58,
+        "pct_chg": 0.386,
+        "volume": 32449862152,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-21",
+        "open": 11718.955,
+        "high": 11824.531,
+        "low": 11636.841,
+        "close": 11730.686,
+        "pct_chg": 0.035,
+        "volume": 34879512842,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-22",
+        "open": 11643.071,
+        "high": 11747.964,
+        "low": 11561.488,
+        "close": 11654.726,
+        "pct_chg": -0.648,
+        "volume": 25938267247,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-23",
+        "open": 11664.503,
+        "high": 11769.588,
+        "low": 11582.77,
+        "close": 11676.179,
+        "pct_chg": 0.184,
+        "volume": 26077926280,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-26",
+        "open": 11610.473,
+        "high": 11715.072,
+        "low": 11529.118,
+        "close": 11622.095,
+        "pct_chg": -0.463,
+        "volume": 33187654610,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-27",
+        "open": 11630.68,
+        "high": 11735.461,
+        "low": 11549.183,
+        "close": 11642.322,
+        "pct_chg": 0.174,
+        "volume": 29753394352,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-28",
+        "open": 11831.145,
+        "high": 11937.732,
+        "low": 11748.244,
+        "close": 11842.988,
+        "pct_chg": 1.724,
+        "volume": 27837694060,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-29",
+        "open": 11973.094,
+        "high": 12080.96,
+        "low": 11889.198,
+        "close": 11985.079,
+        "pct_chg": 1.2,
+        "volume": 31757124893,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-10-30",
+        "open": 11948.069,
+        "high": 12055.709,
+        "low": 11864.349,
+        "close": 11960.029,
+        "pct_chg": -0.209,
+        "volume": 26457621537,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-02",
+        "open": 11913.587,
+        "high": 12020.917,
+        "low": 11830.109,
+        "close": 11925.513,
+        "pct_chg": -0.289,
+        "volume": 26133871863,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-03",
+        "open": 12022.231,
+        "high": 12130.539,
+        "low": 11937.991,
+        "close": 12034.265,
+        "pct_chg": 0.912,
+        "volume": 23980658573,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-04",
+        "open": 12230.242,
+        "high": 12340.424,
+        "low": 12144.544,
+        "close": 12242.484,
+        "pct_chg": 1.73,
+        "volume": 37877187398,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-05",
+        "open": 12093.845,
+        "high": 12202.799,
+        "low": 12009.103,
+        "close": 12105.951,
+        "pct_chg": -1.115,
+        "volume": 32351516925,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-06",
+        "open": 12157.731,
+        "high": 12267.26,
+        "low": 12072.542,
+        "close": 12169.901,
+        "pct_chg": 0.528,
+        "volume": 29784524375,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-09",
+        "open": 12058.401,
+        "high": 12167.035,
+        "low": 11973.907,
+        "close": 12070.471,
+        "pct_chg": -0.817,
+        "volume": 31031783615,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-10",
+        "open": 12045.229,
+        "high": 12153.744,
+        "low": 11960.828,
+        "close": 12057.286,
+        "pct_chg": -0.109,
+        "volume": 24691202206,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-11",
+        "open": 12098.819,
+        "high": 12207.817,
+        "low": 12014.043,
+        "close": 12110.93,
+        "pct_chg": 0.445,
+        "volume": 29407825077,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-12",
+        "open": 12119.235,
+        "high": 12228.417,
+        "low": 12034.315,
+        "close": 12131.366,
+        "pct_chg": 0.169,
+        "volume": 31469816757,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-13",
+        "open": 12052.42,
+        "high": 12161.0,
+        "low": 11967.968,
+        "close": 12064.484,
+        "pct_chg": -0.551,
+        "volume": 28636519256,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-16",
+        "open": 12170.978,
+        "high": 12280.626,
+        "low": 12085.696,
+        "close": 12183.161,
+        "pct_chg": 0.984,
+        "volume": 21209246819,
+        "amount": null
+      },
+      {
+        "trade_date": "2026-11-17",
+        "open": 12089.97,
+        "high": 12198.889,
+        "low": 12005.255,
+        "close": 12102.072,
+        "pct_chg": -0.666,
+        "volume": 35348265743,
+        "amount": null
+      }
+    ]
+  }
+}

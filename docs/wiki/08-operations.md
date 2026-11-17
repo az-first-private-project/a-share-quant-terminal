@@ -342,3 +342,24 @@ CI 统一设置 `TZ=Asia/Shanghai`、`SCHEDULER_ENABLED=0`、`AUTO_CREATE_TABLES
 - 管理写操作需 `X-Admin-Key` 或本机来源；
 - 需要跨设备访问时优先 SSH 隧道 / Tailscale；确有公网需求再在反向代理层加 Basic Auth，**不要把端口改成 `0.0.0.0`**；
 - 外部数据仅个人研究，不得对外分发或商用。
+
+---
+
+## 13. 演示站发布与更新
+
+演示站是**只读静态快照**，不需要后端与数据库：
+
+```bash
+cd backend
+python scripts/export_demo_snapshot.py      # 生成 frontend/public/demo/*.json
+cd ../frontend
+npm install
+npm run build:demo                          # 输出 dist-demo/
+npm run preview -- --outDir dist-demo       # 本地预览
+```
+
+- 导出脚本使用独立 `*_demo` 库（默认 `gfna_demo`），不会写生产库；
+- 行情来自 `app.fixtures.demo_data.seed_demo_data`，下游走 `features/scores/sector_scores/market_factors/temperature/regime/algos`；
+- 演示站顶部固定显示「演示数据 · 只读」横幅；POST/PUT 等写操作在 `frontend/src/api/client.ts` 直接拒绝；
+- GitHub Actions `demo-pages.yml` 在 push `main` 后自动重建并部署 Pages。首次使用需在仓库 Settings → Pages 选择 **GitHub Actions**；未开启时 deploy 步骤会显式失败；
+- 快照停留在构建日，不随交易日更新；`frontend/public/demo/manifest.json` 记录生成时间与文件清单。

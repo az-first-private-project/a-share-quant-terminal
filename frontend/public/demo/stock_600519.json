@@ -1,0 +1,143 @@
+{
+  "code": "600519",
+  "name": "贵州茅台",
+  "exchange": "SH",
+  "board": "主板",
+  "industry_l1": "有色金属",
+  "industry_l2": null,
+  "ownership": "地方国企",
+  "is_st": false,
+  "list_date": "2015-01-05",
+  "status": 1,
+  "trade_date": "2026-11-17",
+  "latest": {
+    "trade_date": "2026-11-17",
+    "open": 60.306,
+    "high": 60.765,
+    "low": 59.894,
+    "close": 60.662,
+    "pre_close": 60.044,
+    "pct_chg": 1.029,
+    "volume": 13854570,
+    "amount": 840445925.34,
+    "turnover_rate": 3.108,
+    "market_cap": 60662000000.0,
+    "float_cap": 42463400000.0,
+    "pe_ttm": 68.3876,
+    "pb": 2.8077,
+    "ps_ttm": 9.6875,
+    "dv_ttm": 1.53,
+    "is_limit_up": false,
+    "is_limit_down": false,
+    "is_suspended": false
+  },
+  "features": {
+    "ma5": 60.9284,
+    "ma10": 60.8752,
+    "ma20": 61.1459,
+    "ma60": 63.2557,
+    "rsi14": 46.1474,
+    "macd_dif": -0.430243,
+    "macd_dea": -0.475668,
+    "macd_hist": 0.045426,
+    "macd_golden_cross": false,
+    "boll_mid": 61.1459,
+    "boll_upper": 62.8131,
+    "boll_lower": 59.4788,
+    "atr14": 1.2166,
+    "momentum_5": 0.4171,
+    "momentum_20": -2.8755,
+    "momentum_60": -10.3641,
+    "volatility_20": 27.8594,
+    "volume_ratio": 1.084,
+    "ma_bullish": false
+  },
+  "scores": {
+    "value": 2.02,
+    "quality": 4.62,
+    "momentum": 5.48,
+    "volatility": 7.14,
+    "liquidity": 2.86,
+    "sentiment": 5.0,
+    "composite": 4.47,
+    "detail": {
+      "raw": {
+        "pb": 2.8077,
+        "amount": 840445925.34,
+        "dv_ttm": 1.53,
+        "pe_ttm": 68.3876,
+        "ps_ttm": 9.6875,
+        "amount_ma20": 726751477.54,
+        "momentum_20": -2.8755,
+        "momentum_60": -10.3641,
+        "volatility_20": 27.8594
+      },
+      "weights": {
+        "value": 0.2,
+        "quality": 0.15,
+        "momentum": 0.25,
+        "liquidity": 0.15,
+        "sentiment": 0.1,
+        "volatility": 0.15
+      },
+      "percentile": {
+        "value": 0.2024,
+        "quality": 0.4619,
+        "momentum": 0.5476,
+        "liquidity": 0.2857,
+        "sentiment": 0.5,
+        "volatility": 0.7143
+      },
+      "industry_l1": "有色金属",
+      "sentiment_source": "neutral"
+    }
+  },
+  "sectors": [
+    {
+      "sector_code": "BK1036",
+      "sector_name": "半导体"
+    }
+  ],
+  "sectors_total_matching": 1,
+  "freshness": [
+    {
+      "dataset": "stock_daily",
+      "display_name": "个股日线",
+      "status": "ok",
+      "is_critical": true,
+      "last_success_at": "2026-11-17T04:45:18.114435+00:00",
+      "last_attempt_at": "2026-11-17T04:45:18.114435+00:00",
+      "last_trade_date": "2026-11-17",
+      "rows": 10500,
+      "coverage": 1.0,
+      "anomalies": 0,
+      "error": null
+    },
+    {
+      "dataset": "stock_features",
+      "display_name": "技术指标",
+      "status": "ok",
+      "is_critical": true,
+      "last_success_at": "2026-11-17T04:46:33.547540+00:00",
+      "last_attempt_at": "2026-11-17T04:46:33.547540+00:00",
+      "last_trade_date": null,
+      "rows": 42,
+      "coverage": null,
+      "anomalies": 0,
+      "error": null
+    },
+    {
+      "dataset": "stock_scores",
+      "display_name": "个股因子评分",
+      "status": "ok",
+      "is_critical": true,
+      "last_success_at": "2026-11-17T04:46:33.584106+00:00",
+      "last_attempt_at": "2026-11-17T04:46:33.584106+00:00",
+      "last_trade_date": null,
+      "rows": 42,
+      "coverage": null,
+      "anomalies": 0,
+      "error": null
+    }
+  ]
+}

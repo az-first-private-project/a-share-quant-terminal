@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import zlib
 from datetime import date, timedelta
 
 import numpy as np
@@ -96,7 +97,7 @@ async def seed_demo_data(db: AsyncSession, days: int = DAYS) -> dict:
             exchange=exchange_of(code),
             board=board_of(code),
             name=name,
-            industry_l1=SECTORS[hash(code) % len(SECTORS)][1],
+            industry_l1=SECTORS[zlib.crc32(code.encode("utf-8")) % len(SECTORS)][1],
             industry_l2=None,
             ownership=classify_ownership(code, name),
             list_date=date(2015, 1, 5),

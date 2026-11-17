@@ -1,0 +1,169 @@
+{
+  "meta": {
+    "trade_date": "2026-11-17",
+    "index_used": "沪深300",
+    "data_quality": "accumulating",
+    "stale_fields": [],
+    "is_historical": false,
+    "disclaimer": "以上为基于历史数据的状态描述与配置参考，不构成投资建议，不预测涨跌。"
+  },
+  "regime": null,
+  "allocation": null,
+  "thermometer": {
+    "current_temp": null,
+    "current_label": "数据不足",
+    "current_score": null,
+    "series": [],
+    "week_avg": null,
+    "week_max": null,
+    "week_min": null,
+    "week_slope": null,
+    "week_trend": "数据不足",
+    "emotion_conclusion": "数据积累中，暂不判断市场情绪",
+    "extreme_note": "",
+    "components": {
+      "items": [
+        {
+          "key": "turnover",
+          "raw": 1.7929,
+          "note": "全市场换手率 1.79%",
+          "unit": "%",
+          "label": "换手率",
+          "score": null,
+          "weight": 0.2,
+          "available": false,
+          "direction": 1
+        },
+        {
+          "key": "amount",
+          "raw": 50871283920.65,
+          "note": "成交额 0.05 万亿",
+          "unit": "元",
+          "label": "成交额",
+          "score": null,
+          "weight": 0.2,
+          "available": false,
+          "direction": 1
+        },
+        {
+          "key": "limit_up",
+          "raw": 0.0,
+          "note": "0 家涨停",
+          "unit": "家",
+          "label": "涨停家数",
+          "score": null,
+          "weight": 0.15,
+          "available": false,
+          "direction": 1
+        },
+        {
+          "key": "margin_buy",
+          "raw": null,
+          "note": "融资买入数据未覆盖",
+          "unit": "%",
+          "label": "融资买入占比",
+          "score": null,
+          "weight": 0.15,
+          "available": false,
+          "direction": 1
+        },
+        {
+          "key": "new_high_60",
+          "raw": 0.0714,
+          "note": "创60日新高 7.1%",
+          "unit": "%",
+          "label": "60日新高占比",
+          "score": null,
+          "weight": 0.1,
+          "available": false,
+          "direction": 1
+        },
+        {
+          "key": "rsi14_norm",
+          "raw": 37.902,
+          "note": "指数 RSI 37.9",
+          "unit": "",
+          "label": "指数 RSI",
+          "score": 19.8,
+          "weight": 0.1,
+          "available": true,
+          "direction": 1
+        },
+        {
+          "key": "rv20_inv",
+          "raw": 12.3603,
+          "note": "20日年化波动 12.4%",
+          "unit": "%",
+          "label": "波动稳定度",
+          "score": null,
+          "weight": 0.1,
+          "available": false,
+          "direction": -1
+        }
+      ],
+      "total_count": 7,
+      "available_count": 1
+    },
+    "confidence": "insufficient"
+  },
+  "evidence": [],
+  "caveats": [
+    "阈值经 2023-09 ~ 2026-11 历史校准，市场结构变化时仍需复核",
+    "状态描述的是当前与过去，不预测未来涨跌",
+    "配置建议是风险偏好参考，不构成投资建议"
+  ],
+  "freshness": [
+    {
+      "dataset": "market_regime",
+      "display_name": "市场状态",
+      "status": "ok",
+      "is_critical": false,
+      "last_success_at": "2026-11-17T04:46:34.165440+00:00",
+      "last_attempt_at": "2026-11-17T04:46:34.165440+00:00",
+      "last_trade_date": null,
+      "rows": 0,
+      "coverage": null,
+      "anomalies": 0,
+      "error": null
+    },
+    {
+      "dataset": "market_temperature",
+      "display_name": "市场温度",
+      "status": "ok",
+      "is_critical": false,
+      "last_success_at": "2026-11-17T04:46:34.125160+00:00",
+      "last_attempt_at": "2026-11-17T04:46:34.125160+00:00",
+      "last_trade_date": null,
+      "rows": 1,
+      "coverage": null,
+      "anomalies": 0,
+      "error": null
+    },
+    {
+      "dataset": "market_factors",
+      "display_name": "市场因子",
+      "status": "ok",
+      "is_critical": false,
+      "last_success_at": "2026-11-17T04:46:34.108649+00:00",
+      "last_attempt_at": "2026-11-17T04:46:34.108649+00:00",
+      "last_trade_date": null,
+      "rows": 1,
+      "coverage": null,
+      "anomalies": 0,
+      "error": null
+    },
+    {
+      "dataset": "macro_rates",
+      "display_name": "国债收益率",
+      "status": "unknown",
+      "is_critical": false,
+      "last_success_at": null,
+      "last_attempt_at": null,
+      "last_trade_date": null,
+      "rows": null,
+      "coverage": null,
+      "anomalies": null,
+      "error": null
+    }
+  ]
+}

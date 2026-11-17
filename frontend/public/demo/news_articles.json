@@ -1,0 +1,83 @@
+{
+  "total": 5,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 1,
+  "items": [
+    {
+      "title": "演示：A 股主要指数震荡整理，成交额保持平稳",
+      "url": "https://example.invalid/demo/news/1",
+      "content": "市场复盘",
+      "author": null,
+      "publish_time": "2026-11-17T03:46:34.302959Z",
+      "id": 1,
+      "source_id": 1,
+      "source_name": "新浪财经",
+      "summary": "市场复盘",
+      "url_hash": "49db43483282a5eeeafd8b4de0f52f574a601490a9732422d142438b266af421",
+      "crawl_time": "2026-11-17T04:46:34.302959Z",
+      "is_processed": 1,
+      "sentiment_score": 0.1
+    },
+    {
+      "title": "演示：新能源板块出现分化，资金流向呈现结构性特征",
+      "url": "https://example.invalid/demo/news/2",
+      "content": "板块观察",
+      "author": null,
+      "publish_time": "2026-11-17T02:46:34.302959Z",
+      "id": 2,
+      "source_id": 2,
+      "source_name": "同花顺",
+      "summary": "板块观察",
+      "url_hash": "ace02b3b35caceaf3211f02a8502376c519590b208e6d1e745a986b03097edb7",
+      "crawl_time": "2026-11-17T04:46:34.302959Z",
+      "is_processed": 1,
+      "sentiment_score": -0.05
+    },
+    {
+      "title": "演示：高股息资产相对抗跌，防御型配置受关注",
+      "url": "https://example.invalid/demo/news/3",
+      "content": "风格观察",
+      "author": null,
+      "publish_time": "2026-11-17T01:46:34.302959Z",
+      "id": 3,
+      "source_id": 1,
+      "source_name": "新浪财经",
+      "summary": "风格观察",
+      "url_hash": "04831af7aa8a0bb6b3e9194af158b388efb4ff850961dd3a68d2635f03c74acc",
+      "crawl_time": "2026-11-17T04:46:34.302959Z",
+      "is_processed": 1,
+      "sentiment_score": 0.1
+    },
+    {
+      "title": "演示：两市融资余额小幅变化，北向资金暂停披露",
+      "url": "https://example.invalid/demo/news/4",
+      "content": "资金面",
+      "author": null,
+      "publish_time": "2026-11-17T00:46:34.302959Z",
+      "id": 4,
+      "source_id": 2,
+      "source_name": "同花顺",
+      "summary": "资金面",
+      "url_hash": "5868e3209ee1f893503a5480295d0185ecb0f73c3233c12f995748b1a88399a6",
+      "crawl_time": "2026-11-17T04:46:34.302959Z",
+      "is_processed": 1,
+      "sentiment_score": -0.05
+    },
+    {
+      "title": "演示：财报披露进入密集期，关注业绩与估值的匹配",
+      "url": "https://example.invalid/demo/news/5",
+      "content": "基本面",
+      "author": null,
+      "publish_time": "2026-11-16T23:46:34.302959Z",
+      "id": 5,
+      "source_id": 3,
+      "source_name": "华尔街见闻",
+      "summary": "基本面",
+      "url_hash": "dcb93767d7ed5f7dec18e2bd25de9bcb37de7764451f2541e50f58fff29a72db",
+      "crawl_time": "2026-11-17T04:46:34.302959Z",
+      "is_processed": 1,
+      "sentiment_score": 0.1
+    }
+  ]
+}

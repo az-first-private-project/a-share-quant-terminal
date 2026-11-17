@@ -6,6 +6,24 @@
 
 ---
 
+## 0. V9 Batch A：只读 Demo + 轻量体验（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 演示库快照导出（独立 `*_demo` 库，进程内 ASGI 复用真实 API） | `backend/scripts/export_demo_snapshot.py`（新增） |
+| 演示行情生成改用稳定 CRC32 分板块，避免 `hash()` 跨进程漂移 | `backend/app/fixtures/demo_data.py` |
+| Alembic 支持 `GFNA_DEMO_DATABASE_NAME`，演示迁移不碰生产库 | `backend/alembic/env.py` |
+| 前端 `VITE_DEMO_MODE` 只读模式、快照路由映射、写操作拒绝 | `frontend/src/api/demo.ts`、`client.ts`（新增/修改） |
+| 顶部只读横幅 | `frontend/src/components/DemoBanner.tsx`、`App.tsx` |
+| `npm run build:demo` + `dist-demo/` | `frontend/package.json`、`vite.config.ts`、`.env.demo` |
+| GitHub Pages 自动构建/部署 | `.github/workflows/demo-pages.yml`（新增） |
+| 本地 `-DemoSite` / `demo` 一键预览 | `start-local.ps1`、`start.sh` |
+| 在线 Demo、3 分钟体验路径与发布说明 | `README.md`、`docs/wiki/08-operations.md`、`09-dependencies.md` |
+
+验收：`npm run build` 与 `npm run build:demo` 均通过；演示站 4 个核心页面 Playwright 验收 4/4 PASS；演示快照 25 个 JSON（约 425KB），未包含生产库数据。
+
+---
+
 ## 0. V5.1 增补（2026-10-22）
 
 本轮解决三件事：**容器首次启动空数据**、**历史估值缺失**、**板块/资金流无兜底**。

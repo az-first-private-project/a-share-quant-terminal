@@ -1,0 +1,69 @@
+{
+  "end": "2026-11-17",
+  "days": 30,
+  "dates": [
+    "2026-11-17"
+  ],
+  "items": [
+    {
+      "sector_code": "BK1036",
+      "scores": [
+        5.67
+      ]
+    },
+    {
+      "sector_code": "BK1037",
+      "scores": [
+        5.67
+      ]
+    },
+    {
+      "sector_code": "BK1038",
+      "scores": [
+        5.22
+      ]
+    },
+    {
+      "sector_code": "BK1039",
+      "scores": [
+        6.0
+      ]
+    },
+    {
+      "sector_code": "BK1040",
+      "scores": [
+        5.57
+      ]
+    },
+    {
+      "sector_code": "BK1041",
+      "scores": [
+        5.96
+      ]
+    },
+    {
+      "sector_code": "BK1042",
+      "scores": [
+        6.04
+      ]
+    },
+    {
+      "sector_code": "BK1043",
+      "scores": [
+        5.23
+      ]
+    },
+    {
+      "sector_code": "BK1044",
+      "scores": [
+        5.62
+      ]
+    },
+    {
+      "sector_code": "BK1045",
+      "scores": [
+        6.15
+      ]
+    }
+  ]
+}

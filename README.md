@@ -13,7 +13,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[快速开始](#快速开始) · [核心能力](#核心能力) · [架构](#架构) · [当前策略](#当前策略) · [机器人推送](#机器人推送) · [界面一览](#界面一览) · [文档](#文档)
+[在线演示](https://hui-Elna.github.io/a-share-quant-terminal/) · [快速开始](#快速开始) · [核心能力](#核心能力) · [架构](#架构) · [当前策略](#当前策略) · [机器人推送](#机器人推送) · [界面一览](#界面一览) · [文档](#文档)
 
 </div>
 
@@ -168,6 +168,21 @@ python scripts/push_cli.py --date 2026-11-16          # 补发指定交易日
 |---|---|
 | ![新闻情报](docs/assets/home.png) | ![个股详情](docs/assets/stock.png) |
 | 多源财经快讯、AI 摘要、来源筛选 | K 线 + MA/BOLL + 成交量、指标卡、六维因子雷达 |
+
+---
+
+## 只想看看效果
+
+不装 PostgreSQL、不启动后端，只用 Node 打开只读演示站：
+
+```bash
+cd frontend
+npm install
+npm run build:demo
+npm run preview
+```
+
+演示数据来自 `backend/scripts/export_demo_snapshot.py` 生成的静态快照（`frontend/public/demo/`），页面顶部有「演示数据 · 只读」提示。在线版本：[GitHub Pages](https://hui-Elna.github.io/a-share-quant-terminal/)（首次使用需在仓库 Settings → Pages 选择 GitHub Actions）。
 
 ---
 

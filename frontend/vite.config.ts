@@ -14,7 +14,7 @@ const API_PROXY = {
   },
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
@@ -27,6 +27,7 @@ export default defineConfig({
     proxy: API_PROXY,
   },
   build: {
+    outDir: mode === 'demo' ? 'dist-demo' : 'dist',
     rollupOptions: {
       output: {
         // 第三方库按用途分组：页面懒加载后，重图表库只在对应页面请求时下载
@@ -40,4 +41,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

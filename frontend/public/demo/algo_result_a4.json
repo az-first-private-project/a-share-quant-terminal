@@ -1,0 +1,52 @@
+{
+  "algo": "a4",
+  "algo_name": "高股息质量 × 低估值",
+  "trade_date": "2026-11-17",
+  "run": {
+    "run_id": "473d4787-7378-44dc-aee5-ddcbc2b62f65",
+    "created_at": "2026-11-17T04:46:34.266360+00:00",
+    "elapsed_ms": 27,
+    "universe_count": 42,
+    "signal_count": 0,
+    "data_version": "2026-11-17:cbfb0d34d7ea7846",
+    "signal_schema": 3,
+    "params": {
+      "limit": 20,
+      "dv_max": 15.0,
+      "pb_max": 2.5,
+      "pe_max": 15.0,
+      "div_min": 4.0,
+      "min_score": 5.0,
+      "trend_dev": 0.9,
+      "min_amount": 50000000.0
+    },
+    "status": "success"
+  },
+  "from_cache": true,
+  "count": 0,
+  "data": [],
+  "market_gate": {
+    "index_code": "sh000300",
+    "available": true,
+    "close": 10728.32,
+    "ma20": 10849.4381,
+    "pct_chg": -0.305,
+    "passed": true,
+    "rule": "市场阶段数据缺失，防御型门槛按放行处理",
+    "regime_code": null,
+    "regime_label": null,
+    "regime_trade_date": null,
+    "regime_since": null,
+    "regime_days": null,
+    "regime_available": false,
+    "threshold": [
+      "bottoming",
+      "pull_down",
+      "risk_off"
+    ]
+  },
+  "total": 0,
+  "has_more": false,
+  "page": 1,
+  "page_size": 20
+}

@@ -1,0 +1,108 @@
+{
+  "items": [
+    {
+      "run_id": "473d4787-7378-44dc-aee5-ddcbc2b62f65",
+      "algo": "a4",
+      "algo_name": "高股息质量 × 低估值",
+      "trade_date": "2026-11-17",
+      "created_at": "2026-11-17T04:46:34.266360+00:00",
+      "elapsed_ms": 27,
+      "universe_count": 42,
+      "signal_count": 0,
+      "data_version": "2026-11-17:cbfb0d34d7ea7846",
+      "signal_schema": 3,
+      "params": {
+        "limit": 20,
+        "dv_max": 15.0,
+        "pb_max": 2.5,
+        "pe_max": 15.0,
+        "div_min": 4.0,
+        "min_score": 5.0,
+        "trend_dev": 0.9,
+        "min_amount": 50000000.0
+      },
+      "status": "success",
+      "error": null,
+      "is_backtest": false
+    },
+    {
+      "run_id": "4fca7465-aeed-4bc6-be1b-0faf37be63fb",
+      "algo": "a4",
+      "algo_name": "高股息质量 × 低估值",
+      "trade_date": "2026-11-17",
+      "created_at": "2026-11-17T04:46:15.979328+00:00",
+      "elapsed_ms": 26,
+      "universe_count": 42,
+      "signal_count": 0,
+      "data_version": "2026-11-17:c1e0013a88b31356",
+      "signal_schema": 3,
+      "params": {
+        "limit": 20,
+        "dv_max": 15.0,
+        "pb_max": 2.5,
+        "pe_max": 15.0,
+        "div_min": 4.0,
+        "min_score": 5.0,
+        "trend_dev": 0.9,
+        "min_amount": 50000000.0
+      },
+      "status": "superseded",
+      "error": null,
+      "is_backtest": false
+    },
+    {
+      "run_id": "4b1a75cc-58e5-460d-b4a0-9ebfc10d1dd3",
+      "algo": "a4",
+      "algo_name": "高股息质量 × 低估值",
+      "trade_date": "2026-11-17",
+      "created_at": "2026-11-17T04:45:43.803394+00:00",
+      "elapsed_ms": 26,
+      "universe_count": 42,
+      "signal_count": 0,
+      "data_version": "2026-11-17:d811e1a4449f5c12",
+      "signal_schema": 3,
+      "params": {
+        "limit": 20,
+        "dv_max": 15.0,
+        "pb_max": 2.5,
+        "pe_max": 15.0,
+        "div_min": 4.0,
+        "min_score": 5.0,
+        "trend_dev": 0.9,
+        "min_amount": 50000000.0
+      },
+      "status": "superseded",
+      "error": null,
+      "is_backtest": false
+    },
+    {
+      "run_id": "a510bb01-101d-45bd-880a-b6bac19054a2",
+      "algo": "a4",
+      "algo_name": "高股息质量 × 低估值",
+      "trade_date": "2026-11-17",
+      "created_at": "2026-11-17T04:45:21.417822+00:00",
+      "elapsed_ms": 27,
+      "universe_count": 42,
+      "signal_count": 0,
+      "data_version": "2026-11-17:bd05f8ee1360f79d",
+      "signal_schema": 3,
+      "params": {
+        "limit": 20,
+        "dv_max": 15.0,
+        "pb_max": 2.5,
+        "pe_max": 15.0,
+        "div_min": 4.0,
+        "min_score": 5.0,
+        "trend_dev": 0.9,
+        "min_amount": 50000000.0
+      },
+      "status": "superseded",
+      "error": null,
+      "is_backtest": false
+    }
+  ],
+  "total": 4,
+  "has_more": false,
+  "page": 1,
+  "page_size": 10
+}

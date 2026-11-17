@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-11-17",
+  "is_demo": true,
+  "database": "gfna_demo",
+  "source": "backend/app/fixtures/demo_data.py + pipeline.run_task",
+  "files": [
+    "health.json",
+    "dashboard.json",
+    "overview.json",
+    "market_indices.json",
+    "market_sectors.json",
+    "algo_list.json",
+    "algo_ladder.json",
+    "algo_consensus.json",
+    "algo_result_a3.json",
+    "algo_runs_a3.json",
+    "algo_result_a4.json",
+    "algo_runs_a4.json",
+    "news_stats.json",
+    "news_sources.json",
+    "news_articles.json",
+    "freshness.json",
+    "trade_calendar.json",
+    "stock_600519.json",
+    "stock_600519_kline.json",
+    "stock_search.json",
+    "stock_sparkline.json",
+    "watchlist.json",
+    "sector_sparkline.json"
+  ]
+}

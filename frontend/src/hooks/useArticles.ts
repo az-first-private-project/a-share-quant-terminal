@@ -18,6 +18,7 @@ import {
   type AutoCrawlState,
 } from '../api/news'
 import { recordStatus } from '../lib/statusFeed'
+import { DEMO_MODE } from '../api/demo'
 
 /** 同一浏览器会话 10 分钟内最多触发一次自动抓取 */
 const AUTO_CRAWL_KEY = 'gfna:news-auto-crawl-at'
@@ -109,6 +110,8 @@ export function useAutoCrawl() {
   const [lastResult, setLastResult] = useState<AutoCrawlState['last_result']>(null)
 
   useEffect(() => {
+    // 演示模式没有后端，自动抓取与轮询都应跳过
+    if (DEMO_MODE) return
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | undefined
 

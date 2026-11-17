@@ -1,0 +1,13 @@
+{
+  "status": "ok",
+  "service": "GFNA",
+  "version": "5.0.0",
+  "database": "connected",
+  "latest_trade_date": "2026-11-17",
+  "data_ready": true,
+  "detail": {
+    "fresh_datasets": 12,
+    "total_datasets": 21,
+    "message": "关键数据集均新鲜可用"
+  }
+}

@@ -19,6 +19,8 @@
 import { lazy } from 'react'
 import { Navigate, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
+import DemoBanner from './components/DemoBanner'
+import { DEMO_MODE } from './api/demo'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const DetailPage = lazy(() => import('./pages/DetailPage'))
@@ -34,21 +36,24 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/article/:id" element={<DetailPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/index-compare" element={<IndexComparePage />} />
-        <Route path="/algo-center" element={<AlgoCenter />} />
-        <Route path="/ladder" element={<Navigate to="/algo-center#ladder" replace />} />
-        <Route path="/paper" element={<PaperPage />} />
-        <Route path="/stocks/:code" element={<StockDetailPage />} />
-        <Route path="/watchlist" element={<WatchlistPage />} />
-        <Route path="/jobs" element={<JobsPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <>
+      {DEMO_MODE && <DemoBanner />}
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/article/:id" element={<DetailPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/index-compare" element={<IndexComparePage />} />
+          <Route path="/algo-center" element={<AlgoCenter />} />
+          <Route path="/ladder" element={<Navigate to="/algo-center#ladder" replace />} />
+          <Route path="/paper" element={<PaperPage />} />
+          <Route path="/stocks/:code" element={<StockDetailPage />} />
+          <Route path="/watchlist" element={<WatchlistPage />} />
+          <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
