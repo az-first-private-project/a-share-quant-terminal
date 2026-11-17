@@ -69,6 +69,84 @@ _FIELD_ALIASES: dict[str, str] = {
 #: 简写字段：表示"排除行业"
 _EXCLUDE_INDUSTRY = "exclude_industry"
 
+_NUM_OPS = (
+    "gt", "ge", "lt", "le", "eq", "ne", "between",
+    "top_pct", "bottom_pct", "notna", "isna",
+)
+_STR_OPS = ("eq", "ne", "in", "not_in", "notna", "isna")
+_BOOL_OPS = ("eq", "ne", "notna", "isna")
+
+
+def _field(
+    label: str,
+    field_type: str,
+    operators: Sequence[str],
+    *,
+    unit: str = "",
+    description: str = "",
+    minimum: float | None = None,
+    maximum: float | None = None,
+) -> dict[str, Any]:
+    return {
+        "label": label,
+        "type": field_type,
+        "operators": list(operators),
+        "unit": unit,
+        "description": description,
+        "min": minimum,
+        "max": maximum,
+    }
+
+
+#: 自定义条件树的字段注册表（`/algo/fields` 的唯一事实源）。
+FIELD_SPECS: dict[str, dict[str, Any]] = {
+    # 行情 / 技术
+    "close": _field("收盘价", "number", _NUM_OPS, unit="元"),
+    "pct_chg": _field("涨跌幅", "number", _NUM_OPS, unit="%"),
+    "open": _field("开盘价", "number", _NUM_OPS, unit="元"),
+    "high": _field("最高价", "number", _NUM_OPS, unit="元"),
+    "low": _field("最低价", "number", _NUM_OPS, unit="元"),
+    "volume": _field("成交量", "number", _NUM_OPS, unit="股"),
+    "amount": _field("成交额", "number", _NUM_OPS, unit="元"),
+    "amount_ma20": _field("20 日均成交额", "number", _NUM_OPS, unit="元"),
+    "turnover_rate": _field("换手率", "number", _NUM_OPS, unit="%"),
+    "vol_ratio_20": _field("20 日量比", "number", _NUM_OPS),
+    "ma5": _field("MA5", "number", _NUM_OPS, unit="元"),
+    "ma20": _field("MA20", "number", _NUM_OPS, unit="元"),
+    "ma60": _field("MA60", "number", _NUM_OPS, unit="元"),
+    "ma120": _field("MA120", "number", _NUM_OPS, unit="元"),
+    "rsi6": _field("RSI6", "number", _NUM_OPS),
+    "rsi14": _field("RSI14", "number", _NUM_OPS),
+    "macd_dif": _field("MACD DIF", "number", _NUM_OPS),
+    "macd_dea": _field("MACD DEA", "number", _NUM_OPS),
+    "kdj_j": _field("KDJ J 值", "number", _NUM_OPS),
+    "boll_width_pct60": _field("布林带宽 60 日分位", "number", _NUM_OPS, unit="%"),
+    "momentum_20": _field("20 日动量", "number", _NUM_OPS),
+    "momentum_60": _field("60 日动量", "number", _NUM_OPS),
+    "volatility_20": _field("20 日波动率", "number", _NUM_OPS),
+    # 估值 / 质量
+    "pe_ttm": _field("PE_TTM", "number", _NUM_OPS),
+    "pb": _field("PB", "number", _NUM_OPS),
+    "ps_ttm": _field("PS_TTM", "number", _NUM_OPS),
+    "dv_ttm": _field("股息率", "number", _NUM_OPS, unit="%"),
+    "composite_score": _field("综合评分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "value_score": _field("价值分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "quality_score": _field("质量分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "momentum_score": _field("动量分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "volatility_score": _field("波动分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "liquidity_score": _field("流动性分", "number", _NUM_OPS, minimum=0, maximum=10),
+    "sentiment_score": _field("情绪分", "number", _NUM_OPS, minimum=0, maximum=10),
+    # 维度
+    "industry_l1": _field("一级行业", "string", _STR_OPS),
+    "ownership": _field("所有制", "string", _STR_OPS),
+    "is_st": _field("是否 ST", "boolean", _BOOL_OPS),
+}
+
+
+def field_specs() -> list[dict[str, Any]]:
+    """返回按 key 排序的字段元数据（供前端渲染条件树）。"""
+    return [{"key": key, **spec} for key, spec in sorted(FIELD_SPECS.items())]
+
 
 @dataclass(frozen=True)
 class FieldRef:
@@ -736,6 +814,8 @@ def flatten_fields(node: "Condition | ConditionGroup") -> list[str]:
 
 __all__ = [
     "OP",
+    "FIELD_SPECS",
+    "field_specs",
     "Condition",
     "ConditionDetail",
     "ConditionGroup",

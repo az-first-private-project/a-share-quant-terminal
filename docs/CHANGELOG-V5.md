@@ -51,6 +51,19 @@
 
 ---
 
+## 0. V9 Batch D：条件树字段注册与预览编辑器（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 条件字段注册表（37 字段，含类型/算子/范围） | `backend/app/strategy/condition.py`（`FIELD_SPECS` / `field_specs`） |
+| 只读预览服务：复用横截面/统一过滤，不写 `stg_run` | `backend/app/strategy/preview.py` |
+| `GET /algo/fields`、`POST /algo/preview`（20s 超时、10 次/分钟） | `backend/app/api/v1/algo.py` |
+| 递归条件树编辑器 + JSON 双向视图 | `frontend/src/components/ConditionTreeEditor.tsx` |
+| 选股中心“自定义规则 · 条件树预览”入口 | `frontend/src/pages/AlgoCenter.tsx` |
+| 测试 | `backend/tests/test_condition_preview.py` |
+
+---
+
 ## 0. V5.1 增补（2026-10-22）
 
 本轮解决三件事：**容器首次启动空数据**、**历史估值缺失**、**板块/资金流无兜底**。

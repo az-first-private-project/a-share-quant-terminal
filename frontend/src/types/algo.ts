@@ -3,6 +3,46 @@
  */
 import type { Freshness, PaginationMeta } from './common'
 
+/** 条件树字段元数据（V9 P1-4） */
+export interface AlgoFieldSpec {
+  key: string
+  label: string
+  type: 'number' | 'integer' | 'string' | 'boolean' | 'enum' | string
+  operators: string[]
+  unit?: string
+  description?: string
+  min?: number | null
+  max?: number | null
+}
+
+export interface ConditionNode {
+  logic?: 'AND' | 'OR'
+  children?: ConditionNode[]
+  field?: string
+  op?: string
+  value?: unknown
+}
+
+export interface ConditionPreviewResponse {
+  trade_date: string
+  universe_count: number
+  hit_count: number
+  limit: number
+  conditions: Array<{
+    key: string | null
+    label: string | null
+    scope: string
+    passed_count: number
+    total: number
+  }>
+  data: Array<Record<string, unknown>>
+  param_fingerprint: string
+  elapsed_ms: number
+  data_ready: boolean
+  warning: string | null
+  writes: false
+}
+
 /** 参数值快照（run.params 中可能出现数字/字符串/布尔/null） */
 export type AlgoParamValue = number | string | boolean | null
 

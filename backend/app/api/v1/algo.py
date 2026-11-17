@@ -15,8 +15,11 @@ POST /api/v1/algo/{code}/refresh          忽略缓存重跑
 """
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
+import time
+from collections import deque
 from datetime import date
 from typing import Any, Optional
 
@@ -28,6 +31,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import InvalidParamError, NotFoundError, UnknownAlgoError
 from app.core.pagination import pagination_meta
 from app.db.session import get_db
+from app.strategy.condition import OP, field_specs, from_dict
+from app.strategy.preview import preview_condition_tree
 from app.strategy.runner import count_runs, get_run, list_runs, run_strategy
 from app.strategy.strategies import CANDIDATE_SPECS, SPECS, get_spec, list_specs
 
@@ -39,6 +44,33 @@ class WatchHitsRequest(BaseModel):
 
     codes: list[str] = Field(default_factory=list, description="1–6 位数字代码，去重后 ≤100")
     days: int = Field(10, ge=1, le=60, description="回看交易日数")
+
+
+class PreviewRequest(BaseModel):
+    """条件树预览体（只读，不写 stg_run）。"""
+
+    tree: dict[str, Any]
+    trade_date: date | None = None
+    limit: int = Field(20, ge=1, le=100)
+
+
+_PREVIEW_WINDOW_SEC = 60.0
+_PREVIEW_MAX_CALLS = 10
+_preview_calls: deque[float] = deque()
+
+
+def _check_preview_rate() -> None:
+    now = time.monotonic()
+    while _preview_calls and now - _preview_calls[0] >= _PREVIEW_WINDOW_SEC:
+        _preview_calls.popleft()
+    if len(_preview_calls) >= _PREVIEW_MAX_CALLS:
+        raise InvalidParamError(
+            "条件预览过于频繁，请稍后再试",
+            code="BUSY",
+            status_code=429,
+            suggestion="每分钟最多 10 次预览",
+        )
+    _preview_calls.append(now)
 
 
 # ============================================================
@@ -225,6 +257,39 @@ async def get_watchlist_hits(
 # ============================================================
 # 结果
 # ============================================================
+
+@router.get("/fields")
+async def get_algo_fields() -> dict:
+    """条件树可用字段、操作符与 AND/OR 逻辑（单一事实源：condition.py）。"""
+    return {
+        "fields": field_specs(),
+        "operators": sorted(OP),
+        "logic": ["AND", "OR"],
+    }
+
+
+@router.post("/preview")
+async def preview_algo_tree(
+    payload: PreviewRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """只读预览条件树命中数与前 N 行；不写 stg_run，不进入共识。"""
+    _check_preview_rate()
+    tree = from_dict(payload.tree)
+    try:
+        result = await asyncio.wait_for(
+            preview_condition_tree(db, tree, payload.trade_date, payload.limit),
+            timeout=20.0,
+        )
+    except asyncio.TimeoutError:
+        raise InvalidParamError(
+            "条件树预览超过 20 秒，请缩小范围或简化条件",
+            code="BUSY",
+            status_code=429,
+            suggestion="减少条件数量或去掉高成本的分位条件",
+        ) from None
+    return result
+
 
 @router.get("/{algo_code}")
 async def get_algo_result(

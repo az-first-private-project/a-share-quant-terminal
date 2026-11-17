@@ -253,6 +253,8 @@ api_router.include_router(watchlist.router)
 | GET | `/api/v1/algo/health` | 引擎自检 |
 | GET | `/api/v1/algo/ladder` | 策略天梯（5/10/20 日前瞻收益） |
 | GET | `/api/v1/algo/consensus` | 多策略共识榜 |
+| GET | `/api/v1/algo/fields` | 条件树字段/算子/逻辑清单 |
+| POST | `/api/v1/algo/preview` | 条件树只读预览（20s 超时、10 次/分钟） |
 | POST | `/api/v1/algo/hits` | 自选股近 N 日命中 |
 | GET | `/api/v1/algo/{algo_code}` | 执行/读取策略结果 |
 | POST | `/api/v1/algo/{algo_code}/refresh` | 忽略缓存重跑 |

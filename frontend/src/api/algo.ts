@@ -4,11 +4,14 @@
 import { downloadCsv, extractListPage, request } from './client'
 import type { ListPage } from '../types/common'
 import type {
+  AlgoFieldSpec,
   AlgoMeta,
   AlgoParams,
   AlgoResult,
   AlgoRunDetail,
   AlgoRunSummary,
+  ConditionNode,
+  ConditionPreviewResponse,
   ConsensusResponse,
   LadderResponse,
   WatchHitsResponse,
@@ -94,6 +97,29 @@ export function downloadAlgoCsv(
     },
     `${algoCode}_export.csv`,
   )
+}
+
+/** 条件树字段清单（V9 P1-4） */
+export function fetchAlgoFields(): Promise<{
+  fields: AlgoFieldSpec[]
+  operators: string[]
+  logic: string[]
+}> {
+  return request('/algo/fields')
+}
+
+/** 条件树只读预览（不写 stg_run） */
+export function previewConditionTree(payload: {
+  tree: ConditionNode
+  trade_date?: string
+  limit?: number
+}): Promise<ConditionPreviewResponse> {
+  return request('/algo/preview', {
+    method: 'POST',
+    body: payload,
+    timeoutMs: 25_000,
+    retry: 0,
+  })
 }
 
 /**

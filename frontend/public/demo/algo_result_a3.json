@@ -3,12 +3,12 @@
   "algo_name": "央企 × 综合评分TOP",
   "trade_date": "2026-11-17",
   "run": {
-    "run_id": "51202193-862f-4dcd-95a3-f016f85986dc",
-    "created_at": "2026-11-17T05:24:00.627819+00:00",
-    "elapsed_ms": 53,
+    "run_id": "a8e7128c-49fe-4e43-b8c5-b772913f0e21",
+    "created_at": "2026-11-17T05:29:43.420601+00:00",
+    "elapsed_ms": 57,
     "universe_count": 42,
     "signal_count": 6,
-    "data_version": "2026-11-17:b478f921075cb254",
+    "data_version": "2026-11-17:9c250c430ba030a0",
     "signal_schema": 3,
     "params": {
       "limit": 20,

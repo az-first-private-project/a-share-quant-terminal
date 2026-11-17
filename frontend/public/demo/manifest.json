@@ -10,6 +10,7 @@
     "market_indices.json",
     "market_sectors.json",
     "algo_list.json",
+    "algo_fields.json",
     "algo_ladder.json",
     "algo_consensus.json",
     "algo_result_a3.json",

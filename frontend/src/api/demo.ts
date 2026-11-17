@@ -20,6 +20,7 @@ const EXACT: Record<string, string> = {
   '/market/bull-bear': 'market_bull_bear.json',
   '/market/sector-scores/sparkline': 'sector_sparkline.json',
   '/algo/list': 'algo_list.json',
+  '/algo/fields': 'algo_fields.json',
   '/algo/ladder': 'algo_ladder.json',
   '/algo/consensus': 'algo_consensus.json',
   '/algo/a3': 'algo_result_a3.json',

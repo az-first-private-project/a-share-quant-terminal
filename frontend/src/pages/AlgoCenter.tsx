@@ -26,6 +26,7 @@ import PageHeader from '../components/PageHeader'
 import Disclaimer from '../components/Disclaimer'
 import BacktestPanel from '../components/BacktestPanel'
 import OosPanel from '../components/OosPanel'
+import ConditionTreeEditor from '../components/ConditionTreeEditor'
 import StrategyLadder from '../components/StrategyLadder'
 import ConsensusBoard from '../components/ConsensusBoard'
 import { EmptyState, ErrorState, LoadingState } from '../components/StateViews'
@@ -685,6 +686,17 @@ export default function AlgoCenter() {
 
       {/* ========== 多策略共识榜（默认折叠） ========== */}
       <ConsensusBoard onOpenAlgo={handleLadderSelect} />
+
+      {/* ========== 自定义规则（条件树只读预览） ========== */}
+      <details className="card p-4 sm:p-5">
+        <summary className="cursor-pointer text-[13px] font-semibold tracking-wide">
+          自定义规则 · 条件树预览
+          <span className="ml-2 text-[11px] font-normal text-muted-foreground">只读，不产生 run</span>
+        </summary>
+        <div className="mt-3">
+          <ConditionTreeEditor />
+        </div>
+      </details>
 
       {/* ========== 参数面板 + 结果区 ========== */}
       {selectedAlgo && (

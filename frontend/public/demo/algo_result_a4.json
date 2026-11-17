@@ -3,12 +3,12 @@
   "algo_name": "高股息质量 × 低估值",
   "trade_date": "2026-11-17",
   "run": {
-    "run_id": "461db189-6481-4580-8406-fa9f11312752",
-    "created_at": "2026-11-17T05:24:00.699517+00:00",
-    "elapsed_ms": 29,
+    "run_id": "314d35bd-011f-4917-9af2-24b296b147f5",
+    "created_at": "2026-11-17T05:29:43.498690+00:00",
+    "elapsed_ms": 34,
     "universe_count": 42,
     "signal_count": 0,
-    "data_version": "2026-11-17:b478f921075cb254",
+    "data_version": "2026-11-17:9c250c430ba030a0",
     "signal_schema": 3,
     "params": {
       "limit": 20,

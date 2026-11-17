@@ -77,6 +77,7 @@ EXPORTS: list[tuple[str, str]] = [
     ("market_sectors.json", "/api/v1/market/sectors"),
     ("market_bull_bear.json", "/api/v1/market/bull-bear"),
     ("algo_list.json", "/api/v1/algo/list?include_observation=true"),
+    ("algo_fields.json", "/api/v1/algo/fields"),
     ("algo_ladder.json", "/api/v1/algo/ladder?window=60&horizon=20"),
     ("algo_consensus.json", "/api/v1/algo/consensus?min_count=2&limit=100&offset=0"),
     ("algo_result_a3.json", "/api/v1/algo/a3"),

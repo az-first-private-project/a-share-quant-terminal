@@ -303,6 +303,8 @@ python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 | GET | `/api/v1/algo/{code}` | 执行/读取策略结果（含 run 元信息） |
 | GET | `/api/v1/algo/ladder` | 策略天梯（5/10/20 日前瞻收益） |
 | GET | `/api/v1/algo/consensus` | 多策略共识榜 |
+| GET | `/api/v1/algo/fields` | 条件树字段/算子清单 |
+| POST | `/api/v1/algo/preview` | 条件树只读预览（不写 run） |
 | POST | `/api/v1/backtest/{code}` | 创建回测（后台执行） |
 | POST | `/api/v1/backtest/{code}/grid` | 参数敏感性矩阵 |
 | GET | `/api/v1/backtest/{code}/oos` | 样本外 walk-forward 结果（最新或指定 `oos_id`） |
