@@ -119,6 +119,7 @@ app = FastAPI(
 | `CORS_ORIGINS` | `*` | |
 | `PUSH_*` / `WECOM_WEBHOOK_URL` | 关闭 | 企业微信推送 |
 | `OBSERVATION_ALGOS` / `PUSH_OBSERVATION` | 空 / `0` | 观察候选策略 |
+| `PUSH_WATCHLIST_ONLY` | `0` | 1 = 只推送自选命中；0 = 推送全部并标注 `[自选]` |
 | `DEEPSEEK_API_KEY` / `DEEPSEEK_MODEL` / `LLM_ENABLED` | 空 / `deepseek-chat` / 有 key 即开 | AI 日报 |
 
 ---

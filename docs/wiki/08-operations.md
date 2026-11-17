@@ -108,6 +108,7 @@ python scripts/pipeline_cli.py algos
 | `PUSH_ENABLED` / `WECOM_WEBHOOK_URL` | 0 / 空 | 企业微信推送 |
 | `PUSH_ALGOS` / `PUSH_TOP_N` / `PUSH_MODE` | 空 / 10 / always | 推送范围 |
 | `OBSERVATION_ALGOS` / `PUSH_OBSERVATION` | 空 / 0 | 观察候选 |
+| `PUSH_WATCHLIST_ONLY` | 0 | 1 = 只推自选命中；0 = 全部并标 `[自选]` |
 | `PAPER_ENABLED_ALGOS` | 空 = 全部 | 纸面组合 |
 | `CORS_ORIGINS` | `*` | 收紧生产来源 |
 | `LOG_LEVEL` / `LOG_JSON` | INFO / 0 | 日志 |
