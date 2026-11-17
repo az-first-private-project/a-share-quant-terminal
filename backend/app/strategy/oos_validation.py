@@ -19,11 +19,16 @@ from __future__ import annotations
 import calendar
 import logging
 import statistics
+import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Any, Callable, Mapping, Sequence
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.errors import InvalidParamError
+from app.db.models.strategy import OOSRun
 from app.strategy.backtest import run_backtest
 from app.strategy.metrics import METRIC_KEYS
 
@@ -448,10 +453,155 @@ def summarize_oos(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     }
 
 
+async def save_oos_rows(
+    db: AsyncSession,
+    oos_id: str,
+    algo_code: str,
+    folds: Sequence[OOSFold],
+    results: Sequence[Mapping[str, Any]],
+    params: Mapping[str, Any] | None = None,
+) -> None:
+    """把 ``run_oos`` 的逐折结果写入 ``stg_oos_run``（只 flush，不 commit）。"""
+    from app.strategy.runner import SIGNAL_SCHEMA_VERSION, params_fingerprint
+
+    oos_uuid = uuid.UUID(str(oos_id))
+    fingerprint = params_fingerprint(algo_code, dict(params or {}))
+    by_fold = {
+        int(item.get("fold_index")): item
+        for item in results
+        if item.get("fold_index") is not None
+    }
+    for fold in folds:
+        payload = by_fold.get(fold.fold_index) or {}
+        test = payload.get("test") if isinstance(payload.get("test"), Mapping) else {}
+        train = payload.get("train") if isinstance(payload.get("train"), Mapping) else None
+        status = "success" if test.get("status") == "success" else "failed"
+        error = None if status == "success" else str(test.get("error") or "")[:2000] or None
+        row = await db.get(OOSRun, (oos_uuid, fold.fold_index))
+        if row is None:
+            row = OOSRun(
+                id=oos_uuid,
+                fold_index=fold.fold_index,
+                algo_code=algo_code,
+                train_start=fold.train_start,
+                train_end=fold.train_end,
+                test_start=fold.test_start,
+                test_end=fold.test_end,
+                window_type=fold.window_type,
+                degraded=fold.degraded,
+                status=status,
+                metrics={"test": dict(test.get("metrics") or {}), "train": (
+                    dict(train.get("metrics") or {}) if train else None
+                )},
+                params=dict(params or {}),
+                param_fingerprint=fingerprint,
+                signal_schema=int(SIGNAL_SCHEMA_VERSION),
+                error=error,
+            )
+            db.add(row)
+        else:
+            row.window_type = fold.window_type
+            row.degraded = fold.degraded
+            row.status = status
+            row.metrics = {
+                "test": dict(test.get("metrics") or {}),
+                "train": dict(train.get("metrics") or {}) if train else None,
+            }
+            row.params = dict(params or {})
+            row.param_fingerprint = fingerprint
+            row.signal_schema = int(SIGNAL_SCHEMA_VERSION)
+            row.error = error
+    await db.flush()
+
+
+def _iso(value: Any) -> str | None:
+    return value.isoformat() if value is not None else None
+
+
+async def load_oos_rows(
+    db: AsyncSession,
+    algo_code: str,
+    oos_id: str | None = None,
+) -> dict[str, Any] | None:
+    """读取一组 OOS 结果；``oos_id`` 为空时取该策略最新一组。"""
+    if oos_id:
+        group_id = uuid.UUID(str(oos_id))
+    else:
+        group_id = (
+            await db.execute(
+                select(OOSRun.id)
+                .where(OOSRun.algo_code == algo_code)
+                .order_by(OOSRun.created_at.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+        if group_id is None:
+            return None
+
+    rows = (
+        await db.execute(
+            select(OOSRun)
+            .where(OOSRun.id == group_id)
+            .where(OOSRun.algo_code == algo_code)
+            .order_by(OOSRun.fold_index.asc())
+        )
+    ).scalars().all()
+    if not rows:
+        return None
+
+    folds: list[dict[str, Any]] = []
+    for row in rows:
+        metrics = row.metrics or {}
+        test_metrics = dict(metrics.get("test") or {})
+        train_metrics = metrics.get("train")
+        folds.append(
+            {
+                "fold_index": int(row.fold_index),
+                "train_start": _iso(row.train_start),
+                "train_end": _iso(row.train_end),
+                "test_start": _iso(row.test_start),
+                "test_end": _iso(row.test_end),
+                "window_type": row.window_type,
+                "degraded": bool(row.degraded),
+                "train": {
+                    "status": row.status,
+                    "metrics": dict(train_metrics or {}),
+                },
+                "test": {
+                    "status": row.status,
+                    "metrics": test_metrics,
+                    "error": row.error,
+                },
+            }
+        )
+
+    statuses = {row.status for row in rows}
+    if "running" in statuses or "pending" in statuses:
+        status = "running"
+    elif "failed" in statuses:
+        status = "failed"
+    else:
+        status = "success"
+    first = rows[0]
+    return {
+        "algo": algo_code,
+        "oos_id": str(group_id),
+        "status": status,
+        "window_type": first.window_type,
+        "degraded": any(bool(row.degraded) for row in rows),
+        "params": dict(first.params or {}),
+        "created_at": _iso(first.created_at),
+        "folds": folds,
+        "summary": summarize_oos(folds),
+    }
+
+
 __all__ = [
     "OOSFold",
     "build_folds",
     "run_oos",
     "run_single_window",
     "summarize_oos",
+    "save_oos_rows",
+    "load_oos_rows",
 ]

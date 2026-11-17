@@ -271,6 +271,8 @@ api_router.include_router(watchlist.router)
 | POST | `/api/v1/backtest/{algo_code}/grid` | 参数敏感性矩阵 |
 | GET | `/api/v1/backtest/grid/{grid_id}` | 矩阵状态与每格指标 |
 | POST | `/api/v1/backtest/grid/{grid_id}/retry` | 重试失败格 |
+| POST | `/api/v1/backtest/{algo_code}/oos` | 创建样本外 walk-forward（后台逐折执行） |
+| GET | `/api/v1/backtest/{algo_code}/oos?oos_id=` | 读取样本外结果（缺省最新一组） |
 
 #### 纸面 / 自选 / 元信息 / 管理
 

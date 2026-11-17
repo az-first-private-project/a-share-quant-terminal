@@ -25,6 +25,7 @@ import RunMetaPanel, { type RunSource } from '../components/RunMetaPanel'
 import PageHeader from '../components/PageHeader'
 import Disclaimer from '../components/Disclaimer'
 import BacktestPanel from '../components/BacktestPanel'
+import OosPanel from '../components/OosPanel'
 import StrategyLadder from '../components/StrategyLadder'
 import ConsensusBoard from '../components/ConsensusBoard'
 import { EmptyState, ErrorState, LoadingState } from '../components/StateViews'
@@ -782,6 +783,15 @@ export default function AlgoCenter() {
           panelDirty={panelDiff.dirty}
           changedKeys={panelDiff.changedKeys}
           resultRunId={result?.run?.run_id ?? null}
+        />
+      )}
+
+      {/* ========== 样本外验证（与样本内同页并列） ========== */}
+      {selectedAlgo && (
+        <OosPanel
+          key={`oos-${selectedAlgo.algo_code}`}
+          algoCode={selectedAlgo.algo_code}
+          strategyParams={params}
         />
       )}
 

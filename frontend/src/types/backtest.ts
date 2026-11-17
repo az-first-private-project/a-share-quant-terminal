@@ -106,6 +106,46 @@ export interface BacktestTradesResponse {
   items: BacktestTrade[]
 }
 
+/** 样本外单折（V9 P0-2） */
+export interface OOSFold {
+  fold_index: number
+  train_start: string
+  train_end: string
+  test_start: string
+  test_end: string
+  window_type: string
+  degraded: boolean
+  train?: { status: string; metrics: Partial<BacktestMetrics> }
+  test: { status: string; metrics: Partial<BacktestMetrics>; error?: string | null }
+}
+
+/** GET /api/v1/backtest/{algo_code}/oos 响应 */
+export interface OOSResult {
+  algo: string
+  oos_id: string
+  status: 'pending' | 'running' | 'success' | 'failed' | string
+  window_type: string
+  degraded: boolean
+  params: Record<string, AlgoParamValue>
+  created_at: string | null
+  folds: OOSFold[]
+  summary: Record<string, number | string | boolean | null>
+}
+
+/** POST /api/v1/backtest/{algo_code}/oos 响应 */
+export interface OOSCreateResponse {
+  oos_id: string
+  algo: string
+  status: string
+  requested_start: string
+  effective_start: string
+  start_trimmed: boolean
+  window_type: string
+  degraded: boolean
+  folds: Array<Record<string, unknown>>
+  poll: string
+}
+
 /** POST /api/v1/backtest/{algo_code} 响应（6.1，异步任务） */
 export interface BacktestJobResponse {
   bt_id: string

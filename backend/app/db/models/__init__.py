@@ -17,7 +17,7 @@ from app.db.models.news import CrawlLog, NewsArticle, NewsSource
 from app.db.models.push import PushLog
 from app.db.models.state import WatchlistState
 from app.db.models.strategy import (
-    BacktestGrid, BacktestGridCell, BacktestRun, PaperNav, PaperPortfolio,
+    BacktestGrid, BacktestGridCell, BacktestRun, OOSRun, PaperNav, PaperPortfolio,
     StgRun, StgSignal, StgSignalPerf,
 )
 
@@ -35,7 +35,7 @@ __all__ = [
     "TradeCalendar", "MetaDataQuality", "IngestJob", "AlgoMeta",
     # 策略
     "StgRun", "StgSignal", "StgSignalPerf", "BacktestRun",
-    "BacktestGrid", "BacktestGridCell",
+    "BacktestGrid", "BacktestGridCell", "OOSRun",
     "PaperPortfolio", "PaperNav",
     # 推送
     "PushLog",

@@ -24,6 +24,20 @@
 
 ---
 
+## 0. V9 Batch B：样本外验证持久化与 API/UI（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 新增 `stg_oos_run` 表（组 ID + fold 主键，JSONB metrics/params） | `backend/app/db/models/strategy.py`、`alembic/versions/20261117_0015_oos_run.py` |
+| OOS 结果落库/读取 | `backend/app/strategy/oos_validation.py`（`save_oos_rows` / `load_oos_rows`） |
+| CLI 默认落库，支持 `--no-save` | `backend/scripts/oos_cli.py` |
+| GET/POST `/api/v1/backtest/{code}/oos`，后台逐折执行；同策略 pending/running 返回 429 | `backend/app/api/v1/backtest.py` |
+| 选股中心“样本外验证 · Walk-Forward”面板（折表、汇总、degraded 徽标） | `frontend/src/components/OosPanel.tsx`、`hooks/useOos.ts`、`AlgoCenter.tsx` |
+| 集成测试 | `backend/tests/integration/test_oos_run.py` |
+| 证据/API/Wiki 同步 | `docs/evidence/V9-oos-validation.md`、`docs/wiki/02-backend-api.md`、`06-strategy-backtest.md`、`README.md` |
+
+---
+
 ## 0. V5.1 增补（2026-10-22）
 
 本轮解决三件事：**容器首次启动空数据**、**历史估值缺失**、**板块/资金流无兜底**。

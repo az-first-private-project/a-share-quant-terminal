@@ -374,11 +374,15 @@ benchmark_return, excess_return, volatility
 | 数据不足 | 自动降级为 expanding window，每个 fold 标 `window_type=expanding` / `degraded=true` |
 | 结果 | 所有 fold 原样返回；单窗失败记录 `status=failed`，不中断整轮 |
 | 汇总 | 测试窗年化/超额/Sharpe/回撤的均值、中位数与正超额折数 |
+| 持久化 | `stg_oos_run`（迁移 `0015_oos_run`）；同一 `id` 为一组，`(id, fold_index)` 唯一 |
+| API | `POST /api/v1/backtest/{code}/oos` 后台执行；`GET .../oos?oos_id=` 读取 |
+| UI | 选股中心「样本外验证 · Walk-Forward」面板，与回测同页并列 |
 
 ```bash
 cd backend
 python scripts/oos_cli.py --algo a3 --start 2024-01-02 --end 2026-11-16
 python scripts/oos_cli.py --algo a4 --start 2024-01-02 --end 2026-11-16 --no-train --param pe_max=12
+# 默认写入 stg_oos_run；只输出 JSON 时加 --no-save
 ```
 
 实测结论与数据限制见 [V9-oos-validation.md](../evidence/V9-oos-validation.md)。注意：2022–2023 因缺少全市场技术指标与评分，暂不可做真样本外；不得用稀疏数据补算冒充 OOS。

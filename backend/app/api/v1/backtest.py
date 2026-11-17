@@ -16,7 +16,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import BACKTEST
@@ -25,12 +25,14 @@ from app.core.errors import (
 )
 from app.core.logging import get_logger
 from app.db.models import (
-    BacktestRun, DimStock, FactFeatureDaily, FactStockDaily, FactStockScoreDaily,
+    BacktestRun, DimStock, FactFeatureDaily, FactStockDaily, FactStockScoreDaily, OOSRun,
 )
-from app.db.session import get_db
+from app.db.session import AsyncSessionLocal, get_db
 from app.engine.backtest_view import build_backtest_extras
 from app.strategy.backtest import run_backtest
 from app.strategy.grid import create_grid, execute_grid, get_grid, requeue_failed_cells
+from app.strategy.oos_validation import build_folds, load_oos_rows, run_oos, save_oos_rows
+from app.strategy.runner import SIGNAL_SCHEMA_VERSION, params_fingerprint
 from app.strategy.strategies import CANDIDATE_SPECS, SPECS, get_spec
 
 router = APIRouter(prefix="/api/v1/backtest", tags=["回测"])
@@ -46,6 +48,19 @@ class GridRequest(BaseModel):
     end_date: date
     rebalance_days: list[int] = Field(..., min_length=1, max_length=10)
     max_positions: list[int] = Field(..., min_length=1, max_length=10)
+    strategy: dict[str, Any] | None = None
+
+
+class OOSRequest(BaseModel):
+    """样本外 walk-forward 入参（V9 P0-2）。"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    start_date: date
+    end_date: date
+    train_months: int = Field(24, ge=1, le=60)
+    test_months: int = Field(6, ge=1, le=24)
+    step_months: int = Field(6, ge=1, le=24)
     strategy: dict[str, Any] | None = None
 
 #: B1–B5 用于判断特征回填起点的代表列（列名不能参数化，这里显式映射）
@@ -200,6 +215,49 @@ async def execute_backtest(
         )
     except Exception:  # noqa: BLE001 - 失败已写入 backtest_run.status=failed
         logger.exception("后台回测失败 bt_id=%s algo=%s", bt_id, algo_code)
+
+
+async def execute_oos(
+    *,
+    oos_id: str,
+    algo_code: str,
+    folds,
+    strategy_params: dict,
+    bt_params: dict,
+) -> None:
+    """后台执行 walk-forward；逐折落库，单折失败不中断整组。"""
+    group_id = uuid.UUID(str(oos_id))
+    try:
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                update(OOSRun)
+                .where(OOSRun.id == group_id)
+                .values(status="running", error=None)
+            )
+            await db.commit()
+            result = await run_oos(
+                algo_code,
+                folds,
+                strategy_params=strategy_params,
+                bt_params=bt_params,
+                include_train=True,
+            )
+            await save_oos_rows(
+                db, oos_id, algo_code, folds, result["folds"], strategy_params
+            )
+            await db.commit()
+    except Exception as exc:  # noqa: BLE001 - 后台任务不能向事件循环抛
+        logger.exception("后台样本外验证失败 oos_id=%s algo=%s", oos_id, algo_code)
+        try:
+            async with AsyncSessionLocal() as db:
+                await db.execute(
+                    update(OOSRun)
+                    .where(OOSRun.id == group_id)
+                    .values(status="failed", error=f"{type(exc).__name__}: {str(exc)[:500]}")
+                )
+                await db.commit()
+        except Exception:  # pragma: no cover - 标记失败再失败只记日志
+            logger.exception("标记 OOS failed 失败 oos_id=%s", oos_id)
 
 
 @router.post("/{algo_code}")
@@ -398,6 +456,146 @@ async def retry_backtest_grid(
 async def get_backtest_grid(grid_id: str, db: AsyncSession = Depends(get_db)) -> dict:
     """矩阵状态与每格指标摘要（只读，不重算任何回测）。"""
     return await get_grid(db, grid_id)
+
+
+@router.get("/{algo_code}/oos")
+async def get_oos_result(
+    algo_code: str,
+    oos_id: Optional[str] = Query(None, description="OOS 批次 ID；缺省取最新一组"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """读取样本外 walk-forward 结果（只读，不重算）。"""
+    if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
+        raise UnknownAlgoError(
+            f"未知策略: {algo_code}", detail={"available": sorted(SPECS.keys())}
+        )
+    payload = await load_oos_rows(db, algo_code, oos_id)
+    if payload is None:
+        raise NotFoundError(
+            f"策略 {algo_code} 尚无可用的样本外结果",
+            detail={"algo": algo_code, "oos_id": oos_id},
+        )
+    return payload
+
+
+@router.post("/{algo_code}/oos")
+async def create_oos_result(
+    algo_code: str,
+    payload: OOSRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """创建样本外 walk-forward 任务并立即返回；结果由 GET 轮询。"""
+    if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
+        raise UnknownAlgoError(
+            f"未知策略: {algo_code}", detail={"available": sorted(SPECS.keys())}
+        )
+    if payload.start_date >= payload.end_date:
+        raise InvalidParamError("start_date 必须早于 end_date")
+    if (payload.end_date - payload.start_date).days > 365 * 6:
+        raise InvalidParamError("样本外区间不能超过 6 年")
+    if payload.step_months < payload.test_months:
+        raise InvalidParamError("step_months 必须大于等于 test_months，避免测试窗重叠")
+
+    active = (
+        await db.execute(
+            select(func.count())
+            .select_from(OOSRun)
+            .where(OOSRun.algo_code == algo_code)
+            .where(OOSRun.status.in_(("pending", "running")))
+        )
+    ).scalar_one()
+    if int(active or 0) > 0:
+        raise InvalidParamError(
+            f"策略 {algo_code} 已有样本外任务在排队/运行中",
+            code="BUSY",
+            status_code=429,
+            suggestion="等待当前任务完成后再试",
+        )
+
+    requested_start = payload.start_date
+    start = requested_start
+    data_start = await _data_start(algo_code, db)
+    trimmed = False
+    if data_start and data_start > start:
+        start = data_start
+        trimmed = True
+        if start >= payload.end_date:
+            raise InvalidParamError(
+                f"数据只从 {data_start} 开始，样本外区间内没有可用数据",
+                detail={"effective_start": data_start.isoformat()},
+            )
+
+    strategy_params = dict(payload.strategy or {})
+    folds = build_folds(
+        start,
+        payload.end_date,
+        train_months=payload.train_months,
+        test_months=payload.test_months,
+        step_months=payload.step_months,
+    )
+    if not folds:
+        raise InvalidParamError(
+            "当前区间无法切出任何样本外折，请放宽区间或缩短训练窗",
+            detail={
+                "effective_start": start.isoformat(),
+                "end": payload.end_date.isoformat(),
+                "train_months": payload.train_months,
+                "test_months": payload.test_months,
+            },
+        )
+
+    oos_uuid = uuid.uuid4()
+    oos_id = str(oos_uuid)
+    fingerprint = params_fingerprint(algo_code, strategy_params)
+    for fold in folds:
+        db.add(
+            OOSRun(
+                id=oos_uuid,
+                fold_index=fold.fold_index,
+                algo_code=algo_code,
+                train_start=fold.train_start,
+                train_end=fold.train_end,
+                test_start=fold.test_start,
+                test_end=fold.test_end,
+                window_type=fold.window_type,
+                degraded=fold.degraded,
+                status="pending",
+                params=strategy_params,
+                param_fingerprint=fingerprint,
+                signal_schema=int(SIGNAL_SCHEMA_VERSION),
+            )
+        )
+    await db.commit()
+
+    bt_params = {
+        "rebalance_days": int(BACKTEST.rebalance_days),
+        "max_positions": int(BACKTEST.max_positions),
+        "benchmark": str(BACKTEST.benchmark_code),
+        "commission": float(BACKTEST.commission_rate),
+        "stamp_tax": float(BACKTEST.stamp_tax_rate),
+        "slippage": float(BACKTEST.slippage_rate),
+    }
+    background_tasks.add_task(
+        execute_oos,
+        oos_id=oos_id,
+        algo_code=algo_code,
+        folds=folds,
+        strategy_params=strategy_params,
+        bt_params=bt_params,
+    )
+    return {
+        "oos_id": oos_id,
+        "algo": algo_code,
+        "status": "queued",
+        "requested_start": requested_start.isoformat(),
+        "effective_start": start.isoformat(),
+        "start_trimmed": trimmed,
+        "window_type": folds[0].window_type,
+        "degraded": any(fold.degraded for fold in folds),
+        "folds": [fold.as_dict() for fold in folds],
+        "poll": f"/api/v1/backtest/{algo_code}/oos?oos_id={oos_id}",
+    }
 
 
 @router.get("/{bt_id}")

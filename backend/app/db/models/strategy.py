@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import uuid
 from datetime import date, datetime
 from typing import Any
 
@@ -15,7 +16,7 @@ from sqlalchemy import (
     Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, PrimaryKeyConstraint,
     SmallInteger, String, Text, desc,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, utcnow
@@ -243,8 +244,45 @@ class PaperNav(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class OOSRun(Base):
+    """样本外 walk-forward 单折结果（V9 P0-2）。
+
+    同一 ``id`` 是整组 OOS 的批次 ID；``(id, fold_index)`` 唯一。
+    ``metrics`` 存 ``{"test": {...}, "train": {...}}``，便于 API 同页并列展示。
+    """
+
+    __tablename__ = "stg_oos_run"
+    __table_args__ = (
+        PrimaryKeyConstraint("id", "fold_index", name="pk_stg_oos_run"),
+        Index("ix_stg_oos_run_algo_created", "algo_code", "created_at"),
+        Index("ix_stg_oos_run_status", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    algo_code: Mapped[str] = mapped_column(String(16), nullable=False)
+
+    train_start: Mapped[date] = mapped_column(Date, nullable=False)
+    train_end: Mapped[date] = mapped_column(Date, nullable=False)
+    test_start: Mapped[date] = mapped_column(Date, nullable=False)
+    test_end: Mapped[date] = mapped_column(Date, nullable=False)
+    window_type: Mapped[str] = mapped_column(String(16), default="fixed")
+    degraded: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    metrics: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB, comment='{"test": {...}, "train": {...}}'
+    )
+    params: Mapped[dict[str, Any] | None] = mapped_column(JSONB, comment="策略参数快照")
+    param_fingerprint: Mapped[str | None] = mapped_column(String(32))
+    signal_schema: Mapped[int] = mapped_column(SmallInteger, default=3)
+    status: Mapped[str] = mapped_column(String(16), default="pending",
+                                        comment="pending/running/success/failed")
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 __all__ = [
     "StgRun", "StgSignal", "StgSignalPerf", "BacktestRun",
     "BacktestGrid", "BacktestGridCell",
-    "PaperPortfolio", "PaperNav",
+    "PaperPortfolio", "PaperNav", "OOSRun",
 ]

@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import json
 import sys
+import uuid
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -41,6 +42,7 @@ from app.strategy.oos_validation import (  # noqa: E402
     build_folds,
     run_oos,
     run_single_window,
+    save_oos_rows,
 )
 
 
@@ -252,9 +254,26 @@ async def _run(args) -> int:
                 include_train=not args.no_train,
                 progress=progress,
             )
+            oos_id = str(uuid.uuid4())
+            persisted = False
+            save_error = None
+            if not args.no_save:
+                try:
+                    await save_oos_rows(
+                        db, oos_id, args.algo, folds, result["folds"], params
+                    )
+                    await db.commit()
+                    persisted = True
+                except Exception as exc:  # noqa: BLE001 - 落库失败不应丢失验证结果
+                    await db.rollback()
+                    save_error = f"{type(exc).__name__}: {str(exc)[:200]}"
+                    print(f"[warn] OOS 结果落库失败: {save_error}", file=sys.stderr)
             payload = {
                 "mode": "walk_forward",
                 "data_audit": audit,
+                "oos_id": oos_id,
+                "persisted": persisted,
+                "save_error": save_error,
                 **result,
             }
 
@@ -286,6 +305,9 @@ def main() -> int:
         help="策略参数覆盖，可重复：--param pe_max=12",
     )
     parser.add_argument("--no-train", action="store_true", help="只跑测试窗")
+    parser.add_argument(
+        "--no-save", action="store_true", help="只输出结果，不写 stg_oos_run"
+    )
     parser.add_argument(
         "--single-window",
         action="store_true",

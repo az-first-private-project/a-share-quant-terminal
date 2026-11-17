@@ -305,6 +305,8 @@ python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 | GET | `/api/v1/algo/consensus` | 多策略共识榜 |
 | POST | `/api/v1/backtest/{code}` | 创建回测（后台执行） |
 | POST | `/api/v1/backtest/{code}/grid` | 参数敏感性矩阵 |
+| GET | `/api/v1/backtest/{code}/oos` | 样本外 walk-forward 结果（最新或指定 `oos_id`） |
+| POST | `/api/v1/backtest/{code}/oos` | 创建样本外任务（后台逐折执行） |
 | GET | `/api/v1/paper/portfolios` | 纸面组合列表 |
 | GET/PUT | `/api/v1/watchlist` | 自选状态（单租户） |
 | GET | `/api/v1/meta/freshness` | 数据集新鲜度 |

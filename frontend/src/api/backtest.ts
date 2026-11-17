@@ -1,7 +1,7 @@
 /**
  * 回测 API（契约第 6 节）
  */
-import { downloadCsv, request } from './client'
+import { ApiError, downloadCsv, request } from './client'
 import type {
   BacktestGridCreateResponse,
   BacktestGridDetail,
@@ -12,6 +12,8 @@ import type {
   BacktestResult,
   BacktestStatusResponse,
   BacktestTradesResponse,
+  OOSCreateResponse,
+  OOSResult,
 } from '../types/backtest'
 
 /**
@@ -60,6 +62,41 @@ export function fetchBacktestTrades(
 /** 导出净值曲线 CSV（6.2） */
 export function downloadBacktestCsv(btId: string): Promise<void> {
   return downloadCsv(`/backtest/${encodeURIComponent(btId)}/export.csv`, undefined, `backtest_${btId}.csv`)
+}
+
+/** 读取样本外 walk-forward 结果；无记录时返回 null（空态，不当作错误） */
+export async function fetchOos(
+  algoCode: string,
+  oosId?: string | null,
+): Promise<OOSResult | null> {
+  try {
+    return await request<OOSResult>(`/backtest/${encodeURIComponent(algoCode)}/oos`, {
+      query: { oos_id: oosId || undefined },
+    })
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null
+    }
+    throw error
+  }
+}
+
+/** 创建样本外 walk-forward 任务 */
+export function runOos(
+  algoCode: string,
+  payload: {
+    start_date: string
+    end_date: string
+    train_months?: number
+    test_months?: number
+    step_months?: number
+    strategy?: Record<string, string | number | undefined>
+  },
+): Promise<OOSCreateResponse> {
+  return request<OOSCreateResponse>(`/backtest/${encodeURIComponent(algoCode)}/oos`, {
+    method: 'POST',
+    body: payload,
+  })
 }
 
 /** 建立参数敏感性矩阵（T10）；后台逐格执行，立即返回 grid_id */

@@ -4,7 +4,8 @@
 > 数据截止：2026-11-16（个股日线、评分均到该日）
 > 关联基线：[V8-backtest-baseline.md](V8-backtest-baseline.md)
 > 实现：`backend/app/strategy/oos_validation.py` + `backend/scripts/oos_cli.py`
-> 性质：**只读验证**。未修改 `SPECS`、策略参数默认值、回测成交规则与费率。
+> 持久化/API/UI：`stg_oos_run`（迁移 `0015_oos_run`）、`/api/v1/backtest/{code}/oos`、选股中心“样本外验证”面板
+> 性质：**验证只读**。未修改 `SPECS`、策略参数默认值、回测成交规则与费率。
 
 ---
 
@@ -191,6 +192,16 @@ cd backend
 | A4 `pe_max=12` 测试窗 | `2ca6bed5-69f6-48cd-ba83-a94557caca68` | `ad1e91bd-3bd0-4d40-bfaf-1ed265c81493` | `3076f154-bb00-46a5-adc4-3e94fdcb84db` | `d04ae541-224f-49b4-bdb0-95ed5210a6fd` |
 
 > `artifacts/` 被 `.gitignore` 忽略；本报告已把全部指标写入文档。需要原始 JSON 时按上述命令重跑即可。
+
+---
+
+## 7.1 API / UI 入口（2026-11-17 补全）
+
+- `POST /api/v1/backtest/{code}/oos`：后台按折执行，先写 `pending`，逐折更新 `success/failed`；同一策略已有 `pending/running` 组时返回 429 `BUSY`。
+- `GET /api/v1/backtest/{code}/oos`：默认返回最新一组，可用 `?oos_id=` 指定；无记录返回 404 统一错误体。
+- 选股中心「样本外验证 · Walk-Forward」面板：展示训练/测试区间、年化、超额、Sharpe、最大回撤、成交笔数与汇总；`degraded` 显式标注。
+- `backend/scripts/oos_cli.py` 默认把结果写入 `stg_oos_run`；`--no-save` 只输出 JSON。
+- 迁移：`20261117_0015_oos_run.py`，`upgrade → downgrade -1 → upgrade` 已验证。
 
 ---
 
