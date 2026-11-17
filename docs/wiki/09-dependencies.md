@@ -237,7 +237,7 @@ news_collector.collect_news
 
 | 项 | 事实 | 影响 / 建议 |
 |---|---|---|
-| 超大模块 | `ingest/service.py` 136KB、`ingest/valuation.py` 133KB、`ingest/akshare_provider.py` 103KB、`strategy/strategies.py` 87KB、`engine/market_regime.py` 50KB | 阅读与测试成本高；可按“数据域/能力”拆分，但需保持函数签名稳定 |
+| 超大模块 | `ingest/service.py` 139KB（唯一 >72KB 模块）；`engine/market_regime.py` 50KB | V9 已完成：`strategy/strategies.py` → `specs/data/market/conditions/ranking/candidates`；`ingest/valuation.py` → `valuation_math` + `valuation_store` + 门面；`ingest/akshare_provider.py` → `akshare_normalize` + provider。`service.py` 下一批按 job/collector 拆分；体积守卫见 `tests/test_module_size_budget.py` |
 | 指标重复实现 | `engine/market_factors.py` 内部重新实现 `ema/rsi/atr/adx`，未复用 `engine/indicators.py` | 口径漂移风险；新指标应优先复用 indicators |
 | 估值双路径 | `valuation_fast`（东财）与 `valuation`（本地财报推算）并存 | 两套口径可能不一致；需在 freshness/detail 中标注来源 |
 | 硬编码快照 | `BROAD_INDEX_SNAPSHOT`、`BROAD_ERP_SNAPSHOT` 固定为 2026-11-13 | 时间推移后 PE/ERP 会过期；需定期更新或改为动态计算 |

@@ -80,7 +80,8 @@ pipeline.run_task(task)
 | 文件 | 体量 | 职责 | 主要写入表 |
 |---|---:|---|---|
 | `service.py` | 136 KB | **采集编排唯一入口**：股票池/快照/历史/板块/资金流/两融/宏观/指数 | 几乎所有事实表 |
-| `akshare_provider.py` | 103 KB | AKShare 主源：日历、快照、历史、股票池、板块、资金流、两融、中债、指数 | 由 service 落库 |
+| `akshare_provider.py` | 66 KB | AKShare 主源：日历、快照、历史、股票池、板块、资金流、两融、中债、指数 | 由 service 落库 |
+| `akshare_normalize.py` | 41 KB | AKShare 原始返回的列名兼容、单位换算与标准化（V9 从 provider 拆出） | 由 provider 调用 |
 | `baostock_provider.py` | 14 KB | 兜底源：历史日线/日历/指数（其余能力不实现） | 由 service 落库 |
 | `sina_provider.py` | 9 KB | 新浪概念板块成分兜底 | `dim_sector_member` |
 | `tencent_history.py` | 12 KB | 腾讯 `fqkline` 批量历史 + 新浪 K 线/qfq 因子兜底；WAF 熔断 | `fact_stock_daily` |
@@ -93,7 +94,9 @@ pipeline.run_task(task)
 | `em_tls_patch.py` | 3 KB | 东财 TLS/cffi 兼容补丁 | — |
 | `calendar.py` | 13 KB | 交易日历同步与查询（含 `latest/prev/next`） | `trade_calendar` |
 | `bulk_backfill.py` | 30 KB | 腾讯日线/新浪资金流/东财估值批量回补 + 断点续传 | 多表 |
-| `valuation.py` | 133 KB | 财报/分红缓存 + point-in-time 估值（PE/PB/股息率） | `dim_stock_financial` / `dim_stock_dividend` / `fact_stock_daily` |
+| `valuation.py` | 63 KB | 财报/分红抓取与同步编排 + point-in-time 估值入口（V9 门面） | `dim_stock_financial` / `dim_stock_dividend` / `fact_stock_daily` |
+| `valuation_math.py` | 45 KB | 财报/分红标准化、EPS/营收 TTM、PE/PB/PS/股息率数学（V9 从 valuation 拆出） | 由 valuation 调用 |
+| `valuation_store.py` | 28 KB | 日期/DB/任务/质量写入辅助（V9 从 valuation 拆出） | `dim_stock_financial` / `dim_stock_dividend` / `meta_data_quality` |
 | `quality.py` | 24 KB | 落库前质量校验 + 写 `meta_data_quality` | `meta_data_quality` |
 
 ---
@@ -171,17 +174,17 @@ pipeline.run_task(task)
 
 ---
 
-## 6. 估值链路（`valuation.py`）
+## 6. 估值链路（`valuation.py` + `valuation_math.py` + `valuation_store.py`）
 
 三种口径并存：
 
 1. **`valuation_fast`（东财）**：`em_valuation.fetch_valuation` 直接取历史 PE_TTM/PB/PS/市值；
 2. **`valuation`（本地推算兜底）**：
-   - `sync_financials`（L2174）→ `dim_stock_financial`；
-   - `sync_dividends`（L2428）→ `dim_stock_dividend`；
-   - `build_valuation_frame`（L755）：`EPS_TTM = 本期累计 + 上年年报 − 上年同期`；`PE = close / EPS_TTM`；`PB = close / BPS`；`股息率 = 近 12 月 dps / close`；
+   - `valuation.py` 的 `sync_financials` → `dim_stock_financial`；
+   - `valuation.py` 的 `sync_dividends` → `dim_stock_dividend`；
+   - `valuation_math.py` 的 `build_valuation_frame`：`EPS_TTM = 本期累计 + 上年年报 − 上年同期`；`PE = close / EPS_TTM`；`PB = close / BPS`；`股息率 = 近 12 月 dps / close`；
    - 用 `announced_date = 报告期 + 90 天` 做 point-in-time，`merge_asof` 只取可知的最新报告期；
-3. **`collect_latest_valuation`（L3162）**：只更新最新交易日的估值列。
+3. **`valuation.py` 的 `collect_latest_valuation`**：只更新最新交易日的估值列。
 
 关键原则：
 

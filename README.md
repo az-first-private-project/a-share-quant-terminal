@@ -248,6 +248,7 @@ python scripts/pipeline_cli.py moneyflow_history # 新浪资金流历史
 python scripts/pipeline_cli.py valuation_fast --start 2018-01-01 # 东财历史估值
 python scripts/pipeline_cli.py all               # 最新交易日全链路
 python scripts/pipeline_cli.py backtest a3 --start 2025-10-21 --end 2026-10-21
+python scripts/oos_cli.py --algo a3 --start 2024-01-02 --end 2026-11-16  # 样本外 walk-forward
 python scripts/push_cli.py --dry-run             # 预览当日选股播报
 python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 ```
@@ -394,7 +395,8 @@ CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、�
 |---|---|
 | [Code Wiki](docs/wiki/README.md) | 架构总览、后端 API、数据模型、采集、计算引擎、策略回测、前端、运维、依赖关系 |
 | [API 契约](docs/V5-API-CONTRACT.md) | 接口字段与响应结构 |
-| [V8 回测基线](docs/evidence/V8-backtest-baseline.md) | 策略汰换与回测证据 |
+| [V8 回测基线](docs/evidence/V8-backtest-baseline.md) | 策略汰换与回测证据（样本内基线） |
+| [V9 样本外验证](docs/evidence/V9-oos-validation.md) | 4 折 walk-forward、A3 样本外分布、A4 `pe_max=12` 对照 |
 | [V5 架构说明](docs/architecture.md) | 早期架构设计（部分内容已被 V6/V7/V8 扩展） |
 
 ---

@@ -27,7 +27,18 @@ CANDIDATE_SPECS= ['c1','c2','c3','c4','c5','c6']
 
 ## 2. 策略元信息（`StrategySpec`）
 
-文件：[`strategy/strategies.py`](../../backend/app/strategy/strategies.py)
+门面：[`strategy/strategies.py`](../../backend/app/strategy/strategies.py)。V9 已按职责拆分：
+
+| 模块 | 职责 |
+|---|---|
+| `strategy/specs.py` | `StrategySpec`、`SPECS` / `CANDIDATE_SPECS`、参数校验与 `jsonable` |
+| `strategy/data.py` | 横截面取数、窗口特征、统一过滤、数据就绪检查 |
+| `strategy/market.py` | 市场状态、A4/B4/B5/C6 门槛 |
+| `strategy/conditions.py` | 条件树、策略求值、逐条依据 |
+| `strategy/ranking.py` | 排序、打分、metrics 与 `rank_signals` |
+| `strategy/candidates.py` | `build_candidates` 候选池编排 |
+
+`strategies.py` 只做 re-export，既有导入路径不变。
 
 ```python
 @dataclass(frozen=True)
@@ -42,7 +53,7 @@ class StrategySpec:
     sort_order: int = 0
 ```
 
-参数 schema 项由 `_param`（L105-L121）构造：`key/label/type/default/min/max`。
+参数 schema 项由 `specs.py` 的 `_param` 构造：`key/label/type/default/min/max`。
 
 ### 2.1 A3
 
@@ -87,7 +98,7 @@ close >= MA120 × trend_dev(0.9)
 
 ## 3. 候选池构建
 
-入口：`build_candidates(algo_code, trade_date, params, db)`（L2008-L2065）
+入口：`candidates.py` 的 `build_candidates(algo_code, trade_date, params, db)`
 
 ```
 _fetch_cross_section（一次 SQL）
@@ -125,7 +136,7 @@ coerce_numeric_frame（数值列统一 float64）
 
 ### 3.1 排序与信号生成
 
-`rank_signals(algo_code, df, params)`（L1950）：
+`ranking.py` 的 `rank_signals(algo_code, df, params)`：
 
 1. 按 `_SORT_SPEC` 排序（如 A3 `composite_score` 降序、A4 `dv_ttm` 降序）；
 2. `tie-break` 用 `code`，保证结果稳定；
@@ -348,6 +359,29 @@ benchmark_return, excess_return, volatility
 - 每日净值行保存收盘持仓与下一交易日待执行清单；
 - 增量续算：水位 + 60 日重叠窗口，每周全量校准；
 - 复用 `run_backtest(..., initial_state, phase_anchor, signal_from, capture_state_on)`。
+
+---
+
+## 9. 样本外 / Walk-Forward 验证
+
+文件：[`strategy/oos_validation.py`](../../backend/app/strategy/oos_validation.py) · CLI：[`scripts/oos_cli.py`](../../backend/scripts/oos_cli.py)
+
+| 项 | 规则 |
+|---|---|
+| 引擎 | 复用 `run_backtest`，不新建回测引擎 |
+| 折切分 | `build_folds(start, end, train_months=24, test_months=6, step_months=6)` |
+| 独立性 | 强制 `train_end < test_start`；`step_months >= test_months`，测试窗不重叠 |
+| 数据不足 | 自动降级为 expanding window，每个 fold 标 `window_type=expanding` / `degraded=true` |
+| 结果 | 所有 fold 原样返回；单窗失败记录 `status=failed`，不中断整轮 |
+| 汇总 | 测试窗年化/超额/Sharpe/回撤的均值、中位数与正超额折数 |
+
+```bash
+cd backend
+python scripts/oos_cli.py --algo a3 --start 2024-01-02 --end 2026-11-16
+python scripts/oos_cli.py --algo a4 --start 2024-01-02 --end 2026-11-16 --no-train --param pe_max=12
+```
+
+实测结论与数据限制见 [V9-oos-validation.md](../evidence/V9-oos-validation.md)。注意：2022–2023 因缺少全市场技术指标与评分，暂不可做真样本外；不得用稀疏数据补算冒充 OOS。
 
 API：`GET /api/v1/paper/portfolios`、`GET /api/v1/paper/portfolio/{algo_code}`、`POST .../sync`。
 
