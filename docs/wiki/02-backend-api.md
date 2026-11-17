@@ -284,6 +284,7 @@ api_router.include_router(watchlist.router)
 | GET | `/api/v1/watchlist` | 自选状态 |
 | PUT | `/api/v1/watchlist` | 整份覆盖（字段可选） |
 | GET | `/api/v1/meta/freshness` | 所有数据集新鲜度 |
+| GET | `/api/v1/meta/provider-health` | 数据源 × 任务成功率/降级次数（days=1–30） |
 | GET | `/api/v1/meta/trade-calendar` | 交易日历 |
 | GET | `/api/v1/meta/jobs` | 任务监控（`status=archived` 可审计） |
 | GET | `/api/v1/meta/partitions` | `fact_stock_daily` 分区概览 |

@@ -5,7 +5,7 @@
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -18,6 +18,7 @@ from app.core.logging import get_logger
 from app.core.pagination import pagination_meta
 from app.db.models import IngestJob, TradeCalendar
 from app.db.session import get_db
+from app.ingest.provider_health import summarize_provider_health
 from app.services.freshness import get_freshness_items
 
 router = APIRouter(prefix="/api/v1/meta", tags=["元信息"])
@@ -32,6 +33,21 @@ async def get_freshness(db: AsyncSession = Depends(get_db)) -> dict:
         "items": items,
         "network_enabled": INGEST_NETWORK_ENABLED,
         "snapshot_ready_after": f"{SNAPSHOT_READY_HOUR:02d}:{SNAPSHOT_READY_MINUTE:02d}",
+    }
+
+
+@router.get("/provider-health")
+async def get_provider_health(
+    days: int = Query(7, ge=1, le=30, description="回看自然日"),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """数据源 × 任务的成功率、降级次数与最近脱敏错误。"""
+    items = await summarize_provider_health(db, days)
+    return {
+        "window_days": days,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "items": items,
+        "empty": not items,
     }
 
 

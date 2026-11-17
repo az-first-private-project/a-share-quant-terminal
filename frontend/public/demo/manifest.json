@@ -20,6 +20,7 @@
     "news_sources.json",
     "news_articles.json",
     "freshness.json",
+    "provider_health.json",
     "trade_calendar.json",
     "stock_600519.json",
     "stock_600519_kline.json",

@@ -38,6 +38,19 @@
 
 ---
 
+## 0. V9 Batch C：数据源健康度与合规面板（2026-11-17）
+
+| 变更 | 文件 |
+|---|---|
+| 新增 `meta_provider_health`（迁移 `0016_provider_health`） | `backend/app/db/models/meta.py`、`alembic/versions/20261117_0016_provider_health.py` |
+| ProviderChain 埋点包装（每 `fetch_*` 记录 attempts，失败不影响采集） | `backend/app/ingest/service.py`、`provider_health.py` |
+| `GET /api/v1/meta/provider-health?days=7` | `backend/app/api/v1/meta.py` |
+| 任务监控页「数据源健康」tab、看板“降级中”徽标、关于页合规区块 | `frontend/src/pages/JobsPage.tsx`、`DashboardPage.tsx`、`AboutPage.tsx`、`ProviderHealthPanel.tsx` |
+| 合规说明文档 | `docs/DATA_USAGE_NOTICE.md` |
+| 测试 | `backend/tests/test_provider_health.py`、`tests/integration/test_provider_health.py` |
+
+---
+
 ## 0. V5.1 增补（2026-10-22）
 
 本轮解决三件事：**容器首次启动空数据**、**历史估值缺失**、**板块/资金流无兜底**。

@@ -12,7 +12,8 @@ from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
-    Boolean, Date, DateTime, Index, Integer, Numeric, SmallInteger, String, Text, func,
+    BigInteger, Boolean, Date, DateTime, Index, Integer, Numeric, SmallInteger, String,
+    Text, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -100,4 +101,26 @@ class AlgoMeta(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-__all__ = ["TradeCalendar", "MetaDataQuality", "IngestJob", "AlgoMeta"]
+class ProviderHealth(Base):
+    """数据源尝试埋点（V9 P0-3）：每次 ProviderChain 尝试一行。"""
+
+    __tablename__ = "meta_provider_health"
+    __table_args__ = (
+        Index("ix_provider_health_date_provider_task", "trade_date", "provider", "task"),
+        Index("ix_provider_health_created", "created_at"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    trade_date: Mapped[date | None] = mapped_column(Date)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    task: Mapped[str] = mapped_column(String(64), nullable=False)
+    result: Mapped[str] = mapped_column(String(16), nullable=False,
+                                        comment="ok/partial/failed/unavailable/not_implemented/empty/skipped")
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+__all__ = [
+    "TradeCalendar", "MetaDataQuality", "IngestJob", "AlgoMeta", "ProviderHealth",
+]

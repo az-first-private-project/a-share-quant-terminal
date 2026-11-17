@@ -12,7 +12,9 @@ from app.db.models.fact import (
     FactStockDaily, FactStockScoreDaily, MacroRate, MarginTrading, MarketIndex,
     MarketRegimeDaily, MarketTemperatureDaily, SectorScore,
 )
-from app.db.models.meta import AlgoMeta, IngestJob, MetaDataQuality, TradeCalendar
+from app.db.models.meta import (
+    AlgoMeta, IngestJob, MetaDataQuality, ProviderHealth, TradeCalendar,
+)
 from app.db.models.news import CrawlLog, NewsArticle, NewsSource
 from app.db.models.push import PushLog
 from app.db.models.state import WatchlistState
@@ -32,7 +34,7 @@ __all__ = [
     "MarketTemperatureDaily", "MacroRate", "FactMarketDaily", "MarketRegimeDaily",
     "DailyReport",
     # 元数据
-    "TradeCalendar", "MetaDataQuality", "IngestJob", "AlgoMeta",
+    "TradeCalendar", "MetaDataQuality", "IngestJob", "AlgoMeta", "ProviderHealth",
     # 策略
     "StgRun", "StgSignal", "StgSignalPerf", "BacktestRun",
     "BacktestGrid", "BacktestGridCell", "OOSRun",

@@ -286,7 +286,7 @@ python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 | 指数 / 风格 / 宽基 | 新浪 / 中证指数 | 中债收益率、6 宽基、创业板50、红利低波50 |
 | 新闻 | 新浪/同花顺/东财/华尔街见闻 JSON | DeepSeek 摘要；失败不影响主链 |
 
-> 东方财富 `push2*` 在部分网络会被重置；系统会自动降级到腾讯/新浪/同花顺，无需手工切换。数据仅个人研究，不对外分发或商用。
+> 东方财富 `push2*` 在部分网络会被重置；系统会自动降级到腾讯/新浪/同花顺，无需手工切换。任务监控页的「数据源健康」会展示近 7 天成功率与降级次数；数据仅个人研究，不对外分发或商用。完整限制见 [数据源与使用限制](docs/DATA_USAGE_NOTICE.md)。
 
 ---
 
@@ -310,6 +310,7 @@ python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 | GET | `/api/v1/paper/portfolios` | 纸面组合列表 |
 | GET/PUT | `/api/v1/watchlist` | 自选状态（单租户） |
 | GET | `/api/v1/meta/freshness` | 数据集新鲜度 |
+| GET | `/api/v1/meta/provider-health?days=7` | 数据源 × 任务成功率、降级次数与最近错误 |
 | POST | `/api/v1/admin/ingest/{task}` | 手动触发采集（需 `X-Admin-Key`） |
 
 > 机器人推送由定时任务在选股完成后触发，不暴露 HTTP 接口；手动预览/补发用 [`backend/scripts/push_cli.py`](backend/scripts/push_cli.py)。
@@ -414,6 +415,7 @@ CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、�
 | [API 契约](docs/V5-API-CONTRACT.md) | 接口字段与响应结构 |
 | [V8 回测基线](docs/evidence/V8-backtest-baseline.md) | 策略汰换与回测证据（样本内基线） |
 | [V9 样本外验证](docs/evidence/V9-oos-validation.md) | 4 折 walk-forward、A3 样本外分布、A4 `pe_max=12` 对照 |
+| [数据源与使用限制](docs/DATA_USAGE_NOTICE.md) | 数据源清单、用途限制、采集边界与脱敏约定 |
 | [V5 架构说明](docs/architecture.md) | 早期架构设计（部分内容已被 V6/V7/V8 扩展） |
 
 ---

@@ -6,6 +6,7 @@ import type {
   Freshness,
   HealthResponse,
   ListPage,
+  ProviderHealthResponse,
   TradeCalendarResponse,
 } from '../types/common'
 import type { Job, JobQuery } from '../types/jobs'
@@ -18,6 +19,11 @@ import type { Job, JobQuery } from '../types/jobs'
 export async function fetchFreshness(): Promise<Freshness[]> {
   const payload = await request<unknown>('/meta/freshness')
   return extractList<Freshness>(payload)
+}
+
+/** 数据源健康度（V9 P0-3）：近 N 天按 provider × task 聚合 */
+export function fetchProviderHealth(days = 7): Promise<ProviderHealthResponse> {
+  return request<ProviderHealthResponse>('/meta/provider-health', { query: { days } })
 }
 
 /** 交易日历（1）；start/end 缺省时后端按默认窗口返回 */

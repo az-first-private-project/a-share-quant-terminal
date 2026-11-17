@@ -87,6 +87,7 @@ EXPORTS: list[tuple[str, str]] = [
     ("news_sources.json", "/api/v1/sources"),
     ("news_articles.json", "/api/v1/articles?page=1&page_size=20"),
     ("freshness.json", "/api/v1/meta/freshness"),
+    ("provider_health.json", "/api/v1/meta/provider-health?days=7"),
     ("trade_calendar.json", "/api/v1/meta/trade-calendar?only_open=true"),
     ("stock_600519.json", "/api/v1/stocks/600519"),
     ("stock_600519_kline.json", "/api/v1/stocks/600519/kline?limit=250"),

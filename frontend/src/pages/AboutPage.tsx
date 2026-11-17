@@ -60,7 +60,29 @@ export default function AboutPage() {
         </section>
 
         <section className="card p-5 sm:p-6">
-          <SectionHeader index="03" title="数据与风险声明" />
+          <SectionHeader index="03" title="数据与合规" />
+          <div className="space-y-3 text-[12.5px] leading-relaxed text-muted-foreground">
+            <p>
+              数据源：AKShare（公开页面二次封装）、Baostock、腾讯、新浪、东方财富、同花顺、
+              巨潮资讯、中证指数、中债。各源版权归原始提供方所有。
+            </p>
+            <p>
+              用途限制：仅个人研究 / 课程设计，不对外分发、不商用、不提供投资建议；
+              不实现验证码识别、代理池或其他绕过反爬的手段。
+            </p>
+            <p>
+              第三方条款与商用许可无法在本项目内确认；如需商用请自行获得授权。
+              采集日志与接口响应会对 URL、token、Webhook 做脱敏。
+            </p>
+            <p className="text-[11px] text-muted-foreground/80">
+              完整说明见仓库 <span className="font-mono">docs/DATA_USAGE_NOTICE.md</span>；
+              本段不构成法律意见。
+            </p>
+          </div>
+        </section>
+
+        <section className="card p-5 sm:p-6">
+          <SectionHeader index="04" title="数据与风险声明" />
           <ul className="space-y-2.5">
             {[
               '本项目仅用于课程设计与个人研究，数据版权归原始数据源所有',

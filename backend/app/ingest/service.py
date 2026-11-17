@@ -103,6 +103,7 @@ from app.ingest.quality import (
     make_error_report,
     record_quality,
 )
+from app.ingest.provider_health import record_provider_attempts
 
 logger = get_logger(__name__)
 
@@ -167,6 +168,56 @@ def use_provider_chain(chain: ProviderChain | None) -> None:
     """注入自定义降级链（离线测试用 FakeProvider，或 CLI 指定数据源）。"""
     global _CHAIN
     _CHAIN = chain
+
+
+class _RecordingChain:
+    """ProviderChain 薄包装：把每次 fetch_* 的 attempts 写入健康度表。
+
+    不修改 ProviderChain 内部的降级/重试语义；埋点失败只记日志。
+    """
+
+    def __init__(self, chain: ProviderChain, task: str, trade_date: date | None,
+                 db: AsyncSession | None) -> None:
+        self._chain = chain
+        self._task = task
+        self._trade_date = trade_date
+        self._db = db
+
+    async def _record(self, attempts: Any) -> None:
+        try:
+            async with _db_scope(self._db) as session:
+                await record_provider_attempts(
+                    session, self._task, self._trade_date, attempts
+                )
+        except Exception:  # noqa: BLE001 - 埋点不得影响采集
+            logger.warning("记录 provider 健康度失败（已隔离）", exc_info=True)
+
+    def __getattr__(self, name: str) -> Any:
+        attr = getattr(self._chain, name)
+        if not (name.startswith("fetch_") and callable(attr)):
+            return attr
+
+        async def wrapped(*args: Any, **kwargs: Any) -> Any:
+            try:
+                result = await attr(*args, **kwargs)
+            except Exception as exc:  # noqa: BLE001 - 记录后原样抛出
+                detail = getattr(exc, "detail", None)
+                attempts = detail.get("attempts") if isinstance(detail, dict) else None
+                await self._record(attempts)
+                raise
+            detail = getattr(result, "detail", None)
+            attempts = detail.get("attempts") if isinstance(detail, dict) else None
+            await self._record(attempts)
+            return result
+
+        return wrapped
+
+
+def _provider_chain(
+    task: str, trade_date: date | None, db: AsyncSession | None
+) -> _RecordingChain:
+    """获取带健康度埋点的降级链包装。"""
+    return _RecordingChain(get_provider_chain(), task, trade_date, db)
 
 
 # ============================================================
@@ -1061,7 +1112,7 @@ async def sync_stock_universe(db: AsyncSession | None = None) -> FetchResult:
         await job.begin()
 
         try:
-            chain = get_provider_chain()
+            chain = _provider_chain("universe", None, db)
             fetched = await chain.fetch_stock_universe()
             frame = _filter_pool_frame(fetched.detail.get("data"))
 
@@ -1269,7 +1320,7 @@ async def collect_daily_snapshot(
             else:
                 await SNAPSHOT_LIMITER.acquire()
 
-            chain = get_provider_chain()
+            chain = _provider_chain("snapshot", trade_date, db)
             fetched = await chain.fetch_daily_snapshot(
                 trade_date, timeout=config.SNAPSHOT_FETCH_TIMEOUT_SEC
             )
@@ -1403,7 +1454,7 @@ async def backfill_stock_history(
             pending = [code for code in code_list if code not in completed]
             await job.update(total=len(code_list), done=len(completed))
 
-            chain = get_provider_chain()
+            chain = _provider_chain("history", trade_date, db)
             batch_rows: list[dict[str, Any]] = []
             batch_codes: list[str] = []
 
@@ -1787,7 +1838,7 @@ async def collect_sector_members(
             sector_info = await _load_sector_info(db, trade_date)
             if not sector_info:
                 # 当日板块日线还没采：现场拉一次板块列表（不写 fact_sector_daily）
-                chain = get_provider_chain()
+                chain = _provider_chain("sector", trade_date, db)
                 fetched_list = await chain.fetch_sector_list(trade_date)
                 for record in _records(fetched_list.detail.get("data")):
                     sector_code = record.get("sector_code")
@@ -1810,10 +1861,16 @@ async def collect_sector_members(
             )
             await job.update(total=len(sectors))
 
-            chain = get_provider_chain()
+            chain = _provider_chain("sector_members", trade_date, db)
             providers = getattr(chain, "providers", None)
             concept_chain = (
-                ProviderChain([SinaProvider()], name="sina-concept")
+                # 概念优先走新浪直连链，但仍经过埋点包装
+                _RecordingChain(
+                    ProviderChain([SinaProvider()], name="sina-concept"),
+                    "sector_members",
+                    trade_date,
+                    db,
+                )
                 if providers
                 else chain  # 测试注入的脚本链没有 providers，直接复用
             )
@@ -2288,7 +2345,7 @@ async def collect_moneyflow(
                         },
                     )
 
-            chain = get_provider_chain()
+            chain = _provider_chain("moneyflow", trade_date, db)
             try:
                 fetched = await chain.fetch_moneyflow(
                     trade_date, timeout=config.SNAPSHOT_FETCH_TIMEOUT_SEC
@@ -2422,7 +2479,7 @@ async def collect_margin(
                 await job.finish("skipped", error="non_trade_day")
                 return _skipped_result(task, "non_trade_day", trade_date=trade_date.isoformat())
 
-            chain = get_provider_chain()
+            chain = _provider_chain("margin", trade_date, db)
             fetched = await chain.fetch_margin(
                 trade_date, timeout=config.FETCH_TIMEOUT_SEC
             )
@@ -2542,7 +2599,7 @@ async def collect_macro_rates(
                 await job.finish("skipped", error="non_trade_day")
                 return _skipped_result(task, "non_trade_day", trade_date=trade_date.isoformat())
 
-            chain = get_provider_chain()
+            chain = _provider_chain("macro_rates", trade_date, db)
             fetched = await chain.fetch_bond_yields(
                 trade_date - timedelta(days=15),
                 trade_date,
@@ -2654,7 +2711,7 @@ async def collect_style_indices(
                 await job.finish("skipped", error="non_trade_day")
                 return _skipped_result(task, "non_trade_day", trade_date=trade_date.isoformat())
 
-            chain = get_provider_chain()
+            chain = _provider_chain("style_indices", trade_date, db)
             fetched = await chain.fetch_style_indices(
                 trade_date - timedelta(days=30),
                 trade_date,
@@ -2772,7 +2829,7 @@ async def collect_broad_indices(
                 await job.finish("skipped", error="non_trade_day")
                 return _skipped_result(task, "non_trade_day", trade_date=trade_date.isoformat())
 
-            chain = get_provider_chain()
+            chain = _provider_chain("broad_indices", trade_date, db)
             fetched = await chain.fetch_broad_indices(
                 trade_date - timedelta(days=30),
                 trade_date,
@@ -2862,7 +2919,7 @@ async def collect_indices(
             expected_us = sum(1 for _, is_a_share in INDEX_MAP.values() if not is_a_share)
             expected = expected_a + (expected_us if include_us else 0)
 
-            chain = get_provider_chain()
+            chain = _provider_chain("index", trade_date, db)
             fetched = await chain.fetch_index_daily(
                 trade_date, include_us=include_us, timeout=config.FETCH_TIMEOUT_SEC
             )

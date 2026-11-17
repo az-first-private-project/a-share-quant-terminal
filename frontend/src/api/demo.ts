@@ -30,6 +30,7 @@ const EXACT: Record<string, string> = {
   '/sources': 'news_sources.json',
   '/articles': 'news_articles.json',
   '/meta/freshness': 'freshness.json',
+  '/meta/provider-health': 'provider_health.json',
   '/meta/trade-calendar': 'trade_calendar.json',
   '/watchlist': 'watchlist.json',
   '/stocks/sparkline/batch': 'stock_sparkline.json',

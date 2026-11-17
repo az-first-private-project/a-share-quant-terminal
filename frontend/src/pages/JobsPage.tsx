@@ -18,6 +18,7 @@ import PaginationBar from '../components/PaginationBar'
 import PageHeader from '../components/PageHeader'
 import SectionHeader from '../components/SectionHeader'
 import Disclaimer from '../components/Disclaimer'
+import ProviderHealthPanel from '../components/ProviderHealthPanel'
 import {
   EmptyState,
   ErrorState,
@@ -164,6 +165,7 @@ const JOB_COLUMNS: DataTableColumn<Job>[] = [
 const JOB_PAGE_SIZE = 50
 
 export default function JobsPage() {
+  const [tab, setTab] = useState<'jobs' | 'health'>('jobs')
   const [paused, setPaused] = useState(false)
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -313,6 +315,25 @@ export default function JobsPage() {
         }
       />
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTab('jobs')}
+          className={tab === 'jobs' ? 'btn btn-sm h-8' : 'btn btn-sm h-8 opacity-60'}
+          aria-pressed={tab === 'jobs'}
+        >
+          任务监控
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('health')}
+          className={tab === 'health' ? 'btn btn-sm h-8' : 'btn btn-sm h-8 opacity-60'}
+          aria-pressed={tab === 'health'}
+        >
+          数据源健康
+        </button>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
         <span>每日 15:36 自动更新；后端启动后会自动补最近缺失交易日。</span>
         {catchUp.message && (
@@ -322,6 +343,7 @@ export default function JobsPage() {
         )}
       </div>
 
+      <div className={tab === 'jobs' ? 'contents' : 'hidden'}>
       {keyPanelOpen && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
           <span className="text-[11px] text-muted-foreground">
@@ -426,6 +448,9 @@ export default function JobsPage() {
       </div>
 
       <Disclaimer extraOnly extra="任务数据来自后端 meta_jobs / 采集编排记录；若某个数据集长时间未成功，请检查数据源可用性与网络环境。" />
+      </div>
+
+      {tab === 'health' && <ProviderHealthPanel />}
     </motion.div>
   )
 }

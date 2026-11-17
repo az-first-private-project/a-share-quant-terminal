@@ -205,8 +205,8 @@
       "partial_member_count": null,
       "technical_score": 5.55,
       "sentiment_score": 6.28,
-      "news_score": 5.0,
-      "composite_score": 5.67,
+      "news_score": 4.88,
+      "composite_score": 5.64,
       "strength_leaders": [
         {
           "code": "000858",
@@ -1171,8 +1171,8 @@
       "partial_member_count": null,
       "technical_score": 5.55,
       "sentiment_score": 6.28,
-      "news_score": 5.0,
-      "composite_score": 5.67,
+      "news_score": 4.88,
+      "composite_score": 5.64,
       "strength_leaders": [
         {
           "code": "000858",
@@ -2401,8 +2401,8 @@
       "partial_member_count": null,
       "technical_score": 5.55,
       "sentiment_score": 6.28,
-      "news_score": 5.0,
-      "composite_score": 5.67,
+      "news_score": 4.88,
+      "composite_score": 5.64,
       "strength_leaders": [
         {
           "code": "000858",
@@ -2677,8 +2677,8 @@
       "display_name": "个股因子评分",
       "status": "ok",
       "is_critical": true,
-      "last_success_at": "2026-11-17T04:46:33.584106+00:00",
-      "last_attempt_at": "2026-11-17T04:46:33.584106+00:00",
+      "last_success_at": "2026-11-17T05:23:59.981167+00:00",
+      "last_attempt_at": "2026-11-17T05:23:59.981167+00:00",
       "last_trade_date": null,
       "rows": 42,
       "coverage": null,

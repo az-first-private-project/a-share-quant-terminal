@@ -78,6 +78,25 @@ export interface TradeCalendarResponse {
   days: TradeDay[]
 }
 
+/** 数据源 × 任务健康度（V9 P0-3） */
+export interface ProviderHealthItem {
+  provider: string
+  task: string
+  total: number
+  ok: number
+  degraded: number
+  success_rate: number
+  last_error: string | null
+  last_seen_at: string | null
+}
+
+export interface ProviderHealthResponse {
+  window_days: number
+  generated_at: string
+  items: ProviderHealthItem[]
+  empty: boolean
+}
+
 /** GET /health（注意：不在 /api/v1 前缀下；后端实际字段为 latest_trade_date） */
 export interface HealthResponse {
   status: string

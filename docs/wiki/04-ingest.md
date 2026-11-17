@@ -174,6 +174,15 @@ pipeline.run_task(task)
 
 ---
 
+## 5.1 数据源健康度（`provider_health.py`）
+
+- `ProviderChain.call` 已产出 `attempts`（source/status/elapsed_ms/error）；`service._RecordingChain` 在每个 `fetch_*` 后把 attempts 写入 `meta_provider_health`；
+- 每 `(trade_date, provider, task)` 每天最多 100 行；错误过滤 URL/token/Webhook；
+- `GET /api/v1/meta/provider-health?days=7` 按 provider × task 聚合尝试数、成功率、降级次数与最近错误；
+- 前端在任务监控页「数据源健康」区块与看板“数据源正常/降级中”徽标展示。
+
+---
+
 ## 6. 估值链路（`valuation.py` + `valuation_math.py` + `valuation_store.py`）
 
 三种口径并存：

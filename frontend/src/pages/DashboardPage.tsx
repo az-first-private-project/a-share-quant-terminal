@@ -18,6 +18,7 @@ import { motion } from 'framer-motion'
 import { RefreshCw } from 'lucide-react'
 import { useDashboard, useIndexSeries, useTradeCalendar } from '../hooks/useDashboard'
 import { useWatchSignals, useWatchlist } from '../hooks/useWatchSignals'
+import { useProviderHealth } from '../hooks/useProviderHealth'
 import WatchButton from '../components/WatchButton'
 import WatchlistPanel from '../components/WatchlistPanel'
 import IndexCard, {
@@ -283,6 +284,10 @@ export default function DashboardPage() {
   const calendar = useTradeCalendar(720)
   const watchlist = useWatchlist()
   const watchHits = useWatchSignals(watchlist)
+  const providerHealth = useProviderHealth(1)
+  const degradedSources = (providerHealth.data?.items ?? []).filter(
+    (item) => item.degraded > 0,
+  ).length
 
   const data = dashboard.data
   const showLoadingSkeleton = useDelayedFlag(dashboard.isLoading && !data)
@@ -425,8 +430,21 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* ========== 数据新鲜度 ========== */}
-      <FreshnessBadge items={freshness} title="数据新鲜度" />
+      {/* ========== 数据新鲜度 / 数据源健康 ========== */}
+      <div className="flex flex-wrap items-center gap-2">
+        <FreshnessBadge items={freshness} title="数据新鲜度" />
+        <Link
+          to="/jobs"
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+            degradedSources > 0
+              ? 'border-warning/40 bg-warning/10 text-warning hover:border-warning'
+              : 'border-border/70 bg-card/50 text-muted-foreground hover:border-brass/40'
+          }`}
+          title="近 1 天存在降级的数据源；点击查看任务监控"
+        >
+          {degradedSources > 0 ? `降级中 · ${degradedSources} 个源` : '数据源正常'}
+        </Link>
+      </div>
 
       {/* ========== 无数据引导 ========== */}
       {!hasMarketData ? (
