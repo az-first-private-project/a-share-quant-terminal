@@ -69,7 +69,8 @@
 | 变更 | 文件 |
 |---|---|
 | 缺口仅最新交易日且已收盘时，跳过 `history_fast / valuation_fast / moneyflow_history` 逐股区间回补，直接走当日快照流水线（避免启动补跑耗时数十分钟且任务监控无记录） | `backend/app/catch_up.py` |
-| 补跑单测覆盖“今天已收盘不走向区间回补” | `backend/tests/test_catch_up.py` |
+| 当日补跑完成后补跑观察候选（C1–C6），与 16:30 定时任务一致，避免 `PUSH_OBSERVATION=1` 时推送无 run | `backend/app/catch_up.py` |
+| 补跑单测覆盖“今天已收盘不走向区间回补”与“补跑后运行观察候选” | `backend/tests/test_catch_up.py` |
 
 ---
 

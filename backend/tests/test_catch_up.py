@@ -276,6 +276,43 @@ def test_run_catch_up_lock_busy(monkeypatch) -> None:
     assert executed == []
 
 
+def test_run_catch_up_runs_observation_after_today(monkeypatch) -> None:
+    """当日补跑完成后要跑观察候选，否则 PUSH_OBSERVATION 推送无 run 可推。"""
+    state = {"last_completed": D2, "latest": D1,
+             "open_days": [D2], "latest_complete": True,
+             "incomplete_days": []}
+
+    async def fake_state(db):
+        return state
+
+    async def fake_lock(db, key):
+        return True
+
+    async def fake_unlock(db, key):
+        return None
+
+    async def fake_execute(*args, **kwargs):
+        return {"status": "success"}
+
+    observed: list = []
+
+    async def fake_observation(db):
+        observed.append(True)
+        return [{"algo": "c1"}]
+
+    monkeypatch.setattr(cu, "_catch_up_state", fake_state)
+    monkeypatch.setattr(cu, "_today_cn", lambda: D2)
+    monkeypatch.setattr(cu, "_after_close", lambda: True)
+    monkeypatch.setattr("app.pipeline.try_advisory_lock", fake_lock)
+    monkeypatch.setattr("app.pipeline.advisory_unlock", fake_unlock)
+    monkeypatch.setattr(cu, "_execute_catch_up", fake_execute)
+    monkeypatch.setattr("app.worker.run_observation_algos", fake_observation)
+
+    summary = asyncio.run(cu.run_catch_up(db=object()))
+    assert observed == [True]
+    assert summary["observations"] == 1
+
+
 # ============================================================
 # ④ 管理端点注册（一键补数）
 # ============================================================

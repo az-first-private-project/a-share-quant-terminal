@@ -438,6 +438,16 @@ async def run_catch_up(db: AsyncSession | None = None) -> dict:
         result = await _execute_catch_up(
             days, db, today=_today_cn(), snapshot_ok=_after_close()
         )
+        # 与 16:30 定时任务保持一致：当日补跑完成后运行观察候选（C1–C6），
+        # 否则 PUSH_OBSERVATION=1 时推送会因为没有 run 而显示“无信号”。
+        if days == [_today_cn()] and _after_close():
+            try:
+                from app.worker import run_observation_algos
+                observed = await run_observation_algos(db)
+                if observed:
+                    result["observations"] = len(observed)
+            except Exception:                            # noqa: BLE001
+                logger.exception("观察候选补跑失败（不影响主补跑）")
         return {**result, **summary}
     finally:
         if acquired:
