@@ -7,7 +7,7 @@
     同一策略的多次参数 run 合并统计，`hit_count = count(DISTINCT algo_code)`；
   - 同一策略多次 run 命中同一只票只算一次，取**名次最优**那次 run 的 rank/score/metrics
     （名次相同再取更晚创建的 run）；
-  - 只统计当前 `SPECS` 里仍启用的策略，历史 a1/a2 run 不参与（否则下线策略会污染共识）；
+  - 只统计当前 `SPECS` 里仍启用的策略，已下线策略的历史 run 不参与（否则会污染共识）；
   - 不返回跨策略平均分：各策略 score 量纲不同（见 `_SORT_SPEC`），混算会误导；
   - 股票名称/行业/板块/所有制取 `dim_stock`，当日涨跌与综合分取当日事实表；
   - `pct_chg`、`composite_score`、`metrics` 缺失一律保留 NULL / 空对象，**不补 0**；

@@ -75,7 +75,7 @@ def test_empty_input_returns_empty_board():
 
 
 def test_single_strategy_below_min_count_keeps_evaluated_count():
-    rows = [row("b1", "600000"), row("b1", "600001")]
+    rows = [row("c1", "600000"), row("c1", "600001")]
     result = build_consensus(rows, min_count=2)
     assert result["items"] == []
     assert result["total_algos_evaluated"] == 1
@@ -83,9 +83,9 @@ def test_single_strategy_below_min_count_keeps_evaluated_count():
 
 def test_zero_signal_strategy_counts_as_evaluated():
     rows = [
-        row("b4", None),  # 当日 run 成功但 0 信号
-        row("b1", "600000", rank=1),
-        row("b2", "600000", rank=2),
+        row("c4", None),  # 当日 run 成功但 0 信号
+        row("c1", "600000", rank=1),
+        row("c2", "600000", rank=2),
     ]
     result = build_consensus(rows, min_count=2)
     assert result["total_algos_evaluated"] == 3
@@ -108,45 +108,45 @@ def test_min_count_never_exceeds_evaluated_algos():
 
 def test_hit_count_counts_distinct_algos_and_no_cross_avg():
     rows = [
-        row("b1", "600000", rank=3, score=11.0),
-        row("b2", "600000", rank=1, score=18.0),
-        row("b3", "600000", rank=2, score=4.5),
-        row("b1", "600001", rank=1),
-        row("b2", "600001", rank=2),
-        row("b1", "600002", rank=1),
+        row("c1", "600000", rank=3, score=11.0),
+        row("c2", "600000", rank=1, score=18.0),
+        row("c3", "600000", rank=2, score=4.5),
+        row("c1", "600001", rank=1),
+        row("c2", "600001", rank=2),
+        row("c1", "600002", rank=1),
     ]
     result = build_consensus(rows, min_count=2)
     assert [item["code"] for item in result["items"]] == ["600000", "600001"]
     top = result["items"][0]
     assert top["hit_count"] == 3
     assert top["best_rank"] == 1
-    assert [hit["algo_code"] for hit in top["algos"]] == ["b2", "b3", "b1"]
+    assert [hit["algo_code"] for hit in top["algos"]] == ["c2", "c3", "c1"]
     assert "avg_score" not in top
     assert "avg_score" not in top["algos"][0]
 
 
 def test_duplicate_algo_rows_count_once_and_keep_best_rank():
     rows = [
-        row("b1", "600000", rank=5, score=3.0, metrics={"z": 1}),
-        row("b1", "600000", rank=2, score=9.0, metrics={"a": 2}),
-        row("b2", "600000", rank=4),
+        row("c1", "600000", rank=5, score=3.0, metrics={"z": 1}),
+        row("c1", "600000", rank=2, score=9.0, metrics={"a": 2}),
+        row("c2", "600000", rank=4),
     ]
     result = build_consensus(rows, min_count=1)
     item = result["items"][0]
     assert item["hit_count"] == 2
     assert item["best_rank"] == 2
-    b1 = next(hit for hit in item["algos"] if hit["algo_code"] == "b1")
-    assert b1["rank"] == 2
-    assert b1["score"] == 9.0
-    assert b1["metrics"] == {"a": 2}
+    c1 = next(hit for hit in item["algos"] if hit["algo_code"] == "c1")
+    assert c1["rank"] == 2
+    assert c1["score"] == 9.0
+    assert c1["metrics"] == {"a": 2}
 
 
 def test_sector_filter_excludes_items_but_not_evaluated_count():
     rows = [
-        row("b1", "600000", in_sector=False),
-        row("b2", "600000", in_sector=False),
-        row("b2", "600001", in_sector=True),
-        row("b3", "600001", in_sector=True),
+        row("c1", "600000", in_sector=False),
+        row("c2", "600000", in_sector=False),
+        row("c2", "600001", in_sector=True),
+        row("c3", "600001", in_sector=True),
     ]
     result = build_consensus(rows, min_count=2)
     assert [item["code"] for item in result["items"]] == ["600001"]
@@ -160,11 +160,11 @@ def test_sector_filter_excludes_items_but_not_evaluated_count():
 def test_null_fields_are_preserved_not_zeroed():
     rows = [
         row(
-            "b1", "600000", rank=None, score=None, metrics=None,
+            "c1", "600000", rank=None, score=None, metrics=None,
             name=None, stock_name=None, industry=None,
             pct=None, composite=None,
         ),
-        row("b2", "600000", rank=None, score=None, metrics={}),
+        row("c2", "600000", rank=None, score=None, metrics={}),
     ]
     item = build_consensus(rows, min_count=2)["items"][0]
     assert item["name"] == "600000"
@@ -179,15 +179,15 @@ def test_null_fields_are_preserved_not_zeroed():
 
 def test_name_falls_back_to_signal_name_then_code():
     rows = [
-        row("b1", "600000", name="信号名"),
-        row("b2", "600000"),
+        row("c1", "600000", name="信号名"),
+        row("c2", "600000"),
     ]
     item = build_consensus(rows, min_count=2)["items"][0]
     assert item["name"] == "信号名"
 
     rows = [
-        row("b1", "600000", stock_name="维度名", name="信号名"),
-        row("b2", "600000"),
+        row("c1", "600000", stock_name="维度名", name="信号名"),
+        row("c2", "600000"),
     ]
     item = build_consensus(rows, min_count=2)["items"][0]
     assert item["name"] == "维度名"
@@ -195,8 +195,8 @@ def test_name_falls_back_to_signal_name_then_code():
 
 def test_zero_pct_and_decimal_scores_are_kept():
     rows = [
-        row("b1", "600000", score=Decimal("8.125"), pct=Decimal("0.000"), composite=Decimal("6.500")),
-        row("b2", "600000", score=Decimal("7.000")),
+        row("c1", "600000", score=Decimal("8.125"), pct=Decimal("0.000"), composite=Decimal("6.500")),
+        row("c2", "600000", score=Decimal("7.000")),
     ]
     item = build_consensus(rows, min_count=2)["items"][0]
     assert item["pct_chg"] == 0.0
@@ -218,15 +218,15 @@ def test_metrics_preview_limits_and_sorts_keys():
 
 def test_sort_by_hits_then_best_rank_then_composite_then_code():
     rows = [
-        row("b1", "600004", rank=5, composite=9.0),
-        row("b2", "600004", rank=5, composite=9.0),
-        row("b3", "600004", rank=5, composite=9.0),
-        row("b1", "600002", rank=1, composite=8.0),
-        row("b2", "600002", rank=1, composite=8.0),
-        row("b1", "600003", rank=1, composite=None),
-        row("b2", "600003", rank=1, composite=None),
-        row("b1", "600001", rank=1, composite=9.0),
-        row("b2", "600001", rank=1, composite=9.0),
+        row("c1", "600004", rank=5, composite=9.0),
+        row("c2", "600004", rank=5, composite=9.0),
+        row("c3", "600004", rank=5, composite=9.0),
+        row("c1", "600002", rank=1, composite=8.0),
+        row("c2", "600002", rank=1, composite=8.0),
+        row("c1", "600003", rank=1, composite=None),
+        row("c2", "600003", rank=1, composite=None),
+        row("c1", "600001", rank=1, composite=9.0),
+        row("c2", "600001", rank=1, composite=9.0),
     ]
     result = build_consensus(rows, min_count=2)
     assert [item["code"] for item in result["items"]] == [
@@ -241,13 +241,13 @@ def test_limit_truncates_items_but_not_total():
     rows = []
     for index in range(5):
         code = f"60000{index}"
-        rows.append(row("b1", code))
-        rows.append(row("b2", code))
+        rows.append(row("c1", code))
+        rows.append(row("c2", code))
     result = build_consensus(rows, min_count=2, limit=2)
     assert len(result["items"]) == 2
     assert result["total_algos_evaluated"] == 2
 
 
 def test_negative_limit_returns_no_items():
-    rows = [row("b1", "600000"), row("b2", "600000")]
+    rows = [row("c1", "600000"), row("c2", "600000")]
     assert build_consensus(rows, min_count=2, limit=-1)["items"] == []

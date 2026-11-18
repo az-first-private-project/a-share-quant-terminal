@@ -7,20 +7,13 @@
 from __future__ import annotations
 import logging
 
-from datetime import date, datetime, timedelta
-from typing import Any, Sequence
+from datetime import date
+from typing import Any
 import pandas as pd
-from sqlalchemy import and_, or_, select
+from sqlalchemy import select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.models.fact import (
-    FactFeatureDaily,
-    FactMoneyflow,
-    FactStockDaily,
-    FactStockScoreDaily,
-    MarketIndex,
-    MarketRegimeDaily,
-)
+from app.db.models.fact import MarketIndex, MarketRegimeDaily
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +25,7 @@ async def load_market_context(
     trade_date: date,
     index_code: str = BENCHMARK_INDEX_CODE,
 ) -> dict[str, Any]:
-    """基准指数与市场阶段（均截至 T 日），用于 B4/B5 与 A4 的市场门槛。
+    """基准指数与市场阶段（均截至 T 日），用于 A4/C6 的市场门槛。
 
     只使用 <= trade_date 的数据；指数或阶段数据缺失时对应门槛放行
     （不因为基准/阶段缺失而让策略永远空结果）。
@@ -83,8 +76,7 @@ async def load_market_context(
         return {
             "available": False,
             "index_code": index_code,
-            "b4_ok": True,
-            "b5_ok": True,
+            "c6_ok": True,
             **regime_info,
         }
 
@@ -104,13 +96,12 @@ async def load_market_context(
         "close": round(last_close, 2) if last_close is not None else None,
         "ma20": ma20,
         "pct_chg": last_pct,
-        "b4_ok": True if (last_close is None or ma20 is None) else last_close >= ma20 * 0.995,
-        "b5_ok": True if last_pct is None else last_pct > -2.0,
+        "c6_ok": True if (last_close is None or ma20 is None) else last_close >= ma20 * 0.995,
         **regime_info,
     }
 
 def market_gate_payload(market: dict | None, algo_code: str) -> dict[str, Any] | None:
-    """run 级市场门槛摘要（A4/B4/B5），用于 0 信号时解释原因。"""
+    """run 级市场门槛摘要（A4/C6），用于 0 信号时解释原因。"""
     if not market:
         return None
     available = bool(market.get("available", False))
@@ -146,23 +137,14 @@ def market_gate_payload(market: dict | None, algo_code: str) -> dict[str, Any] |
     if not available:
         payload.update({"passed": True, "rule": "指数数据缺失，市场门槛按放行处理"})
         return payload
-    if algo_code in {"b4", "c6"}:
-        ma20 = market.get("ma20")
-        payload.update(
-            {
-                "passed": bool(market.get("b4_ok", True)),
-                "rule": "沪深300 收盘 ≥ MA20 × 0.995",
-                "threshold": None if ma20 is None else round(float(ma20) * 0.995, 4),
-            }
-        )
-    else:
-        payload.update(
-            {
-                "passed": bool(market.get("b5_ok", True)),
-                "rule": "沪深300 当日跌幅 > -2%",
-                "threshold": -2.0,
-            }
-        )
+    ma20 = market.get("ma20")
+    payload.update(
+        {
+            "passed": bool(market.get("c6_ok", True)),
+            "rule": "沪深300 收盘 ≥ MA20 × 0.995",
+            "threshold": None if ma20 is None else round(float(ma20) * 0.995, 4),
+        }
+    )
     return payload
 
 def _market_flag(df: pd.DataFrame, key: str) -> bool:

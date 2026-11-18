@@ -6,6 +6,23 @@
 
 ---
 
+## 0. V9 清理：移除 A1/A2/B1–B5 策略实现（2026-11-18）
+
+| 变更 | 文件 |
+|---|---|
+| 删除 B1–B5 默认参数、排序字段与指标字段 | `backend/app/core/config.py`、`backend/app/strategy/specs.py` |
+| 删除 B 系列条件树构造、`CONDITION_SPECS` 与市场门槛分支；C6 门槛改名为 `c6_ok` | `backend/app/strategy/conditions.py`、`market.py`、`candidates.py` |
+| 删除 B 系列数据就绪检查与回测起点映射 | `backend/app/strategy/data.py`、`runner.py`、`api/v1/backtest.py` |
+| 删除临时对比脚本（仅用于 B 系列重构验证） | `backend/scripts/compare_mask_refactor.py` |
+| 前端移除 B 系列指标列与门槛文案，补全 C1–C6 排序列 | `frontend/src/components/AlgoDataTable.tsx`、`pages/AlgoCenter.tsx` |
+| 测试改为 C 系列代码，删除 B 专属用例 | `backend/tests/**` |
+| 新增策略因子清单文档 | `docs/STRATEGY-FACTORS.md` |
+| README / Wiki / API 契约同步当前策略口径 | `README.md`、`docs/wiki/**`、`docs/V5-API-CONTRACT.md` |
+
+验收：后端单元 651 passed；前端 `npm run build` 通过；后端代码中不再存在 A1/A2/B1–B5 标识或 `CONDITION_SPECS` 引用。
+
+---
+
 ## 0. V9 Batch A：只读 Demo + 轻量体验（2026-11-17）
 
 | 变更 | 文件 |

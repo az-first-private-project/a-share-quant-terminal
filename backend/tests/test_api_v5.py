@@ -689,7 +689,7 @@ def test_backtest_extras_unavailable_for_legacy_record(client):
 def test_watch_state_roundtrip_and_partial_update(watch_state_client):
     client = watch_state_client
     codes = ["000739", "000560"]
-    seen = ["b2:2026-10-26", "b3:2026-10-26"]
+    seen = ["c2:2026-10-26", "c3:2026-10-26"]
 
     resp = client.put("/api/v1/watchlist", json={"codes": codes, "seen_hits": seen})
     assert resp.status_code == 200, resp.text
@@ -707,9 +707,9 @@ def test_watch_state_roundtrip_and_partial_update(watch_state_client):
     assert partial["codes"] == ["600000"]
     assert partial["seen_hits"] == seen, "只传 codes 时不应清空已读水位"
 
-    partial = client.put("/api/v1/watchlist", json={"seen_hits": ["b2:2026-10-27"]}).json()
+    partial = client.put("/api/v1/watchlist", json={"seen_hits": ["c2:2026-10-27"]}).json()
     assert partial["codes"] == ["600000"], "只传 seen_hits 时不应清空名单"
-    assert partial["seen_hits"] == ["b2:2026-10-27"]
+    assert partial["seen_hits"] == ["c2:2026-10-27"]
 
     cleared = client.put("/api/v1/watchlist", json={"codes": []}).json()
     assert cleared["codes"] == []
@@ -719,13 +719,13 @@ def test_watch_state_validation(watch_state_client):
     client = watch_state_client
     base = date(2026, 1, 1)
     too_many_seen = [
-        f"b2:{(base + timedelta(days=i)).isoformat()}" for i in range(501)
+        f"c2:{(base + timedelta(days=i)).isoformat()}" for i in range(501)
     ]
     cases = [
         {"codes": ["'; drop"]},
         {"codes": [f"{i:06d}" for i in range(101)]},
-        {"seen_hits": ["b2:not-a-date"]},
-        {"seen_hits": ["../b2:2026-10-26"]},
+        {"seen_hits": ["c2:not-a-date"]},
+        {"seen_hits": ["../c2:2026-10-26"]},
         {"seen_hits": too_many_seen},
     ]
     for payload in cases:

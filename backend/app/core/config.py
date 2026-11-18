@@ -168,14 +168,14 @@ class BacktestConfig:
 BACKTEST = BacktestConfig()
 
 # ==================== 纸面组合（V6 T11）====================
-# 空 = 全部现存策略；env 逗号分隔覆盖，例如 PAPER_ENABLED_ALGOS=a3,b1
+# 空 = 全部现存策略；env 逗号分隔覆盖，例如 PAPER_ENABLED_ALGOS=a3,a4
 PAPER_ENABLED_ALGOS: tuple[str, ...] = tuple(
     item.strip().lower()
     for item in _env("PAPER_ENABLED_ALGOS", "").split(",")
     if item.strip()
 )
 
-# 策略默认参数（A1/A2 已下线；V8 起 B1–B5 停用，代码保留）
+# 策略默认参数（A1/A2/B1–B5 已下线并移除实现；现役 A3/A4 + C1–C6 观察候选）
 STRATEGY_DEFAULTS = {
     "a3": {"limit": 20, "min_score": 6.0},     # 0–10 分制（不是 0–100！）
     "a4": {
@@ -197,17 +197,6 @@ STRATEGY_DEFAULTS = {
         "limit": 20, "squeeze_pct": 20.0, "vol_mult": 1.5,
         "range_max": 10.0, "min_amount": 2.0e8,
     },
-    "b1": {"limit": 20, "min_vol_ratio": 1.0, "min_amount": 2.0e8},
-    "b2": {
-        "limit": 20, "rsi_max": 20.0, "amp_min": 15.0,
-        "trend_dev": 0.9, "min_amount": 2.0e8,
-    },
-    "b3": {"limit": 20, "k_max": 30.0, "j_max": 10.0, "min_amount": 2.0e8},
-    "b4": {
-        "limit": 20, "squeeze_pct": 20.0, "vol_mult": 1.5,
-        "range_max": 10.0, "min_amount": 2.0e8,
-    },
-    "b5": {"limit": 20, "j_max": 0.0, "dev_max": 8.0, "min_amount": 2.0e8},
 }
 
 

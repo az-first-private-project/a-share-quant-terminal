@@ -328,7 +328,7 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 
 ### 5.1 GET `/api/v1/algo/list`
 
-> V8 M1（2026-11-15）起当前正式启用策略只有 **a3 / a4**；b1–b5 已停用（代码与历史 run 保留）。
+> V8 M1（2026-11-15）起当前正式启用策略只有 **a3 / a4**；A1/A2/B1–B5 的实现已在 V9 清理中删除（历史 run 仍可查询）。
 > `include_observation=true` 时额外返回 c1–c6 观察候选（`is_active=false`、`is_observation=true`），
 > 默认不返回。观察候选可查看/执行/回测，但不进入共识、天梯与正式统计。
 
@@ -366,21 +366,21 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 - 由于一个 run 最多保存 `limit` 条信号，`total ≤ limit`；`offset > 0` 只截取该 run 已保存信号的尾部，
   `offset ≥ total` 返回空 `data`（`count=0`）。需要看到更多信号时应提高 `limit` 重新执行（会生成新 run），
   而不是反复翻页。
-- **`score` 是该策略的排序指标原始值**（A3=综合分、A4=股息率；B1–B5 已停用，其历史 run 仍按原口径可查），
+- **`score` 是该策略的排序指标原始值**（A3=综合分、A4=股息率、C1–C6=各自排序指标），
   **`composite_score` 才是 0–10 的综合因子得分**（可能为 null）。前端"得分"列请用后者。
 - **参数必须真生效**：不同 `pe_max` 必须产生不同 `run_id` 与不同结果。
 - `data[].metrics` 为策略依据的完整指标，前端表格列由 `metrics` 动态生成。
 - `run` 额外字段：`status`（running/success/failed/superseded；superseded 表示同参数旧 run 已被新 run 取代，仍可审计但不参与统计）、失败时 `error`、回测 run 带 `is_backtest`、快照版本 `signal_schema`（见下）。
 
-**run 级市场门槛 `market_gate`（A4/B4/B5，V6 T7 补充；A4 为 V8 M1 补充）**
+**run 级市场门槛 `market_gate`（A4/C6）**
 
-b4/b5 每次响应顶层带 `market_gate`（新 run 与缓存 run 均按 `trade_date` 现算，不落库）：
+C6 每次响应顶层带 `market_gate`（新 run 与缓存 run 均按 `trade_date` 现算，不落库）：
 ```json
 { "index_code": "000300", "available": true, "close": 4103.54, "ma20": 4275.67,
   "pct_chg": -0.8, "passed": false, "rule": "沪深300 收盘 ≥ MA20 × 0.995",
   "threshold": 4254.2916 }
 ```
-- `passed` 为该策略对应的门槛（b4=`b4_ok`，b5=`b5_ok`）；`rule` / `threshold` 供 UI 展示。
+- `passed` 为该策略对应的门槛（c6=`c6_ok`）；`rule` / `threshold` 供 UI 展示。
 - 指数数据缺失时 `available=false`、`passed=true`（按放行处理），`rule` 说明原因。
 
 a4 额外返回市场阶段字段；仅防御型阶段放行：
@@ -395,24 +395,24 @@ a4 额外返回市场阶段字段；仅防御型阶段放行：
 ```
 - a4 的 `passed = regime_code ∈ {bottoming, pull_down, risk_off}`；阶段数据缺失时 `regime_available=false`、`passed=true`（放行）。
 - `available` 仍表示沪深300 指数是否可用，与 `regime_available` 相互独立。
-- 0 信号时前端据此显示“防御型门槛未满足…”，而非笼统的“没有选股信号”。
-- 0 信号时前端据此显示“市场环境要求未满足…”，而非笼统的“没有选股信号”。
+- 0 信号时前端据此显示“防御型门槛未满足…”或“市场环境要求未满足…”，而非笼统的“没有选股信号”。
 
-**逐条依据 `metrics.triggered`（B1–B5，V6 T7）**
+**逐条依据 `metrics.triggered`（A4/C6 市场门槛）**
 
-每个信号附带条件树逐条求值结果，与选股共用同一份 `CONDITION_SPECS`，不另建解释表：
+A4/C6 的市场门槛会写入 `metrics.triggered`（`scope="market"`），与选股共用同一份判定：
 ```json
-[ { "key": "ema_cross_3d", "label": "EMA5 近 3 日上穿 EMA20", "scope": "stock",
-    "required": true, "passed": true, "actual": true, "op": "eq", "threshold": true,
-    "detail": "ema5=8.262 ema20=7.371" },
-  { "key": "b4_market", "label": "沪深300 收盘 ≥ MA20 × 0.995", "scope": "market",
+[ { "key": "a4_regime", "label": "仅在防御型市场阶段启用（震荡筑底/向下调整/避险下跌）",
+    "scope": "market", "required": true, "passed": false, "actual": false,
+    "threshold": ["bottoming", "pull_down", "risk_off"] } ]
+```
+```json
+[ { "key": "c6_market", "label": "沪深300 收盘 ≥ MA20 × 0.995", "scope": "market",
     "required": true, "passed": false, "actual": false,
     "detail": "沪深300 close=4103.54 ma20=4275.67" } ]
 ```
 - `scope`：`stock`（个股条件）或 `market`（市场环境门槛，前端单独分组）。
-- `op` / `threshold` 仅比较类条件返回；`notna` 与市场门槛没有 `threshold`，`actual` 为原始值或整体布尔。
+- `op` / `threshold` 仅比较类条件返回；市场门槛的 `actual` 为整体布尔。
 - `detail` 为人类可读字段快照；所有值均为 JSON 原生类型（numpy / Decimal 已在后端转换）。
-- 条件组（如「阳线或收涨」「趋势支撑」）折叠为一条，`actual/passed` 为组整体布尔值。
 - **快照版本 `run.signal_schema`**（P2-7）：`1` = 重构前的历史 run，`metrics` 不含
   `triggered` / `score_breakdown`；`2` = 结构化依据（triggered/score_breakdown）；
   `3` = V8 M1 a4 防御门槛 + 策略逻辑变更（结构同 2，缓存不再复用 `<3` 的旧 run）。
@@ -420,7 +420,7 @@ a4 额外返回市场阶段字段；仅防御型阶段放行：
   缺字段显示“当前版本未记录该信号依据”，不得混为一谈、渲染成空列表或伪造全通过。
 - 历史 run **只读标注，不批量重算**：重跑会生成新 run 并把同参数旧成功 run 置为
   `superseded`，改变历史与统计口径；确需最新依据时由用户显式执行或强制刷新。
-- a1/a2 不产生结构化依据；a4 自 V8 M1 起在 `metrics.triggered` 中带 `a4_regime` 市场门槛条目。
+- A3 与 C1–C5 不产生结构化 `triggered`；A4 带 `a4_regime`，C6 带 `c6_market`。
 
 **A3 评分拆解 `metrics.score_breakdown`（仅 A3，V6 T7）**
 

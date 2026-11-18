@@ -32,8 +32,8 @@ def test_supersede_only_same_params() -> None:
 
 
 def test_supersede_ignores_current_run() -> None:
-    fingerprint = params_fingerprint("b1", {})
-    assert superseded_run_ids("new", "b1", fingerprint, [("new", {})]) == []
+    fingerprint = params_fingerprint("c1", {})
+    assert superseded_run_ids("new", "c1", fingerprint, [("new", {})]) == []
 
 
 def test_plan_supersede_keeps_newest_per_group() -> None:
@@ -42,13 +42,13 @@ def test_plan_supersede_keeps_newest_per_group() -> None:
         ("new-a3", "a3", day, {"min_score": 60}, datetime(2026, 10, 30, 12, 0)),
         ("old-a3", "a3", day, {"min_score": 60}, datetime(2026, 10, 30, 9, 0)),
         ("custom", "a3", day, {"min_score": 50}, datetime(2026, 10, 30, 8, 0)),
-        ("new-b1", "b1", day, {}, datetime(2026, 10, 30, 12, 0)),
-        ("old-b1", "b1", day, {}, datetime(2026, 10, 30, 9, 0)),
+        ("new-c1", "c1", day, {}, datetime(2026, 10, 30, 12, 0)),
+        ("old-c1", "c1", day, {}, datetime(2026, 10, 30, 9, 0)),
     ]
 
     keep, stale, by_algo = plan_supersede(rows)
 
-    assert stale == ["old-a3", "old-b1"]
+    assert stale == ["old-a3", "old-c1"]
     assert keep[("a3", day, params_fingerprint("a3", {"min_score": 60}))] == "new-a3"
     assert keep[("a3", day, params_fingerprint("a3", {"min_score": 50}))] == "custom"
-    assert by_algo == {"a3": 1, "b1": 1}
+    assert by_algo == {"a3": 1, "c1": 1}

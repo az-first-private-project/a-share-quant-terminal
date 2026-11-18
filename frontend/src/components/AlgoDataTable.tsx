@@ -50,11 +50,12 @@ interface Props {
 const SCORE_META: Record<string, { key: string; header: string }> = {
   a3: { key: 'composite_score', header: '综合评分' },
   a4: { key: 'dv_ttm', header: '股息率' },
-  b1: { key: 'roc10', header: 'ROC10(%)' },
-  b2: { key: 'rsi6', header: 'RSI6' },
-  b3: { key: 'kdj_j', header: 'KDJ J 值' },
-  b4: { key: 'boll_width_pct60', header: '带宽分位(%)' },
-  b5: { key: 'kdj_j', header: 'KDJ J 值' },
+  c1: { key: 'float_cap', header: '流通市值' },
+  c2: { key: 'range40_ratio', header: '40日区间比' },
+  c3: { key: 'rps', header: 'RPS' },
+  c4: { key: 'amount', header: '成交额' },
+  c5: { key: 'vol_ratio_20', header: '20日量比' },
+  c6: { key: 'boll_width_pct60', header: '带宽分位(%)' },
 }
 
 function fmtStrategyScore(algo: string | undefined, value: number): string {
@@ -165,12 +166,9 @@ function marketGateNotice(algo: string | undefined, gate?: MarketGate | null): s
     return '沪深300 指数数据缺失，市场门槛按放行处理。'
   }
   if (gate.passed !== false) return null
-  if (algo === 'b4' || algo === 'c6') {
-    const b4Threshold = typeof gate.threshold === 'number' ? gate.threshold : null
-    return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} < MA20 × 0.995 = ${fmtGateValue(b4Threshold)}，本次不产生信号。`
-  }
-  if (algo === 'b5') {
-    return `市场环境要求未满足：沪深300 当日涨跌幅 ${fmtGateValue(gate.pct_chg)}% ≤ -2%，本次不产生信号。`
+  if (algo === 'c6') {
+    const threshold = typeof gate.threshold === 'number' ? gate.threshold : null
+    return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} < MA20 × 0.995 = ${fmtGateValue(threshold)}，本次不产生信号。`
   }
   return '市场环境要求未满足，本次不产生信号。'
 }

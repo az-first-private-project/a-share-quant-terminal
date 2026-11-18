@@ -19,7 +19,6 @@ from app.strategy.condition import (
     to_dict,
     triggered_row,
 )
-from app.strategy.strategies import CONDITION_SPECS, _evaluate_strategy, rank_signals
 
 
 def _frame() -> pd.DataFrame:
@@ -120,61 +119,3 @@ def test_explain_and_triggered_row_json_safe() -> None:
     assert triggered[1]["actual"] is True
     assert triggered[1]["detail"] == "open=9.5 close=10 pre_close=9.8"
     json.dumps(triggered, ensure_ascii=False, allow_nan=False)
-
-
-def _b1_frame() -> pd.DataFrame:
-    frame = _frame()
-    frame["amount_ma20"] = [3.0e8, 2.0e8, None]
-    frame["vol_ma5"] = [100.0, 100.0, 100.0]
-    frame["volume"] = [160.0, 90.0, 100.0]
-    frame["ema20_up"] = [True, True, True]
-    frame["ema_cross_3d"] = [True, False, True]
-    frame["roc10"] = [5.0, -1.0, 2.0]
-    frame["close"] = [11.0, 10.0, 10.0]
-    frame["ema20"] = [10.0, 10.0, 10.0]
-    frame["ma60"] = [10.0, 10.0, 10.0]
-    return frame
-
-
-@pytest.mark.skip(reason="b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip")
-def test_b1_triggered_matches_condition_specs_count() -> None:
-    frame = _b1_frame()
-    result = rank_signals("b1", frame, {"limit": 20})
-    assert len(result) == 1
-    triggered = result["metrics"].iloc[0]["triggered"]
-    assert len(triggered) == len(CONDITION_SPECS["b1"].children) == 9
-    assert all(item["scope"] == "stock" for item in triggered)
-    assert all(item["passed"] for item in triggered)
-    assert all(item["label"] and item["detail"] for item in triggered)
-    json.dumps(result["metrics"].iloc[0], ensure_ascii=False, allow_nan=False)
-
-
-@pytest.mark.skip(reason="b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip")
-def test_b4_market_condition_is_separate_scope() -> None:
-    frame = pd.DataFrame(
-        {
-            "code": ["600000"],
-            "name": ["甲"],
-            "close": [11.0],
-            "open": [10.0],
-            "pre_close": [10.0],
-            "boll_width_pct60": [10.0],
-            "boll_upper": [10.8],
-            "high20_close": [10.6],
-            "volume": [1600.0],
-            "vol_ma5": [1000.0],
-            "range20_pct": [8.0],
-            "amount_ma20": [3.0e8],
-            "roc10": [5.0],
-        }
-    )
-    frame.attrs["market"] = {"available": True, "b4_ok": True, "close": 4000.0, "ma20": 3900.0}
-    evaluation = _evaluate_strategy("b4", frame, {})
-    assert bool(evaluation.mask.iloc[0]) is True
-    market_items = [item for item in evaluation.details if item.scope == "market"]
-    assert len(market_items) == 1
-    assert market_items[0].key == "b4_market"
-
-    blocked = frame.copy()
-    blocked.attrs["market"] = {"available": True, "b4_ok": False}
-    assert bool(_evaluate_strategy("b4", blocked, {}).mask.iloc[0]) is False

@@ -7,13 +7,13 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Sequence
+from typing import Any
 import numpy as np
 import pandas as pd
-from app.core.config import HISTORY_START, STRATEGY_DEFAULTS
-from app.core.errors import DataUnavailableError, InvalidParamError, UnknownAlgoError
+from app.core.config import STRATEGY_DEFAULTS
+from app.core.errors import InvalidParamError, UnknownAlgoError
 
 #: 次新股过滤口径（用户定稿：上市不足 60 个交易日不入选）
 NEW_STOCK_MIN_TRADING_DAYS = 60
@@ -252,11 +252,6 @@ _SORT_SPEC: dict[str, tuple[str, bool]] = {
     "c4": ("amount", False),               # 成交额降序
     "c5": ("vol_ratio_20", False),         # 放量比降序
     "c6": ("boll_width_pct60", True),      # 带宽分位升序
-    "b1": ("roc10", False),                # 10 日动量降序
-    "b2": ("rsi6", True),                  # 越超卖越靠前
-    "b3": ("kdj_j", True),                 # J 值升序
-    "b4": ("boll_width_pct60", True),      # 挤压越极致越靠前
-    "b5": ("kdj_j", True),                 # J 值升序
 }
 
 #: 各策略 metrics 字段（该策略依据的全部指标；前端表格列由它动态生成）
@@ -294,29 +289,6 @@ _METRIC_FIELDS: dict[str, tuple[str, ...]] = {
     "c6": (
         "boll_width_pct60", "boll_upper", "high20_close", "range20_pct",
         "volume", "vol_ma5", "amount_ma20", "close", "pct_chg", "industry_l1",
-    ),
-    "b1": (
-        "ema5", "ema20", "ema_cross_3d", "ema20_up", "roc10",
-        "close", "pct_chg", "volume", "vol_ma5", "ma60",
-        "amount_ma20", "industry_l1",
-    ),
-    "b2": (
-        "rsi6", "amp60", "ma120", "close", "open", "pre_close", "pct_chg",
-        "amount_ma20", "industry_l1",
-    ),
-    "b3": (
-        "kdj_k", "kdj_d", "kdj_j", "kdj_j_min2", "kdj_golden_cross",
-        "ema60", "close", "pct_chg", "amount_ma20", "industry_l1",
-    ),
-    "b4": (
-        "boll_width", "boll_width_pct60", "boll_upper", "boll_mid", "boll_lower",
-        "high20_close", "range20_pct", "volume", "vol_ma5",
-        "close", "pct_chg", "amount_ma20", "industry_l1",
-    ),
-    "b5": (
-        "boll_lower", "kdj_j", "kdj_j_min2", "kdj_k", "kdj_d",
-        "low", "volume", "vol_ma5", "ma120",
-        "close", "open", "pre_close", "pct_chg", "amount_ma20", "industry_l1",
     ),
 }
 

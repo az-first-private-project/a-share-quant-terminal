@@ -81,7 +81,7 @@ calendar → universe → index → sector(东财,空则同花顺兜底) → sec
    → snapshot(全市场) → moneyflow → margin
    → valuation(财报/分红缓存 → PE/PB/股息率)   ← 仅"最新可得"增量，慢阶段走夜间任务
    → features(指标) → scores(个股因子) → sector_scores(板块评分)
-   → report(AI 日报) → algos(A1–A4)
+   → report(AI 日报) → algos(A3/A4)
 ```
 > 顺序硬约束：**日线 → 估值 → 指标 → 因子 → 选股**。估值必须在因子之前，
 > 否则 `value/quality` 因子拿不到 PE/PB；而估值又依赖日线收盘价。

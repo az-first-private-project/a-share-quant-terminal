@@ -55,7 +55,6 @@ from app.strategy.metrics import compute_metrics  # noqa: E402
 from app.strategy.runner import params_fingerprint  # noqa: E402
 from app.strategy.strategies import (  # noqa: E402
     CANDIDATE_SPECS,
-    CONDITION_SPECS,
     SPECS,
     _assert_data_ready,
     _score_breakdown,
@@ -65,8 +64,6 @@ from app.strategy.strategies import (  # noqa: E402
     market_gate_payload,
     rank_signals,
 )
-
-_B_DISABLED_REASON = "b1–b5 已于 V8 M1 停用；代码保留，恢复时移除 skip"
 
 
 # =====================================================================
@@ -84,47 +81,6 @@ def _condition_frame() -> pd.DataFrame:
             "dv_ttm": [5.0, 1.0, 6.0, 0.5, 2.0, 4.5],
             "industry_l1": ["银行", "电子", "银行", "食品", "计算机", "电子"],
             "macd_golden_cross": [True, False, True, True, False, True],
-        }
-    )
-
-
-def _short_frame() -> pd.DataFrame:
-    """6 行短线策略横截面（B1–B5 共用，按需取列）。"""
-    return pd.DataFrame(
-        {
-            "code": ["600000", "600001", "600002", "600003", "600004", "600005"],
-            "name": ["甲", "乙", "丙", "丁", "戊", "己"],
-            "close": [11.0, 10.5, 10.0, 9.95, 10.2, 10.0],
-            "open": [10.0, 10.6, 9.9, 9.8, 10.1, 10.1],
-            "pre_close": [10.0, 10.2, 10.0, 9.9, 10.1, 10.0],
-            "low": [10.0, 10.1, 9.0, 9.2, 9.8, 10.0],
-            "volume": [1600.0, 900.0, 1520.0, 800.0, 500.0, 1000.0],
-            "vol_ma5": [1000.0] * 6,
-            "amount_ma20": [3.0e8] * 6,
-            "ema5": [11.0, 10.6, 10.1, 9.95, 10.2, 10.0],
-            "ema20": [10.5, 10.5, 9.95, 9.6, 10.0, 10.0],
-            "ema20_up": [True] * 6,
-            "ema_cross_3d": [True, False, True, True, True, True],
-            "ema60": [10.0] * 6,
-            "ma60": [10.0, 10.0, 9.8, 10.0, 10.0, 10.0],
-            "ma120": [9.0, 9.0, 9.0, 12.0, 9.0, 12.0],
-            "roc10": [5.0, -1.0, 3.0, 2.0, 4.0, 1.0],
-            "rsi6": [15.0, 25.0, 10.0, 18.0, 19.0, 30.0],
-            "amp60": [20.0] * 6,
-            "kdj_k": [20.0, 20.0, 40.0, 25.0, 10.0, 20.0],
-            "kdj_d": [15.0] * 6,
-            "kdj_j": [-5.0, 40.0, 5.0, -2.0, -10.0, 5.0],
-            "kdj_j_min2": [-5.0, 30.0, 5.0, -2.0, -10.0, 5.0],
-            "kdj_golden_cross": [True, True, True, False, True, True],
-            "boll_lower": [9.6, 9.0, 9.6, 9.7, 9.9, 9.6],
-            "boll_upper": [10.8, 11.0, 9.9, 10.2, 10.5, 10.4],
-            "boll_mid": [10.2] * 6,
-            "boll_width": [0.12, 0.20, 0.08, 0.05, 0.06, 0.08],
-            "boll_width_pct60": [10.0, 50.0, 15.0, 5.0, 80.0, 30.0],
-            "high20_close": [10.6, 10.8, 9.95, 10.0, 10.4, 10.3],
-            "range20_pct": [8.0, 12.0, 6.0, 4.0, 20.0, 5.0],
-            "pct_chg": [1.0] * 6,
-            "industry_l1": ["电子"] * 6,
         }
     )
 
@@ -373,11 +329,10 @@ def test_list_runs_excludes_backtest_by_default() -> None:
 # =====================================================================
 
 def test_v8_enabled_specs_current() -> None:
-    """V8：启用清单为 a3/a4；c1–c4 在候选注册表，回测达标后才加入。"""
+    """V8：启用清单为 a3/a4；c1–c6 在候选注册表，回测达标后才加入。"""
     assert set(SPECS) == {"a3", "a4"}
     assert set(CANDIDATE_SPECS) == {"c1", "c2", "c3", "c4", "c5", "c6"}
     assert {item.code for item in list_specs()} == {"a3", "a4"}
-    assert CONDITION_SPECS == {}
 
 
 def test_rank_signals_a4_upgrade_filters() -> None:
@@ -471,89 +426,6 @@ def test_market_gate_payload_a4_regime() -> None:
     assert "放行" in missing["rule"]
 
 
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_rank_signals_b1_dual_ema_momentum() -> None:
-    """B1：EMA 近 3 日金叉 + 放量 + MA60 之上，按 ROC10 降序。"""
-    frame = _short_frame()
-    result = rank_signals("b1", frame, {"limit": 20})
-    # 600000(roc=5) 与 600002(roc=3) 满足；600004 量能 500 < 1000 被剔除
-    assert list(result["code"]) == ["600000", "600002"]
-    assert result["roc10"].is_monotonic_decreasing
-    assert list(result["score"]) == pytest.approx([5.0, 3.0])
-    assert result["metrics"].iloc[0]["ema20"] == pytest.approx(10.5)
-
-    # 参数真生效：量能倍数提高到 1.7 → 只剩 600000（1600/1000=1.6 也出局）
-    strict = rank_signals("b1", frame, {"limit": 20, "min_vol_ratio": 1.7})
-    assert len(strict) == 0
-
-
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_rank_signals_b2_rsi_oversold_reversal() -> None:
-    """B2：RSI6 超卖 + 止跌 K 线 + MA120 趋势，按 RSI6 升序。"""
-    frame = _short_frame()
-    result = rank_signals("b2", frame, {"limit": 20})
-    # 600002(10) / 600000(15) / 600004(19)；600003 收盘跌破 MA120*0.9 被剔除
-    assert list(result["code"]) == ["600002", "600000", "600004"]
-    assert result["rsi6"].is_monotonic_increasing
-    assert list(result["score"]) == pytest.approx([10.0, 15.0, 19.0])
-
-    strict = rank_signals("b2", frame, {"limit": 20, "rsi_max": 12.0})
-    assert list(strict["code"]) == ["600002"]
-
-
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_rank_signals_b3_kdj_low_golden_cross() -> None:
-    """B3：J 值低位 + K 上穿 D + EMA60 之上，按 J 值升序。"""
-    frame = _short_frame()
-    result = rank_signals("b3", frame, {"limit": 20})
-    # 600004(J=-10) / 600000(J=-5)；600002 K=40 超上限
-    assert list(result["code"]) == ["600004", "600000"]
-    assert result["kdj_j"].is_monotonic_increasing
-
-    strict = rank_signals("b3", frame, {"limit": 20, "j_max": -6.0})
-    assert list(strict["code"]) == ["600004"]
-
-
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_rank_signals_b4_boll_squeeze_breakout() -> None:
-    """B4：带宽低分位 + 突破上轨新高 + 放量 + 区间收窄，按带宽分位升序。"""
-    frame = _short_frame()
-    result = rank_signals("b4", frame, {"limit": 20})
-    assert list(result["code"]) == ["600000", "600002"]
-    assert result["boll_width_pct60"].is_monotonic_increasing
-
-    strict = rank_signals("b4", frame, {"limit": 20, "vol_mult": 1.55})
-    assert list(strict["code"]) == ["600000"]
-
-
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_rank_signals_b5_boll_lower_kdj_reversal() -> None:
-    """B5：触及布林下轨 + J 超卖 + 缩量止跌，按 J 值升序。"""
-    frame = _short_frame()
-    result = rank_signals("b5", frame, {"limit": 20})
-    # 600004(J=-10，收盘高于 MA120)；600003(J=-2，偏离下轨 2.6% ≤ 8% 放行)
-    assert list(result["code"]) == ["600004", "600003"]
-    assert result["kdj_j"].is_monotonic_increasing
-
-    strict = rank_signals("b5", frame, {"limit": 20, "j_max": -5.0})
-    assert list(strict["code"]) == ["600004"]
-
-
-@pytest.mark.skip(reason=_B_DISABLED_REASON)
-def test_b4_b5_market_gate_blocks_signals() -> None:
-    """市场状态门槛：沪深300 不满足时 B4/B5 必须空结果（attrs 由 build_candidates 注入）。"""
-    frame = _short_frame()
-    blocked = frame.copy()
-    blocked.attrs["market"] = {"b4_ok": False, "b5_ok": False}
-    assert len(rank_signals("b4", blocked, {"limit": 20})) == 0
-    assert len(rank_signals("b5", blocked, {"limit": 20})) == 0
-    # 指数缺失（available=False）时放行，不因基准缺数据而永久空结果
-    allowed = frame.copy()
-    allowed.attrs["market"] = {"available": False, "b4_ok": True, "b5_ok": True}
-    assert len(rank_signals("b4", allowed, {"limit": 20})) == 2
-    assert len(rank_signals("b5", allowed, {"limit": 20})) == 2
-
-
 def test_rank_signals_a4_dividend_and_pe_filters() -> None:
     """A4：PE>0 且 <pe_max、股息率在 [div_min, dv_max]、PB/评分/流动性/趋势过滤，按股息率降序。"""
     frame = _strategy_frame()
@@ -641,37 +513,31 @@ def test_a3_score_breakdown_uses_persisted_detail() -> None:
 
 
 def test_market_gate_payload_for_run_level_hint() -> None:
-    """B4/B5 的 run 级门槛摘要：0 信号时前端可解释原因，缓存 run 也能现算。"""
+    """C6 的 run 级门槛摘要：0 信号时前端可解释原因，缓存 run 也能现算。"""
     market = {
         "available": True,
         "index_code": "000300",
         "close": 4103.54,
         "ma20": 4275.67,
         "pct_chg": -0.8,
-        "b4_ok": False,
-        "b5_ok": True,
+        "c6_ok": False,
     }
-    b4 = market_gate_payload(market, "b4")
-    assert b4 is not None
-    assert b4["passed"] is False
-    assert b4["threshold"] == pytest.approx(4254.29165, abs=0.01)
-    assert b4["rule"] == "沪深300 收盘 ≥ MA20 × 0.995"
-    assert b4["close"] == pytest.approx(4103.54)
-
-    b5 = market_gate_payload(market, "b5")
-    assert b5 is not None
-    assert b5["passed"] is True
-    assert b5["threshold"] == -2.0
+    c6 = market_gate_payload(market, "c6")
+    assert c6 is not None
+    assert c6["passed"] is False
+    assert c6["threshold"] == pytest.approx(4254.29165, abs=0.01)
+    assert c6["rule"] == "沪深300 收盘 ≥ MA20 × 0.995"
+    assert c6["close"] == pytest.approx(4103.54)
 
     missing = market_gate_payload(
-        {"available": False, "index_code": "000300", "b4_ok": True, "b5_ok": True}, "b4"
+        {"available": False, "index_code": "000300", "c6_ok": True}, "c6"
     )
     assert missing is not None
     assert missing["available"] is False
     assert missing["passed"] is True
     assert "放行" in missing["rule"]
-    assert market_gate_payload(None, "b4") is None
-    json.dumps(b4, ensure_ascii=False, allow_nan=False)
+    assert market_gate_payload(None, "c6") is None
+    json.dumps(c6, ensure_ascii=False, allow_nan=False)
 
 
 # =====================================================================
@@ -679,7 +545,7 @@ def test_market_gate_payload_for_run_level_hint() -> None:
 # =====================================================================
 
 def test_score_semantics_is_raw_sort_metric() -> None:
-    """score = 排序指标原始值：A4=股息率（B 策略已停用，不再断言）。"""
+    """score = 排序指标原始值：A4=股息率（C 策略同为各自排序指标）。"""
     frame = _strategy_frame()
 
     a4 = rank_signals("a4", frame, {})

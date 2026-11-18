@@ -5,7 +5,7 @@
 
 口径：
   - 只认当前 `SPECS` 内启用策略、`status='success'` 且 `is_backtest IS FALSE`
-    的 run（与共识榜一致，历史 a1/a2 run 不提示）；
+    的 run（与共识榜一致，已下线策略的历史 run 不提示）；
   - 近 N 个交易日以 `trade_calendar` 为准，锚定最新成功 run 的交易日；
   - 同一策略同一天多次参数 run 命中同一只票只保留一条（名次最优 → 更晚创建）；
   - 整个查询是一条 SQL，`codes` 走参数绑定，不拼字符串。

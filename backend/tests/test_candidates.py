@@ -190,13 +190,13 @@ def test_rank_signals_c6_boll_squeeze() -> None:
     frame["volume"] = [160.0, 160.0]
     frame["range20_pct"] = [8.0, 8.0]
     frame["amount_ma20"] = [3.0e8, 3.0e8]
-    market = {"available": True, "b4_ok": True}
+    market = {"available": True, "c6_ok": True}
     frame.attrs["market"] = market
     result = rank_signals("c6", frame, {})
     assert list(result["code"]) == ["600061"]
 
     blocked = frame.copy()
-    blocked.attrs["market"] = {"available": True, "b4_ok": False}
+    blocked.attrs["market"] = {"available": True, "c6_ok": False}
     assert len(rank_signals("c6", blocked, {})) == 0
 
 

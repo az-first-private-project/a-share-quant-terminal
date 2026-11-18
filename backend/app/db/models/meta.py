@@ -86,7 +86,7 @@ class IngestJob(Base):
 
 
 class AlgoMeta(Base):
-    """策略元信息台账（A3/A4 + B1–B5）；/algo/list 实际由 strategy/strategies.py 的 SPECS 提供。"""
+    """策略元信息台账（A3/A4）；/algo/list 实际由 strategy/strategies.py 的 SPECS 提供。"""
 
     __tablename__ = "algo_meta"
 

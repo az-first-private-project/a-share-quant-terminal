@@ -18,8 +18,8 @@ CANDIDATE_SPECS= ['c1','c2','c3','c4','c5','c6']
 | **正式启用** | A3 央企 × 综合评分 | 进入 `/algo/list` 默认返回、每日任务、共识 |
 | **正式启用** | A4 高股息质量 × 低估值 | 带防御型市场阶段门槛 |
 | 观察候选 | C1 海龟突破、C2 高窄旗形、C3 RPS 突破、C4 涨停洗盘、C5 均线放量突破、C6 布林挤压突破 | 可查看/执行/回测；不进入共识与每日正式任务；`include_observation=true` 才出现在清单 |
-| 已停用 | B1–B5 短线策略 | V8 M1 回测未过门槛；`STRATEGY_DEFAULTS`、排序/指标定义和条件构造代码保留，但未注册进 `SPECS`，`CONDITION_SPECS` 为空 |
-| 已下线 | A1、A2 | 按回测结果下线，仅历史 run 保留 |
+| 已移除 | B1–B5 短线策略 | V8 停用后，V9 清理时删除全部实现（默认参数、排序/指标字段、条件构造）；历史 run 仍可查询 |
+| 已移除 | A1、A2 | 按回测结果下线，V9 清理时删除残留引用；仅历史 run 保留 |
 
 > `CANDIDATE_SPECS` 是从 `SPECS` 中 `pop` 出来的；新增策略必须先通过回测门槛，再显式加入 `SPECS`。
 
@@ -33,7 +33,7 @@ CANDIDATE_SPECS= ['c1','c2','c3','c4','c5','c6']
 |---|---|
 | `strategy/specs.py` | `StrategySpec`、`SPECS` / `CANDIDATE_SPECS`、参数校验与 `jsonable` |
 | `strategy/data.py` | 横截面取数、窗口特征、统一过滤、数据就绪检查 |
-| `strategy/market.py` | 市场状态、A4/B4/B5/C6 门槛 |
+| `strategy/market.py` | 市场状态、A4/C6 门槛 |
 | `strategy/conditions.py` | 条件树、策略求值、逐条依据 |
 | `strategy/ranking.py` | 排序、打分、metrics 与 `rank_signals` |
 | `strategy/candidates.py` | `build_candidates` 候选池编排 |
@@ -79,7 +79,7 @@ close >= MA120 × trend_dev(0.9)
 按 dv_ttm 降序
 ```
 
-阶段数据缺失时按放行处理；纳入 `_build_condition_specs` 生成的结构化依据。
+阶段数据缺失时按放行处理；0 信号时 `market_gate_payload` 返回可解释摘要。
 
 ### 2.3 候选策略（C1–C6）
 
@@ -118,7 +118,7 @@ apply_common_filters
   - 当日无行情
         │
         ▼
-窗口策略补充历史（_enrich_history，如 C1–C4 需要前 N 日数据）
+窗口策略补充历史（_enrich_history，C1–C5 需要前 N 日数据）
         │
         ▼
 _assert_data_ready（必需列/覆盖率检查）

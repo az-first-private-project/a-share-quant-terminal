@@ -1,5 +1,5 @@
 """
-内置策略（A3/A4 价值守正 + B1–B5 短线进攻）与候选池构建
+内置策略（A3/A4 价值守正 + C1–C6 观察候选）与候选池构建
 ========================================================
 **一个策略 = 一个候选池构建步骤 + 一个排序评分步骤**：
 
@@ -8,41 +8,26 @@
       `fact_stock_score_daily` + `fact_moneyflow` + `dim_stock`，全部 LEFT JOIN），
       先在 SQL 里做基础可用性过滤，再在 pandas 里做统一的 A 股口径过滤与策略条件。
       **禁止 N+1 查询**：候选池只查一次库，一次取回当日全市场。
-      B4/B5 额外读取沪深300 指数状态（`market_indices`），把市场门槛放进 `frame.attrs["market"]`。
+      A4/C6 额外读取沪深300 指数状态（`market_indices`），把市场门槛放进 `frame.attrs["market"]`。
   - `rank_signals(algo_code, df, params)`：纯函数（无 DB），把候选池按策略口径再筛一次、
       排序、截断到 `limit`，并生成 `rank / score / metrics`，供 API 直接序列化。
       其中 **score = 本策略排序指标的原始值**。
 
-现存启用策略（A1/A2 已按回测结果下线；B1–B5 于 V8 M1 停用，代码保留）：
+当前代码仅保留 A3/A4 与 C1–C6（A1/A2/B1–B5 的实现已删除，历史 run 仍可查询）：
   A3 央企 × 综合评分
       ``dim_stock.ownership == '央企'`` 且 ``composite_score >= min_score(默认6)``，
-      按 ``composite_score`` 降序。回测 2025-01 起 +22.9%、最大回撤 -10.4%、Sharpe 0.85。
+      按 ``composite_score`` 降序。
   A4 高股息质量 × 低估值
       ``pe_ttm > 0``、``pe_ttm < pe_max``、``div_min <= dv_ttm <= dv_max``、
       ``0 < pb <= pb_max``、``composite_score >= min_score``、20 日均额达标、
       ``close >= MA120 × trend_dev``，且仅在防御型市场阶段
       （bottoming/pull_down/risk_off）启用，按 ``dv_ttm`` 降序。
-
-新增短线策略（来自《短线量化策略设计报告》，日线落地口径）：
-  B1 双均线动量突破
-      EMA5/EMA20 近 3 日金叉、收盘站上 EMA20 且 EMA20 上行、ROC10 > 0、
-      量能 ≥ 5 日均量 × min_vol_ratio、收盘 > MA60、20 日均额 ≥ min_amount，
-      按 ``roc10`` 降序。
-  B2 RSI6 超卖回归
-      ``rsi6 < rsi_max(默认20)`` 且当日出现止跌 K 线（收阳或收盘不低于昨收）、
-      收盘 > MA120 × trend_dev(默认0.9，剔除深熊)、60 日振幅 > amp_min(默认15%)、
-      20 日均额达标，按 ``rsi6`` 升序（越超卖越靠前）。
-  B3 KDJ 低位金叉
-      今日或昨日 J < j_max(默认10)、当日 K 上穿 D、K < k_max(默认30)、
-      收盘 > EMA60、收盘不低于昨收、20 日均额达标，按 ``kdj_j`` 升序。
-  B4 布林挤压突破
-      前一日带宽处于 60 日最低 squeeze_pct% 分位、收盘突破上轨且创 20 日新高、
-      量能 ≥ 5 日均量 × vol_mult、20 日区间宽度 < range_max、20 日均额达标，
-      且沪深300 收盘 ≥ MA20 × 0.995（市场状态门槛），按带宽分位升序。
-  B5 布林下轨 × KDJ 双确认
-      最低价触及布林下轨、今日或昨日 J < j_max(默认0)、缩量、
-      止跌 K 线、收盘 > MA120 或偏离下轨不超过 dev_max%、20 日均额达标，
-      且沪深300 当日跌幅 > -2%（市场状态门槛），按 ``kdj_j`` 升序。
+  C1 海龟突破：20 日新高 + 成交额过亿 + 阳线真涨，按流通市值降序。
+  C2 高窄旗形：40 日强动量后 10 日极度收敛缩量，按 40 日区间比降序。
+  C3 RPS 相对强度突破：120 日 RPS 前 10% 且接近 120 日新高，按 RPS 降序。
+  C4 涨停洗盘：昨日涨停后今日放量收阴但不破昨收，按成交额降序。
+  C5 均线放量突破：MA5/MA20 金叉 + 20 日均量放量，按放量比降序。
+  C6 布林挤压突破：带宽低分位 + 突破上轨新高 + 放量，按带宽分位升序。
 
 统一前置过滤（所有策略一致）：
   剔除 ST、status != 1（停牌/退市）、delist_date 已到、上市不足 60 个交易日、
@@ -99,16 +84,12 @@ __all__ = [
     "listed_trading_days",
     "apply_common_filters",
     "_numeric_column",
-    "_B_READY_COLUMN",
     "_MIN_FEATURE_COVERAGE",
     "_assert_data_ready",
     "load_market_context",
     "market_gate_payload",
     "_market_flag",
-    "_cond",
-    "_build_condition_specs",
-    "CONDITION_SPECS",
-    "_market_condition_detail",
+    "_c6_market_detail",
     "_a4_regime_detail",
     "StrategyEvaluation",
     "_evaluate_strategy",

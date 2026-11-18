@@ -46,7 +46,7 @@ L1 采集 ingest ──► L2 PostgreSQL 单一事实源
 | 数据库 | PostgreSQL 16；`fact_stock_daily` 按年 RANGE 分区 |
 | 任务编排 | `backend/app/pipeline.py` 的 `run_task` / `run_daily_pipeline` |
 | 定时任务 | 15:36 盘后 / 16:30 选股 / 17:10 信号统计 / 17:30 纸面 / 02:00 补齐 / 定时新闻 |
-| 当前正式策略 | **A3、A4**；C1–C6 为观察候选；B1–B5 已停用但代码保留 |
+| 当前正式策略 | **A3、A4**；C1–C6 为观察候选；A1/A2/B1–B5 实现已移除，仅保留历史 run |
 | 后端入口 | `backend/app/main.py` → `app:app` |
 | CLI 入口 | `backend/scripts/pipeline_cli.py` |
 | 端口 | 后端 8000、前端 5173、宿主机 PostgreSQL 5433（容器内 5432） |
@@ -72,6 +72,7 @@ L1 采集 ingest ──► L2 PostgreSQL 单一事实源
 | [04-采集与数据质量](./04-ingest.md) | Provider 链、采集任务、限频重试、质量校验、断点续传、补缺 | 数据工程 |
 | [05-计算引擎](./05-engine.md) | 指标、因子、评分、市场状态、温度、板块、信号统计 | 量化 / 算法 |
 | [06-策略与回测](./06-strategy-backtest.md) | 策略定义、条件树、缓存复现、回测撮合、参数矩阵、纸面组合 | 量化 / 策略 |
+| [策略因子清单](../STRATEGY-FACTORS.md) | A3/A4/C1–C6 参数、条件因子、排序与数据门槛 | 量化 / 策略 |
 | [07-前端应用](./07-frontend.md) | 路由、页面、Hooks、组件、设计系统、状态持久化 | 前端 |
 | [08-运行与部署](./08-operations.md) | 环境变量、引导、CLI、一键启动、Docker、定时任务、CI、排障 | 运维 / 新成员 |
 | [09-依赖关系与扩展](./09-dependencies.md) | 模块依赖图、关键调用链、扩展点、技术债、术语表 | 架构 / 贡献者 |

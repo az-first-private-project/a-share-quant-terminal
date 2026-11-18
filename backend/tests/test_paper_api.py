@@ -64,7 +64,7 @@ def test_unknown_algo_returns_404(client) -> None:
 
 def test_disabled_algo_is_rejected(client, monkeypatch) -> None:
     monkeypatch.setattr(paper_api, "is_enabled", lambda code: False)
-    resp = client.get("/api/v1/paper/portfolio/b3")
+    resp = client.get("/api/v1/paper/portfolio/c3")
     assert resp.status_code == 422
     assert resp.json()["error"]["code"] == "INVALID_PARAM"
 
@@ -76,12 +76,12 @@ def test_detail_passes_days_through(client, monkeypatch) -> None:
     monkeypatch.setattr(paper_api, "is_enabled", lambda code: True)
     monkeypatch.setattr(paper_api, "get_paper_detail", fake_detail)
 
-    resp = client.get("/api/v1/paper/portfolio/b3?days=7")
+    resp = client.get("/api/v1/paper/portfolio/c3?days=7")
     assert resp.status_code == 200, resp.text
-    assert resp.json() == {"algo_code": "b3", "days": 7, "caliber": "test"}
+    assert resp.json() == {"algo_code": "c3", "days": 7, "caliber": "test"}
 
-    assert client.get("/api/v1/paper/portfolio/b3?days=0").status_code == 422
-    assert client.get("/api/v1/paper/portfolio/b3?days=2001").status_code == 422
+    assert client.get("/api/v1/paper/portfolio/c3?days=0").status_code == 422
+    assert client.get("/api/v1/paper/portfolio/c3?days=2001").status_code == 422
 
 
 def test_sync_is_accepted_and_runs_background(client, monkeypatch) -> None:
@@ -93,13 +93,13 @@ def test_sync_is_accepted_and_runs_background(client, monkeypatch) -> None:
     monkeypatch.setattr(paper_api, "is_enabled", lambda code: True)
     monkeypatch.setattr(paper_api, "sync_paper_background", fake_sync)
 
-    resp = client.post("/api/v1/paper/portfolio/b3/sync")
+    resp = client.post("/api/v1/paper/portfolio/c3/sync")
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["status"] == "accepted"
-    assert body["algo"] == "b3"
+    assert body["algo"] == "c3"
     assert body["mode"] == "background"
-    assert called == ["b3"]
+    assert called == ["c3"]
 
 
 def test_existing_portfolio_series_has_no_gaps_or_dupes(client) -> None:

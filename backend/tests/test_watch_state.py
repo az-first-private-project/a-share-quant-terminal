@@ -14,8 +14,8 @@ from app.engine.watch_state import (
 
 
 def test_normalize_seen_dedupes_and_keeps_order():
-    raw = ["b2:2026-10-26", "b3:2026-10-26", "b2:2026-10-26"]
-    assert normalize_seen_hits(raw) == ["b2:2026-10-26", "b3:2026-10-26"]
+    raw = ["c2:2026-10-26", "c3:2026-10-26", "c2:2026-10-26"]
+    assert normalize_seen_hits(raw) == ["c2:2026-10-26", "c3:2026-10-26"]
 
 
 def test_normalize_seen_accepts_uppercase_algo():
@@ -26,14 +26,14 @@ def test_normalize_seen_accepts_uppercase_algo():
     "value",
     [
         "",
-        "b2",
-        "b2:2026/10/26",
-        "b2:2026-13-01",
-        "b2:2026-02-30",
+        "c2",
+        "c2:2026/10/26",
+        "c2:2026-13-01",
+        "c2:2026-02-30",
         "b-2:2026-10-26",
-        "b2:2026-10-26:extra",
+        "c2:2026-10-26:extra",
         ":2026-10-26",
-        "b2:",
+        "c2:",
         "x" * 33 + ":2026-10-26",
         123,
         None,
@@ -49,7 +49,7 @@ def test_normalize_seen_rejects_invalid(value):
 
 def test_normalize_seen_limit():
     base = date(2026, 1, 1)
-    unique = [f"b2:{(base + timedelta(days=i)).isoformat()}" for i in range(MAX_SEEN_HITS + 1)]
+    unique = [f"c2:{(base + timedelta(days=i)).isoformat()}" for i in range(MAX_SEEN_HITS + 1)]
     assert len(normalize_seen_hits(unique[:MAX_SEEN_HITS])) == MAX_SEEN_HITS
     with pytest.raises(InvalidParamError):
         normalize_seen_hits(unique)

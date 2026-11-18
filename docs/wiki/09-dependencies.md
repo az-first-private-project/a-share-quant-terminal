@@ -241,7 +241,7 @@ news_collector.collect_news
 | 指标重复实现 | `engine/market_factors.py` 内部重新实现 `ema/rsi/atr/adx`，未复用 `engine/indicators.py` | 口径漂移风险；新指标应优先复用 indicators |
 | 估值双路径 | `valuation_fast`（东财）与 `valuation`（本地财报推算）并存 | 两套口径可能不一致；需在 freshness/detail 中标注来源 |
 | 硬编码快照 | `BROAD_INDEX_SNAPSHOT`、`BROAD_ERP_SNAPSHOT` 固定为 2026-11-13 | 时间推移后 PE/ERP 会过期；需定期更新或改为动态计算 |
-| 死代码保留 | B1–B5 的默认参数、排序、指标字段、条件构造函数仍在，但未注册 | 恢复策略时需重新验证；删除前确认历史 run 兼容 |
+| 废弃策略实现 | A1/A2/B1–B5 的策略代码已于 V9 清理删除；历史 run 数据仍在库中 | 需要复现旧策略时从 git 历史恢复并重新验证 |
 | 双事实源 | `algo_meta` 表 vs `strategy.SPECS` | 以 `SPECS` 为准；`algo_meta` 仅种子/台账 |
 | 文档过时 | `docs/architecture.md` 仍写 V5（21 表、A1–A4） | 以本 Wiki 与 README 为准 |
 | 空 `sql/` 目录 | 实际 DDL 在 ORM + `db/views.py` + Alembic | 不要在本目录寻找建表脚本 |
@@ -258,7 +258,7 @@ news_collector.collect_news
 | **A3** | 央企 × 综合评分策略 |
 | **A4** | 高股息质量 × 低估值策略（带防御阶段门槛） |
 | **C1–C6** | 观察候选策略；可回测/执行，不进入共识与每日正式任务 |
-| **B1–B5** | 已停用短线策略；代码保留 |
+| **B1–B5** | 已移除的短线策略；实现已删除，仅历史 run 可查 |
 | **run_id** | 一次策略运行的 UUID，信号与参数快照的关联键 |
 | **data_version** | 当日四表行数 + 最近写入时间哈希；缓存失效依据 |
 | **参数指纹** | 归一化参数的稳定哈希；与 data_version 共同构成缓存键 |

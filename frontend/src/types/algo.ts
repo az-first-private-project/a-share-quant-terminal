@@ -66,7 +66,7 @@ export interface AlgoParamDef {
 
 /** 算法元信息（5.1） */
 export interface AlgoMeta {
-  /** 契约示例为 "a1"，字符串以兼容后续新增策略 */
+  /** 契约示例为 "a3"，字符串以兼容后续新增策略 */
   algo_code: string
   algo_name: string
   algo_type: string
@@ -100,7 +100,7 @@ export interface AlgoRun {
 /** 标量指标值 */
 export type AlgoMetricScalar = number | string | boolean | null
 
-/** 单条条件求值依据（metrics.triggered[]，B1–B5 新 run） */
+/** 单条条件求值依据（metrics.triggered[]，A4/C6 市场门槛） */
 export interface TriggeredCondition {
   key: string
   label: string

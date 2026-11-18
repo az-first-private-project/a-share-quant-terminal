@@ -473,7 +473,7 @@ def test_sync_all_isolates_single_failure(monkeypatch) -> None:
     assert [item["status"] for item in results] == ["active", "failed"]
     assert failed_marks == ["a4"]
     assert db.rollbacks == 1
-    assert db.commits == 2  # a3 成功 + b3 失败状态落库
+    assert db.commits == 2  # a3 成功 + c3 失败状态落库
 
 
 def test_run_paper_job_skips_non_trade_day(monkeypatch, caplog) -> None:

@@ -32,7 +32,7 @@ def _sort_candidates(algo_code: str, df: pd.DataFrame) -> pd.DataFrame:
     return frame.drop(columns=["_sort_value"])
 
 def _score_series(algo_code: str, df: pd.DataFrame) -> pd.Series:
-    """`score` = 本策略排序指标的原始值（A3=综合评分，A4=股息率，B*=各自排序指标）。"""
+    """`score` = 本策略排序指标的原始值（A3=综合评分，A4=股息率，C*=各自排序指标）。"""
     spec = get_spec(algo_code).code
     field_name, _ = _SORT_SPEC[spec]
     return _numeric_column(df, field_name).astype("float64").round(4)

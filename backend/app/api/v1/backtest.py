@@ -25,7 +25,7 @@ from app.core.errors import (
 )
 from app.core.logging import get_logger
 from app.db.models import (
-    BacktestRun, DimStock, FactFeatureDaily, FactStockDaily, FactStockScoreDaily, OOSRun,
+    BacktestRun, DimStock, FactStockDaily, FactStockScoreDaily, OOSRun,
 )
 from app.db.session import AsyncSessionLocal, get_db
 from app.engine.backtest_view import build_backtest_extras
@@ -63,16 +63,7 @@ class OOSRequest(BaseModel):
     step_months: int = Field(6, ge=1, le=24)
     strategy: dict[str, Any] | None = None
 
-#: B1–B5 用于判断特征回填起点的代表列（列名不能参数化，这里显式映射）
-_B_START_COLUMNS = {
-    "b1": FactFeatureDaily.ema20,
-    "b2": FactFeatureDaily.rsi6,
-    "b3": FactFeatureDaily.kdj_j,
-    "b4": FactFeatureDaily.boll_width_pct60,
-    "b5": FactFeatureDaily.kdj_j,
-}
-
-
+#: 回测起点自动裁剪：A3 依赖评分、A4 依赖估值（C1–C6 从起点逐日判断）
 async def _data_start(algo_code: str, db: AsyncSession) -> date | None:
     """该策略所需数据的最早可用日期。
 
@@ -80,11 +71,6 @@ async def _data_start(algo_code: str, db: AsyncSession) -> date | None:
     `DataUnavailableError` 整体失败。与其让用户猜，不如**自动裁剪起点**并在
     响应里写明 `effective_start`（诚实、可解释）。
     """
-    if algo_code in _B_START_COLUMNS:
-        column = _B_START_COLUMNS[algo_code]
-        return (await db.execute(
-            select(func.min(FactFeatureDaily.trade_date)).where(column.isnot(None))
-        )).scalar()
     if algo_code == "a3":
         return (await db.execute(select(func.min(FactStockScoreDaily.trade_date)))).scalar()
     if algo_code == "a4":
@@ -279,7 +265,7 @@ async def create_backtest(
 
     同步阶段只做参数校验与数据起点裁剪（失败直接 4xx）；执行期错误（数据不足等）
     落 ``backtest_run.status=failed``，由前端轮询 GET 获取。策略参数从 query string
-    按该策略的 `params_schema` 收集（B1–B5 参数各异）。
+    按该策略的 `params_schema` 收集（A3/A4/C1–C6 参数各异）。
     """
     if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
         raise UnknownAlgoError(f"未知策略: {algo_code}",

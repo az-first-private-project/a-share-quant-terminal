@@ -54,9 +54,9 @@ test('mergeRecent 上限为 10 条', () => {
     label: `页面 ${index}`,
     path: `/page-${index}`,
   }))
-  const merged = mergeRecent(entries, { kind: 'algo', label: '策略', path: '/algo-center?algo=b1' })
+  const merged = mergeRecent(entries, { kind: 'algo', label: '策略', path: '/algo-center?algo=c1' })
   assert.equal(merged.length, PALETTE_RECENT_LIMIT)
-  assert.equal(merged[0].path, '/algo-center?algo=b1')
+  assert.equal(merged[0].path, '/algo-center?algo=c1')
 })
 
 test('loadPaletteRecent 容错非法 JSON 与无效条目', () => {
@@ -67,11 +67,11 @@ test('loadPaletteRecent 容错非法 JSON 与无效条目', () => {
     { kind: 'unknown', label: '坏数据', path: '/bad' },
     { kind: 'stock', label: '', path: '/stocks/1' },
     { kind: 'page', label: '首页副本', path: '/' },
-    { kind: 'algo', label: 'B1', path: '/algo-center?algo=b1', sublabel: 'b1 · 布林' },
+    { kind: 'algo', label: 'C1', path: '/algo-center?algo=c1', sublabel: 'c1 · 海龟突破' },
   ])
   assert.deepEqual(loadPaletteRecent({ getItem: () => raw }), [
     { kind: 'page', label: '首页', path: '/' },
-    { kind: 'algo', label: 'B1', path: '/algo-center?algo=b1', sublabel: 'b1 · 布林' },
+    { kind: 'algo', label: 'C1', path: '/algo-center?algo=c1', sublabel: 'c1 · 海龟突破' },
   ])
 })
 

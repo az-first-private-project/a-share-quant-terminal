@@ -535,11 +535,12 @@ export default function AlgoCenter() {
     }
     const labels: Record<string, string> = {
       a4: '股息率（%）',
-      b1: 'ROC10（%）',
-      b2: 'RSI6',
-      b3: 'KDJ J 值',
-      b4: '布林带宽 60 日分位（%）',
-      b5: 'KDJ J 值',
+      c1: '流通市值（元）',
+      c2: '40 日区间比',
+      c3: 'RPS',
+      c4: '成交额（元）',
+      c5: '20 日量比',
+      c6: '布林带宽 60 日分位（%）',
     }
     return `Top 10 ${labels[result.algo] ?? '排序指标'}`
   }, [result])

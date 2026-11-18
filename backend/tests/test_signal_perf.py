@@ -269,10 +269,10 @@ def test_ladder_ranks_by_excess_then_places_empty_last():
         _row("a3", CALENDAR[1], "600003", rets=(20, 20, 20), excesses=(10, 10, 10)),
         _row("a4", CALENDAR[0], "600004", rets=(50, 50, 50), excesses=(None, None, None)),
     ]
-    algos = [LadderAlgo("a4", "A4"), LadderAlgo("a3", "A3"), LadderAlgo("b1", "B1")]
+    algos = [LadderAlgo("a4", "A4"), LadderAlgo("a3", "A3"), LadderAlgo("c1", "B1")]
     items = build_ladder(rows, algos, horizon=20)
 
-    assert [item["algo_code"] for item in items] == ["a3", "a4", "b1"]
+    assert [item["algo_code"] for item in items] == ["a3", "a4", "c1"]
     assert [item["rank"] for item in items] == [1, 2, 3]
 
     a3 = items[0]
@@ -290,9 +290,9 @@ def test_ladder_ranks_by_excess_then_places_empty_last():
     assert a4["avg_ret"] == pytest.approx(50.0)
     assert a4["avg_excess"] is None
 
-    b1 = items[2]
-    assert b1["sample_signals"] == 0
-    assert b1["low_sample"] is True
+    c1 = items[2]
+    assert c1["sample_signals"] == 0
+    assert c1["low_sample"] is True
 
 
 def test_ladder_horizons_map_and_selected_horizon():

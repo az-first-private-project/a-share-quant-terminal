@@ -175,7 +175,7 @@ class FactFeatureDaily(Base):
     amount_ma20: Mapped[float | None] = mapped_column(Numeric(20, 2), comment="20日均成交额(元)")
     ma_bullish: Mapped[bool] = mapped_column(Boolean, default=False, comment="MA5>MA10>MA20")
 
-    # ---- 短线策略指标（B1–B5）----
+    # ---- 短线技术指标（C1–C6 与自定义条件树使用）----
     ema5: Mapped[float | None] = mapped_column(Numeric(12, 4))
     ema20: Mapped[float | None] = mapped_column(Numeric(12, 4))
     ema60: Mapped[float | None] = mapped_column(Numeric(12, 4))

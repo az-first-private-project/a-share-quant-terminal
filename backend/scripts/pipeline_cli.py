@@ -15,7 +15,7 @@
     python scripts/pipeline_cli.py features          # 计算技术指标
     python scripts/pipeline_cli.py scores            # 个股因子评分
     python scripts/pipeline_cli.py sector_scores     # 板块三面评分
-    python scripts/pipeline_cli.py algos             # 跑 A3/A4 + B1–B5 选股
+    python scripts/pipeline_cli.py algos             # 跑 A3/A4 + 观察候选选股
     python scripts/pipeline_cli.py report            # 生成 AI 日报
     python scripts/pipeline_cli.py daily             # 全链路（等价 admin/ingest/all）
     python scripts/pipeline_cli.py all               # 同 daily
@@ -115,7 +115,7 @@ def main() -> int:
         epilog="回测用法：python scripts/pipeline_cli.py backtest a3 --start 2025-10-21 --end 2026-10-21",
     )
     parser.add_argument("task", help="任务名；回测时为 'backtest'")
-    parser.add_argument("algo", nargs="?", help="回测策略代码 a3/a4/b1..b5（仅 backtest 需要）")
+    parser.add_argument("algo", nargs="?", help="回测策略代码 a3/a4/c1..c6（仅 backtest 需要）")
     parser.add_argument("--date", help="目标交易日 YYYY-MM-DD")
     parser.add_argument("--start", help="起始日期（backfill / backtest）")
     parser.add_argument("--end", help="结束日期（backfill / backtest）")

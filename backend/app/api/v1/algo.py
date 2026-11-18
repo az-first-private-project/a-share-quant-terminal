@@ -303,7 +303,7 @@ async def get_algo_result(
 ) -> dict:
     """执行或读取策略结果。
 
-    策略参数从 query string 按 `params_schema` 收集（B1–B5 参数各异），
+    策略参数从 query string 按 `params_schema` 收集（A3/A4/C1–C6 参数各异），
     参数不同 → 缓存必然不命中 → 重新计算并生成新的 run_id。
 
     ``limit`` 同时是策略参数「返回数量上限」：一个 run 只保存该上限内的信号。

@@ -7,24 +7,22 @@
 from __future__ import annotations
 import logging
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, Sequence
 import numpy as np
 import pandas as pd
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import HISTORY_START, STRATEGY_DEFAULTS
-from app.core.errors import DataUnavailableError, InvalidParamError, UnknownAlgoError
+from app.core.config import HISTORY_START
+from app.core.errors import DataUnavailableError, InvalidParamError
 from app.db.models.dim import DimStock
 from app.db.models.fact import (
     FactFeatureDaily,
     FactMoneyflow,
     FactStockDaily,
     FactStockScoreDaily,
-    MarketIndex,
-    MarketRegimeDaily,
 )
 from app.db.models.meta import TradeCalendar
 
@@ -557,18 +555,9 @@ def _numeric_column(df: pd.DataFrame, column: str) -> pd.Series:
         return pd.Series(float("nan"), index=df.index, dtype="float64")
     return _to_float_series(df[column])
 
-#: B 系列各自用于判断"指标是否已回填"的代表列
-_B_READY_COLUMN: dict[str, str] = {
-    "b1": "ema20",
-    "b2": "rsi6",
-    "b3": "kdj_j",
-    "b4": "boll_width_pct60",
-    "b5": "kdj_j",
-}
-
-# 短线指标在候选池中的最低覆盖率。只判断"是否全空"会让回填到一半时
-# 用几百只股票跑出信号并写入 stg_run 缓存（特征表行数不变，data_version
-# 也不会失效），必须按覆盖率拦截。
+#: 短线指标在候选池中的最低覆盖率。只判断"是否全空"会让回填到一半时
+#: 用几百只股票跑出信号并写入 stg_run 缓存（特征表行数不变，data_version
+#: 也不会失效），必须按覆盖率拦截。
 _MIN_FEATURE_COVERAGE = 0.5
 
 def _assert_data_ready(algo_code: str, df: pd.DataFrame) -> None:
@@ -613,24 +602,6 @@ def _assert_data_ready(algo_code: str, df: pd.DataFrame) -> None:
                     "布林/量能指标尚未生成，无法执行布林挤压策略",
                     next_action="执行指标回填（scripts/pipeline_cli.py features）后重试",
                     detail={"dataset": "fact_feature_daily", "column": column},
-                )
-        return
-
-    if spec.code in _B_READY_COLUMN:
-        ready_column = _B_READY_COLUMN[spec.code]
-        for column in (ready_column, "amount_ma20"):
-            coverage = _coverage(column)
-            if coverage < _MIN_FEATURE_COVERAGE:
-                raise DataUnavailableError(
-                    f"{str(df.attrs.get('trade_date') or '')} 短线技术指标覆盖不足"
-                    f"（{column} {coverage:.0%}，需 ≥{_MIN_FEATURE_COVERAGE:.0%}），"
-                    "可能仍在回填",
-                    next_action="执行短线特征回填（scripts/backfill_short_features.py）后重试",
-                    detail={
-                        "dataset": "fact_feature_daily",
-                        "column": column,
-                        "coverage": round(coverage, 4),
-                    },
                 )
         return
 
@@ -713,7 +684,6 @@ __all__ = [
     "listed_trading_days",
     "apply_common_filters",
     "_numeric_column",
-    "_B_READY_COLUMN",
     "_MIN_FEATURE_COVERAGE",
     "_assert_data_ready",
 ]

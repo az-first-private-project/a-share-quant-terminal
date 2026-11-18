@@ -132,44 +132,14 @@ async def latest_ready_trade_date(
     所以这里按策略分别找最新可用日：
 
     - a3：个股综合评分；
-    - a4：PE + 股息率；
-    - b1–b5：对应的短线技术指标列 + 成交额。
+    - a4：PE + 股息率。
 
     返回 None 表示没有任何日期达到 ``min_rows``（调用方回退到最新行情日，
     由策略层给出精确的缺失原因）。
     """
     from sqlalchemy import text
 
-    # 列名来自常量映射，不接收外部输入（SQL 文本无法参数化列名）
-    b_ready_column = {
-        "b1": "ema20",
-        "b2": "rsi6",
-        "b3": "kdj_j",
-        "b4": "boll_width_pct60",
-        "b5": "kdj_j",
-    }
-    if algo_code in b_ready_column:
-        sql = text(
-            f"""
-            SELECT f.trade_date
-            FROM (
-                SELECT trade_date, count(*) AS n
-                FROM fact_feature_daily
-                WHERE {b_ready_column[algo_code]} IS NOT NULL
-                GROUP BY trade_date
-            ) f
-            JOIN (
-                SELECT trade_date, count(*) AS n
-                FROM fact_stock_daily
-                WHERE amount IS NOT NULL
-                GROUP BY trade_date
-            ) d USING (trade_date)
-            WHERE f.n >= :min_rows AND d.n >= :min_rows
-            ORDER BY f.trade_date DESC
-            LIMIT 1
-            """
-        )
-    elif algo_code == "a3":
+    if algo_code == "a3":
         sql = text(
             """
             SELECT trade_date
@@ -437,7 +407,7 @@ async def get_cached_run(
             spec.code, trade_date, run.run_id, fingerprint,
         )
         market_gate = None
-        if spec.code in {"a4", "b4", "b5", "c6"}:
+        if spec.code in {"a4", "c6"}:
             market_gate = strat.market_gate_payload(
                 await strat.load_market_context(db, trade_date), spec.code
             )
@@ -463,7 +433,7 @@ async def run_strategy(
     """执行策略并落 run 快照（缓存优先）。
 
     参数：
-        algo_code:  a3/a4/b1–b5
+        algo_code:  a3/a4/c1–c6
         trade_date: 交易日；None 时取库中最新可用交易日
         params:     策略参数（会补默认值并校验）
         force:      True 忽略缓存强制重算
@@ -636,7 +606,7 @@ async def get_run(run_id: str) -> dict | None:
             )
         signals = await _load_signal_rows(db, run.run_id)
         market_gate = None
-        if run.algo_code in {"a4", "b4", "b5", "c6"}:
+        if run.algo_code in {"a4", "c6"}:
             market_gate = strat.market_gate_payload(
                 await strat.load_market_context(db, run.trade_date), run.algo_code
             )
