@@ -56,7 +56,7 @@ async def build_candidates(
     _assert_data_ready(spec.code, eligible)
 
     market = None
-    if spec.code in {"a4", "c6"}:
+    if spec.code in {"a4", "c3", "c6"}:
         market = await load_market_context(db, trade_date)
 
     # 最终出口再统一 coerce 一次：保证调用方拿到的数值列一定是 float64

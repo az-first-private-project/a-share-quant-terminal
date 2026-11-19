@@ -39,6 +39,31 @@ def _c6_market_detail(df: pd.DataFrame) -> cond_dsl.ConditionDetail:
         detail_text=detail_text,
     )
 
+def _c3_market_detail(df: pd.DataFrame) -> cond_dsl.ConditionDetail:
+    """C3 的市场环境要求（scope=market）：MA20 短期 + MA60 中期双闸门。"""
+    market = df.attrs.get("market") or {}
+    flag = _market_flag(df, "c3_ok")
+    detail_text = (
+        "指数数据缺失，按放行处理"
+        if market.get("available") is False
+        else (
+            f"沪深300 close={market.get('close')} ma20={market.get('ma20')} "
+            f"ma60={market.get('ma60')}"
+        )
+    )
+    passed = pd.Series(bool(flag), index=df.index, dtype=bool)
+    return cond_dsl.ConditionDetail(
+        key="c3_market",
+        label="沪深300 收盘 ≥ MA20 × 0.995 且 ≥ MA60",
+        scope="market",
+        required=True,
+        op=None,
+        passed=passed,
+        actual=passed,
+        detail_text=detail_text,
+    )
+
+
 def _a4_regime_detail(df: pd.DataFrame) -> cond_dsl.ConditionDetail:
     """A4 防御型市场阶段要求（scope=market，单独展示）。"""
     market = df.attrs.get("market") or {}
@@ -102,7 +127,7 @@ def _evaluate_strategy(
         ma120 = _numeric_column(frame, "ma120")
         close = _numeric_column(frame, "close")
         mask = (
-            (pe > 0)
+            (pe > float(normalized["pe_min"]))
             & (pe < float(normalized["pe_max"]))
             & dividend.notna()
             & (dividend >= float(normalized["div_min"]))
@@ -131,11 +156,23 @@ def _evaluate_strategy(
         adj_open = _numeric_column(frame, "adj_open")
         prev_close = _numeric_column(frame, "prev_adj_close")
         amount = _numeric_column(frame, "amount")
+        mom60 = _numeric_column(frame, "mom60")
+        vol20 = _numeric_column(frame, "vol20")
+        limit_up = (
+            _to_bool_series(frame["is_limit_up"])
+            if "is_limit_up" in frame.columns
+            else pd.Series(False, index=frame.index, dtype=bool)
+        )
         mask = (
             (adj_close > high_prev)
             & (amount >= float(normalized["min_amount"]))
             & (adj_close > adj_open)
             & (adj_close > prev_close)
+            & mom60.notna()
+            & (mom60 >= float(normalized["mom60_min"]))
+            & vol20.notna()
+            & (vol20 <= float(normalized["vol_cap"]))
+            & ~limit_up
         )
     elif code == "c2":
         range40 = _numeric_column(frame, "range40_ratio")
@@ -158,10 +195,25 @@ def _evaluate_strategy(
         adj_close = _numeric_column(frame, "adj_close")
         high120 = _numeric_column(frame, "high120")
         amount_ma20 = _numeric_column(frame, "amount_ma20")
+        roc20 = _numeric_column(frame, "roc20")
+        vol20 = _numeric_column(frame, "vol20")
         mask = (
             (rps >= float(normalized["rps_threshold"]))
             & (adj_close >= float(normalized["near_high_ratio"]) * high120)
+            & roc20.notna()
+            & (roc20 <= float(normalized["roc20_max"]))
+            & vol20.notna()
+            & (vol20 <= float(normalized["vol_cap"]))
             & (amount_ma20 >= float(normalized["min_amount"]))
+        )
+        market = frame.attrs.get("market") or {}
+        if market.get("available") is not False and not market.get("c3_ok", True):
+            logger.info("C3 市场环境门槛未通过，本次不产生信号")
+            mask = mask & False
+        return StrategyEvaluation(
+            mask=mask.fillna(False).astype(bool),
+            details=[_c3_market_detail(frame)],
+            frame=frame,
         )
     elif code == "c4":
         prev_limit = (

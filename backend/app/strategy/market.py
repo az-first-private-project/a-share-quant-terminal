@@ -61,7 +61,7 @@ async def load_market_context(
         .where(MarketIndex.index_code == index_code)
         .where(MarketIndex.trade_date <= trade_date)
         .order_by(MarketIndex.trade_date.desc())
-        .limit(30)
+        .limit(60)
     )
     try:
         rows = (await db.execute(statement)).all()
@@ -77,6 +77,7 @@ async def load_market_context(
             "available": False,
             "index_code": index_code,
             "c6_ok": True,
+            "c3_ok": True,
             **regime_info,
         }
 
@@ -87,16 +88,24 @@ async def load_market_context(
     ]
     last_close = closes[-1] if closes else None
     ma20 = round(sum(closes[-20:]) / 20.0, 4) if len(closes) >= 20 else None
+    ma60 = round(sum(closes[-60:]) / 60.0, 4) if len(closes) >= 60 else None
     raw_pct = ordered[-1][2]
     last_pct = float(raw_pct) if raw_pct is not None else None
+    c6_ok = True if (last_close is None or ma20 is None) else last_close >= ma20 * 0.995
+    # C3 用双均线闸门：中期趋势（MA60）与短期趋势（MA20）同时向上才开仓
+    c3_ok = c6_ok if (last_close is None or ma60 is None) else (
+        c6_ok and last_close >= ma60
+    )
 
     return {
         "available": True,
         "index_code": index_code,
         "close": round(last_close, 2) if last_close is not None else None,
         "ma20": ma20,
+        "ma60": ma60,
         "pct_chg": last_pct,
-        "c6_ok": True if (last_close is None or ma20 is None) else last_close >= ma20 * 0.995,
+        "c6_ok": c6_ok,
+        "c3_ok": c3_ok,
         **regime_info,
     }
 
@@ -110,6 +119,7 @@ def market_gate_payload(market: dict | None, algo_code: str) -> dict[str, Any] |
         "available": available,
         "close": jsonable(market.get("close")),
         "ma20": jsonable(market.get("ma20")),
+        "ma60": jsonable(market.get("ma60")),
         "pct_chg": jsonable(market.get("pct_chg")),
     }
     if algo_code == "a4":
@@ -138,10 +148,15 @@ def market_gate_payload(market: dict | None, algo_code: str) -> dict[str, Any] |
         payload.update({"passed": True, "rule": "指数数据缺失，市场门槛按放行处理"})
         return payload
     ma20 = market.get("ma20")
+    ok_key = "c3_ok" if algo_code == "c3" else "c6_ok"
     payload.update(
         {
-            "passed": bool(market.get("c6_ok", True)),
-            "rule": "沪深300 收盘 ≥ MA20 × 0.995",
+            "passed": bool(market.get(ok_key, True)),
+            "rule": (
+                "沪深300 收盘 ≥ MA20 × 0.995 且 ≥ MA60"
+                if algo_code == "c3"
+                else "沪深300 收盘 ≥ MA20 × 0.995"
+            ),
             "threshold": None if ma20 is None else round(float(ma20) * 0.995, 4),
         }
     )

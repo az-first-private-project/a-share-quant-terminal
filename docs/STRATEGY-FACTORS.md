@@ -1,9 +1,10 @@
 # 在用策略因子清单（A3 / A4 / C1–C6）
 
-> 口径版本：2026-11-18（V9 清理后）
+> 口径版本：2026-11-19（2026-11 因子优化后）
 > 事实源：`backend/app/strategy/specs.py`（`SPECS` / `CANDIDATE_SPECS` / `_SORT_SPEC` / `_METRIC_FIELDS`）、
 > `backend/app/strategy/conditions.py`（求值条件）、`backend/app/core/config.py`（`STRATEGY_DEFAULTS`）。
 > 本文档只描述**当前代码中存在**的策略；A1、A2、B1–B5 的实现已删除，仅保留历史 `stg_run` 记录。
+> 优化依据与回测证据见 [FACTOR-OPTIMIZATION-2026-11.md](./FACTOR-OPTIMIZATION-2026-11.md)。
 
 ---
 
@@ -13,11 +14,11 @@
 |---|---|---|---|---|---|
 | `a3` | 央企 × 综合评分TOP | score | 正式启用 | `composite_score` 降序 | 个股综合评分 |
 | `a4` | 高股息质量 × 低估值 | value | 正式启用 | `dv_ttm` 降序 | PE/PB/股息率/评分/MA120 |
-| `c1` | 海龟突破 | breakout | 观察候选 | `float_cap` 降序 | 前 20 日最高价 |
+| `c1` | 海龟突破 | breakout | 观察候选（建议 40 日调仓） | `float_cap` 降序 | 前 20 日最高价 + 中期动量/低波 |
 | `c2` | 高窄旗形 | breakout | 观察候选 | `range40_ratio` 降序 | 40 日窗口高低点 |
-| `c3` | RPS 相对强度突破 | breakout | 观察候选 | `rps` 降序 | 120 日收益率横截面 |
-| `c4` | 涨停洗盘 | reversal | 观察候选 | `amount` 降序 | 昨日涨停/成交量 |
-| `c5` | 均线放量突破 | breakout | 观察候选 | `vol_ratio_20` 降序 | MA5/MA20/20 日均量 |
+| `c3` | RPS 相对强度突破 | breakout | 观察候选 | `rps` 降序 | 120 日收益率横截面 + 双均线闸门 |
+| `c4` | 涨停洗盘 | reversal | 观察候选（建议停用） | `amount` 降序 | 昨日涨停/成交量 |
+| `c5` | 均线放量突破 | breakout | 观察候选（建议停用） | `vol_ratio_20` 降序 | MA5/MA20/20 日均量 |
 | `c6` | 布林挤压突破 | breakout | 观察候选 | `boll_width_pct60` 升序 | 布林带宽分位/量能 |
 
 - 正式启用策略进入 `/api/v1/algo/list` 默认清单、每日 16:30 任务与共识榜。
@@ -81,11 +82,12 @@
 | 参数 | 默认值 | 范围 | 说明 |
 |---|---|---|---|
 | `limit` | 20 | 1–1000 | 返回数量上限 |
+| `pe_min` | 3.0 | 0–1000 | PE_TTM 严格下限（剔除低 PE 陷阱） |
 | `pe_max` | 15.0 | 0.01–1000 | PE_TTM 严格上限 |
-| `div_min` | 4.0 | 0–100 | 股息率下限（%） |
+| `div_min` | 4.5 | 0–100 | 股息率下限（%） |
 | `dv_max` | 15.0 | 0.1–100 | 股息率上限（%） |
 | `pb_max` | 2.5 | 0.1–50 | PB 上限 |
-| `min_score` | 5.0 | 0–10 | 最低综合评分 |
+| `min_score` | 6.5 | 0–10 | 最低综合评分 |
 | `min_amount` | 5.0e7（5000 万元） | 0–1e12 | 20 日均成交额下限（元） |
 | `trend_dev` | 0.9 | 0.5–1.5 | 趋势容忍度：`close >= MA120 × trend_dev` |
 
@@ -93,10 +95,10 @@
 
 | 因子 | 中文名 | 数据源 | 说明 |
 |---|---|---|---|
-| `pe_ttm` | 滚动市盈率 | `fact_stock_daily` | 必须 `> 0` 且 `< pe_max` |
+| `pe_ttm` | 滚动市盈率 | `fact_stock_daily` | 必须落在 `(pe_min, pe_max)`；`pe_min` 默认 3，剔除周期股/一次性收益造成的低 PE 假象 |
 | `dv_ttm` | 滚动股息率（%） | `fact_stock_daily` | 必须落在 `[div_min, dv_max]` |
 | `pb` | 市净率 | `fact_stock_daily` | 必须 `> 0` 且 `<= pb_max` |
-| `composite_score` | 综合评分 | `fact_stock_score_daily` | `>= min_score` |
+| `composite_score` | 综合评分 | `fact_stock_score_daily` | `>= min_score`（默认 6.5，剔除高股息低质量） |
 | `amount_ma20` | 20 日均成交额 | `fact_feature_daily` | `>= min_amount` |
 | `ma120` | 120 日均线 | `fact_feature_daily` | 必须 `> 0` |
 | `close` | 收盘价 | `fact_stock_daily` | `>= ma120 × trend_dev` |
@@ -125,6 +127,8 @@
 | `limit` | 20 | 1–1000 | 返回数量上限 |
 | `lookback` | 20 | 5–60 | 突破窗口（交易日） |
 | `min_amount` | 1.0e8（1 亿元） | 0–1e12 | 当日成交额下限（元） |
+| `mom60_min` | 0.0 | -1.0–1.0 | 60 日动量下限；默认 0 表示只在中期上涨趋势中做突破 |
+| `vol_cap` | 0.05 | 0.005–0.5 | 20 日收益波动率（日标准差）上限；默认 5% |
 
 ### 5.2 条件因子
 
@@ -135,16 +139,22 @@
 | `adj_open` | 复权开盘价 | 日线 × `adj_factor` | `adj_close > adj_open`（收阳） |
 | `prev_adj_close` | 前一日复权收盘 | 日线 × `adj_factor` | `adj_close > prev_adj_close`（真涨） |
 | `amount` | 当日成交额 | `fact_stock_daily` | `>= min_amount` |
+| `mom60` | 60 日动量 | 复权收盘计算 | `adj_close[-1] / adj_close[-61] - 1 >= mom60_min` |
+| `vol20` | 20 日波动率 | 复权收盘日收益标准差 | `<= vol_cap`；剔除高波动题材股 |
+| `is_limit_up` | 当日涨停 | `fact_stock_daily` | 必须为假（涨停日 T+1 开盘难以成交） |
 
 ### 5.3 排序与输出
 
 - 排序：`float_cap`（流通市值）降序。
-- 输出 `metrics`：`high20_prev`、`adj_close`、`adj_open`、`prev_adj_close`、`amount`、
-  `float_cap`、`close`、`pct_chg`、`industry_l1`。
+- **执行建议：40 个交易日调仓**。回测中 20 日调仓全窗口 -17.6%，40 日调仓 +12.1%；
+  默认 20 日调仓只用于横向对比，不推荐实盘跟踪。
+- 输出 `metrics`：`high20_prev`、`adj_close`、`adj_open`、`prev_adj_close`、`mom60`、`vol20`、
+  `amount`、`float_cap`、`close`、`pct_chg`、`industry_l1`。
 
 ### 5.4 数据门槛
 
-- `high20_prev` 全空时报“历史窗口不足”；需至少 `lookback + 1` 根有效日线。
+- `high20_prev` 全空时报“历史窗口不足”；需至少 `max(lookback + 1, 61)` 根有效日线
+  （61 根用于 60 日动量，缺一不可）。
 
 ---
 
@@ -157,10 +167,10 @@
 | `limit` | 20 | 1–1000 | 返回数量上限 |
 | `lookback` | 40 | 20–80 | 动量窗口（交易日） |
 | `mom_min` | 1.6 | 1.0–5.0 | 40 日区间比下限 |
-| `tight_max` | 1.15 | 1.0–2.0 | 10 日收敛上限 |
+| `tight_max` | 1.12 | 1.0–2.0 | 10 日收敛上限 |
 | `high_level` | 0.8 | 0.5–1.0 | 高位保持比例 |
-| `shrink_max` | 0.6 | 0.1–1.0 | 缩量比例上限 |
-| `min_amount` | 5.0e7（5000 万元） | 0–1e12 | 20 日均额下限（元） |
+| `shrink_max` | 0.5 | 0.1–1.0 | 缩量比例上限 |
+| `min_amount` | 1.0e8（1 亿元） | 0–1e12 | 20 日均额下限（元） |
 
 ### 6.2 条件因子
 
@@ -195,8 +205,10 @@
 | `limit` | 20 | 1–1000 | 返回数量上限 |
 | `lookback` | 120 | 60–250 | RPS / 新高窗口（交易日） |
 | `rps_threshold` | 90.0 | 50–100 | RPS 分位下限 |
-| `near_high_ratio` | 0.9 | 0.5–1.0 | 接近新高比例 |
+| `near_high_ratio` | 0.85 | 0.5–1.0 | 接近新高比例 |
 | `min_amount` | 1.0e8（1 亿元） | 0–1e12 | 20 日均额下限（元） |
+| `vol_cap` | 0.05 | 0.005–0.5 | 20 日收益波动率（日标准差）上限 |
+| `roc20_max` | 0.08 | 0–1 | 20 日涨幅上限（剔除已加速的追高标的） |
 
 ### 7.2 条件因子
 
@@ -206,21 +218,29 @@
 | `rps` | 相对强度百分位 | 当日横截面排名 | `>= rps_threshold`（默认前 10%） |
 | `high120` | 120 日最高价 | 日线窗口计算 | `adj_close >= near_high_ratio × high120` |
 | `adj_close` | 复权收盘价 | 日线 × `adj_factor` | 与新高比较 |
+| `roc20` | 20 日涨幅 | 复权收盘计算 | `<= roc20_max`（默认 8%，避免追在加速段） |
+| `vol20` | 20 日波动率 | 复权收盘日收益标准差 | `<= vol_cap`（默认 5%） |
 | `amount_ma20` | 20 日均成交额 | `fact_feature_daily` | `>= min_amount` |
+| 市场门槛 | 沪深300 双均线 | `market_indices` | `close >= MA20 × 0.995` 且 `close >= MA60`；指数缺失按放行 |
 
 ### 7.3 排序与输出
 
 - 排序：`rps` 降序。
-- 输出 `metrics`：`rps`、`roc120`、`high120`、`adj_close`、`close`、`pct_chg`、
+- 输出 `metrics`：`rps`、`roc120`、`roc20`、`vol20`、`high120`、`adj_close`、`close`、`pct_chg`、
   `amount_ma20`、`industry_l1`。
+- `metrics.triggered` 带一条 `c3_market`（`scope="market"`）。
 
 ### 7.4 数据门槛
 
-- `roc120` 全空时报“历史窗口不足”；需至少 `lookback + 1` 根有效日线。
+- `roc120` 全空时报“历史窗口不足”；需至少 `max(lookback + 1, 21)` 根有效日线。
 
 ---
 
 ## 8. C4 · 涨停洗盘
+
+> **建议停用（仅保留研究/回测）**：因子诊断显示「放量」「收阴」两个条件本身为负边际，
+> 合并后相对涨停后基准仅 +0.42pp，胜率还低于基准。详见
+> [WASHOUT-FACTORS.md](./WASHOUT-FACTORS.md)。
 
 ### 8.1 参数
 
@@ -253,6 +273,10 @@
 ---
 
 ## 9. C5 · 均线放量突破
+
+> **建议停用（仅保留研究/回测）**：MA5/MA20 金叉本身没有突破含义，按 `vol_ratio_20`
+> 降序又把毛收益从 +1.55% 压到 +0.32%；样本外调参结果为过拟合。
+> 详见 [WASHOUT-FACTORS.md](./WASHOUT-FACTORS.md)。
 
 ### 9.1 参数
 
@@ -287,6 +311,8 @@
 ---
 
 ## 10. C6 · 布林挤压突破
+
+> 2026-11 优化未改动参数；跨四相位均值为正（+11.2%），保留观察候选。
 
 ### 10.1 参数
 
@@ -336,9 +362,11 @@
 | `ma120` | | ✓ | | | | | | |
 | `close` / `pct_chg` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `high20_prev` / `float_cap` | | | ✓ | | | | | |
+| `mom60` / `vol20` | | | ✓ | | | | | |
 | `range40_ratio` / `high40` / `low40` | | | | ✓ | | | | |
 | `high10` / `low10` / `vol_ma20_prev` | | | | ✓ | | | ✓ | |
 | `rps` / `roc120` / `high120` | | | | | ✓ | | | |
+| `roc20` / `vol20` | | | | | ✓ | | | |
 | `prev_is_limit_up` / `prev_volume` | | | | | | ✓ | | |
 | `adj_close` / `adj_open` / `adj_low` / `prev_adj_close` | | | ✓ | | ✓ | ✓ | | |
 | `ma5_today` / `ma20_today` / `ma5_prev` / `ma20_prev` | | | | | | | ✓ | |

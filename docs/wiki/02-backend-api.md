@@ -106,7 +106,9 @@ app = FastAPI(
 `STRATEGY_DEFAULTS` 是策略参数的唯一默认值来源（A3/A4/C1–C6 均在此登记）。注意：
 
 - **A3 `min_score` 是 0–10 分制**，默认 6.0，不是 0–100；
-- A4 默认 `pe_max=15`、`div_min=4%`、`dv_max=15%`、`pb_max=2.5`、`min_score=5.0`、`min_amount=5e7`、`trend_dev=0.9`。
+- A4 默认 `pe_min=3`、`pe_max=15`、`div_min=4.5%`、`dv_max=15%`、`pb_max=2.5`、`min_score=6.5`、`min_amount=5e7`、`trend_dev=0.9`；
+- C1 默认 `mom60_min=0`、`vol_cap=0.05`；C2 默认 `tight_max=1.12`、`shrink_max=0.5`、`min_amount=1e8`；
+- C3 默认 `near_high_ratio=0.85`、`vol_cap=0.05`、`roc20_max=0.08`，并启用沪深300 双均线闸门。
 
 ### 2.6 其他
 

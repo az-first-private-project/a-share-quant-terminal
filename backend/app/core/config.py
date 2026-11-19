@@ -179,17 +179,21 @@ PAPER_ENABLED_ALGOS: tuple[str, ...] = tuple(
 STRATEGY_DEFAULTS = {
     "a3": {"limit": 20, "min_score": 6.0},     # 0–10 分制（不是 0–100！）
     "a4": {
-        "limit": 20, "pe_max": 15.0, "div_min": 4.0, "dv_max": 15.0,
-        "pb_max": 2.5, "min_score": 5.0, "min_amount": 5.0e7, "trend_dev": 0.9,
+        "limit": 20, "pe_min": 3.0, "pe_max": 15.0, "div_min": 4.5, "dv_max": 15.0,
+        "pb_max": 2.5, "min_score": 6.5, "min_amount": 5.0e7, "trend_dev": 0.9,
     },
-    "c1": {"limit": 20, "lookback": 20, "min_amount": 1.0e8},
+    "c1": {
+        "limit": 20, "lookback": 20, "min_amount": 1.0e8,
+        "mom60_min": 0.0, "vol_cap": 0.05,
+    },
     "c2": {
-        "limit": 20, "lookback": 40, "mom_min": 1.6, "tight_max": 1.15,
-        "high_level": 0.8, "shrink_max": 0.6, "min_amount": 5.0e7,
+        "limit": 20, "lookback": 40, "mom_min": 1.6, "tight_max": 1.12,
+        "high_level": 0.8, "shrink_max": 0.5, "min_amount": 1.0e8,
     },
     "c3": {
         "limit": 20, "lookback": 120, "rps_threshold": 90.0,
-        "near_high_ratio": 0.9, "min_amount": 1.0e8,
+        "near_high_ratio": 0.85, "min_amount": 1.0e8,
+        "vol_cap": 0.05, "roc20_max": 0.08,
     },
     "c4": {"limit": 20, "vol_mult": 2.0, "min_amount": 5.0e7},
     "c5": {"limit": 20, "lookback": 20, "vol_mult": 1.5, "min_amount": 5.0e7},

@@ -6,6 +6,24 @@
 
 ---
 
+## 0. 2026-11 策略因子优化（2026-11-19）
+
+依据 `docs/FACTOR-OPTIMIZATION-2026-11.md`（2024-01-02 ~ 2026-11-17，20 日调仓、沪深300 基准）：
+
+| 策略 | 变更 | 文件 |
+|---|---|---|
+| A4 | 新增 `pe_min=3.0`；`div_min` 4.0→4.5；`min_score` 5.0→6.5 | `config.py`、`specs.py`、`conditions.py` |
+| C1 | 新增 `mom60_min=0`、`vol_cap=0.05`、当日涨停剔除；窗口需 61 根日线 | `config.py`、`specs.py`、`conditions.py`、`data.py` |
+| C2 | `tight_max` 1.15→1.12、`shrink_max` 0.6→0.5、`min_amount` 5000 万→1 亿 | `config.py`、`specs.py` |
+| C3 | 新增 `vol_cap=0.05`、`roc20_max=0.08`；`near_high_ratio` 0.9→0.85；沪深300 双均线闸门 | `config.py`、`specs.py`、`conditions.py`、`market.py`、`candidates.py`、`runner.py` |
+| 缓存 | `SIGNAL_SCHEMA_VERSION` 3→4，旧 run 不再命中缓存；`stg_run` 默认值迁移 | `runner.py`、`db/models/strategy.py`、`alembic/versions/20261119_0017_signal_schema_v4.py` |
+| 前端 | C3 双均线门槛提示、`ma60` 字段、`mom60/vol20/roc20` 列名 | `AlgoDataTable.tsx`、`types/algo.ts` |
+| 文档 | 因子清单、优化报告、C4/C5 诊断、契约 5.1、README 升级说明 | `docs/*`、`README.md` |
+
+验收：A4/C1/C2/C3 生产回测见报告 5.1；C4/C5 建议停用（仅观察候选）；C6 未改动。
+
+---
+
 ## 0. V9 清理：移除 A1/A2/B1–B5 策略实现（2026-11-18）
 
 | 变更 | 文件 |

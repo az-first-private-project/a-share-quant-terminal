@@ -121,6 +121,12 @@ const METRIC_LABELS: Record<string, string> = {
   float_cap: '流通市值',
   volume_ratio: '量比',
   momentum_20: '20日动量',
+  momentum_60: '60日动量',
+  momentum_5: '5日动量',
+  vol20: '20日波动率(日)',
+  roc20: '20日涨幅',
+  mom60: '60日动量',
+  is_limit_up: '当日涨停',
   volatility_20: '20日波动率',
   composite_score: '综合评分',
   value_score: '价值分',
@@ -166,6 +172,10 @@ function marketGateNotice(algo: string | undefined, gate?: MarketGate | null): s
     return '沪深300 指数数据缺失，市场门槛按放行处理。'
   }
   if (gate.passed !== false) return null
+  if (algo === 'c3') {
+    const threshold = typeof gate.threshold === 'number' ? gate.threshold : null
+    return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} 低于 MA20 × 0.995（${fmtGateValue(threshold)}）或 MA60（${fmtGateValue(gate.ma60)}），本次不产生信号。`
+  }
   if (algo === 'c6') {
     const threshold = typeof gate.threshold === 'number' ? gate.threshold : null
     return `市场环境要求未满足：沪深300 收盘 ${fmtGateValue(gate.close)} < MA20 × 0.995 = ${fmtGateValue(threshold)}，本次不产生信号。`

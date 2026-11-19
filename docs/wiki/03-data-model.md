@@ -248,7 +248,7 @@
 | `params` JSONB | 归一化后的参数快照 |
 | `universe_count` / `signal_count` | 候选池/信号数 |
 | `data_version` | 当日四表行数 + 最近写入时间指纹 |
-| `signal_schema` | 3（V8 M1 A4 防御门槛） |
+| `signal_schema` | 4（2026-11 因子优化；3=V8 M1） |
 | `is_backtest` | 回测产生的 run |
 | `status` | running/success/failed/superseded |
 | `elapsed_ms` / `error` | |
@@ -383,6 +383,7 @@
 | `20261101_0008_paper_portfolio.py` | 纸面组合 |
 | `20261108_0009_backtest_grid_table.py` | 矩阵表重构 |
 | `20261108_0010_stg_run_signal_schema.py` | 信号 schema |
+| `20261119_0017_signal_schema_v4.py` | 2026-11 因子优化：默认值升到 4 |
 | `20261112_0011_market_regime.py` | 市场状态 |
 | `20261112_0012_market_factor_ohlc.py` | 市场因子 OHLC |
 | `20261115_0013_signal_score_precision.py` | 分数精度 |

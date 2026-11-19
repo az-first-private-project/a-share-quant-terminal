@@ -33,5 +33,5 @@ async def test_signal_schema_defaults_to_current(db_session):
     await db_session.refresh(implicit)
     await db_session.refresh(legacy)
 
-    assert implicit.signal_schema == 3
+    assert implicit.signal_schema == 4
     assert legacy.signal_schema == 1

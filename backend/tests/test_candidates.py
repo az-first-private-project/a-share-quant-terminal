@@ -37,15 +37,18 @@ def _bars(**overrides) -> pd.DataFrame:
 
 
 def test_window_features_c1_breakout_and_insufficient_bars() -> None:
-    high = [10.0] * 20 + [31.0]
-    close = [10.0] * 20 + [31.0]
-    bars = _bars(high=high, close=close, open=[10.0] * 21)
+    # 60 日动量需要 61 根 K 线：60 根横盘 + 1 根突破
+    high = [10.0] * 60 + [31.0]
+    close = [10.0] * 60 + [31.0]
+    bars = _bars(high=high, close=close, open=[10.0] * 61)
     features = _window_features(bars, "c1", 20)
     assert features is not None
     assert features["high20_prev"] == pytest.approx(10.0)
     assert features["adj_close"] == pytest.approx(31.0)
     assert features["prev_adj_close"] == pytest.approx(10.0)
-    assert _window_features(bars.tail(20), "c1", 20) is None
+    assert features["mom60"] == pytest.approx(2.1)
+    assert features["vol20"] > 0
+    assert _window_features(bars.tail(60), "c1", 20) is None
 
 
 def test_window_features_c2_high_tight_flag() -> None:
@@ -115,6 +118,9 @@ def test_rank_signals_c1_turtle() -> None:
     frame["adj_open"] = [10.0, 11.0, 8.0]
     frame["prev_adj_close"] = [10.0, 10.0, 9.5]
     frame["high20_prev"] = [10.0, 11.0, 8.5]
+    frame["mom60"] = [0.10, 0.10, 0.10]
+    frame["vol20"] = [0.02, 0.02, 0.02]
+    frame["is_limit_up"] = [False, False, False]
     result = rank_signals("c1", frame, {})
     assert list(result["code"]) == ["600001", "600002"]
     assert result["float_cap"].is_monotonic_decreasing
@@ -127,9 +133,26 @@ def test_rank_signals_c2_high_tight_flag() -> None:
     frame["high10"] = [19.0, 19.0]
     frame["low10"] = [17.5, 15.0]
     frame["vol_ma20_prev"] = [100.0, 100.0]
-    frame["volume"] = [50.0, 50.0]
+    frame["volume"] = [40.0, 40.0]
     result = rank_signals("c2", frame, {})
     assert list(result["code"]) == ["600011"]
+
+
+def test_rank_signals_c2_default_thresholds_tightened() -> None:
+    """2026-11 默认值：收敛 1.12、缩量 0.5、20 日均额 1 亿三条件同时生效。"""
+    frame = _candidate_frame(["600011"])
+    frame["range40_ratio"] = [2.0]
+    frame["high40"] = [20.0]
+    frame["high10"] = [19.0]
+    frame["low10"] = [16.8]  # 19 / 16.8 ≈ 1.131 > 1.12，收敛不足
+    frame["vol_ma20_prev"] = [100.0]
+    frame["volume"] = [55.0]  # 0.55 > 0.5，缩量不足
+    frame["amount_ma20"] = [8.0e7]  # 低于 1 亿
+    assert len(rank_signals("c2", frame, {})) == 0
+
+    # 放宽到旧默认值后同一标的入选，证明失败确由三个新阈值导致
+    relaxed = {"tight_max": 1.15, "shrink_max": 0.6, "min_amount": 5.0e7}
+    assert list(rank_signals("c2", frame, relaxed)["code"]) == ["600011"]
 
 
 def test_rank_signals_c3_rps_breakout() -> None:
@@ -138,6 +161,8 @@ def test_rank_signals_c3_rps_breakout() -> None:
     frame["roc120"] = [0.30, 0.10]
     frame["adj_close"] = [12.0, 11.0]
     frame["high120"] = [12.5, 12.0]
+    frame["roc20"] = [0.03, 0.03]
+    frame["vol20"] = [0.03, 0.03]
     result = rank_signals("c3", frame, {})
     assert list(result["code"]) == ["600021"]
 

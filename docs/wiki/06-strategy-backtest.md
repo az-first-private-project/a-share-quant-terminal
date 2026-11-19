@@ -69,30 +69,36 @@ composite_score >= min_score（默认 6.0/10）
 ### 2.2 A4
 
 ```
-pe_ttm > 0 且 < pe_max（默认 15）
-div_min(4%) <= dv_ttm <= dv_max(15%)
+pe_min(3.0) < pe_ttm < pe_max(15)
+div_min(4.5%) <= dv_ttm <= dv_max(15%)
 0 < pb <= pb_max(2.5)
-composite_score >= min_score(5.0)
+composite_score >= min_score(6.5)
 amount_ma20 >= min_amount(5e7)
 close >= MA120 × trend_dev(0.9)
 且 market_regime ∈ {bottoming, pull_down, risk_off}
 按 dv_ttm 降序
 ```
 
-阶段数据缺失时按放行处理；0 信号时 `market_gate_payload` 返回可解释摘要。
+`pe_min` 用于剔除「低 PE 陷阱」（周期股/一次性收益）；阶段数据缺失时按放行处理；
+0 信号时 `market_gate_payload` 返回可解释摘要。
 
 ### 2.3 候选策略（C1–C6）
 
 | 代码 | 名称 | 核心条件 | 排序 |
 |---|---|---|---|
-| C1 | 海龟突破 | 20 日新高 + 成交额过亿 + 阳线真涨 | 流通市值降序 |
-| C2 | 高窄旗形 | 40 日强动量后 10 日收敛缩量 | 40 日区间比降序 |
-| C3 | RPS 相对强度 | 120 日收益横截面前 10% + 接近新高 | RPS 降序 |
-| C4 | 涨停洗盘 | 昨日涨停、今日放量收阴不破昨收 | 成交额降序 |
-| C5 | 均线放量突破 | MA5/MA20 金叉 + 1.5 倍量 | 放量比降序 |
+| C1 | 海龟突破 | 20 日新高 + 60 日动量 ≥ 0 + 20 日波动 ≤ 5% + 非涨停 + 成交额 ≥ 1 亿 | 流通市值降序 |
+| C2 | 高窄旗形 | 40 日强动量后 10 日收敛 < 1.12、缩量 < 0.5 倍、20 日均额 ≥ 1 亿 | 40 日区间比降序 |
+| C3 | RPS 相对强度 | 120 日 RPS ≥ 90 + 接近新高 0.85 + 20 日涨幅 ≤ 8% + 波动 ≤ 5% + 沪深300 双均线闸门 | RPS 降序 |
+| C4 | 涨停洗盘 | 昨日涨停、今日放量收阴不破昨收（建议停用） | 成交额降序 |
+| C5 | 均线放量突破 | MA5/MA20 金叉 + 1.5 倍量（建议停用） | 放量比降序 |
 | C6 | 布林挤压突破 | 带宽低分位 + 突破上轨新高 + 放量 + 市场门槛 | 带宽分位升序 |
 
-参数默认值统一在 `core/config.py:STRATEGY_DEFAULTS`。
+C1 默认 20 日调仓仅用于横向对比，实际跟踪建议 40 日调仓（回测 +12.1%）。
+C3 的沪深300 双均线闸门（`close ≥ MA20×0.995` 且 `≥ MA60`）会主动空仓，
+空仓是策略设计的一部分。
+
+参数默认值统一在 `core/config.py:STRATEGY_DEFAULTS`；2026-11 升级后
+`SIGNAL_SCHEMA_VERSION=4`，历史 run 不再命中缓存。
 
 ---
 
@@ -217,7 +223,7 @@ ConditionGroup(logic="AND", children=[...])           # 枝干
 - `params_fingerprint`（L94）：参数归一化后的稳定哈希；
 - `data_version`（L203)：当日 `fact_stock_daily / fact_feature_daily / fact_stock_score_daily / fact_moneyflow` 行数 + 最近写入时间哈希；行数不变但值被 upsert 更新时同样失效；
 - 命中要求 **4 项全等**，否则重算；
-- `signal_schema` 必须等于当前版本（3）。
+- `signal_schema` 必须等于当前版本（4）。
 
 ### 5.2 执行流程
 

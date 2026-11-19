@@ -104,18 +104,21 @@ SPECS: dict[str, StrategySpec] = {
         sort_order=2,
         short_desc="PE/PB 受控、股息率达标、质量与趋势过滤后，按股息率降序",
         full_desc=(
-            "剔除 PE<=0、PB<=0；保留 PE_TTM < pe_max、股息率在 [div_min, dv_max]、"
+            "剔除 PE<=pe_min、PE>=pe_max、PB<=0；保留股息率在 [div_min, dv_max]、"
             "PB <= pb_max、综合评分 >= min_score、20 日均成交额 >= min_amount、"
             "close >= MA120 × trend_dev 者，按股息率降序取前 limit 只。"
+            "pe_min 用于剔除「低 PE 陷阱」（周期股/一次性收益），"
+            "min_score 6.5 用于剔除高股息但质量差的标的。"
         ),
         defaults=dict(STRATEGY_DEFAULTS["a4"]),
         params_schema=[
             _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
+            _param("pe_min", "PE_TTM 下限", 3.0, 0.0, 1000.0),
             _param("pe_max", "PE_TTM 上限", 15.0, 0.01, 1000.0),
-            _param("div_min", "股息率下限(%)", 4.0, 0.0, 100.0),
+            _param("div_min", "股息率下限(%)", 4.5, 0.0, 100.0),
             _param("dv_max", "股息率上限(%)", 15.0, 0.1, 100.0),
             _param("pb_max", "PB 上限", 2.5, 0.1, 50.0),
-            _param("min_score", "最低综合评分(0-10)", 5.0, 0.0, 10.0),
+            _param("min_score", "最低综合评分(0-10)", 6.5, 0.0, 10.0),
             _param("min_amount", "20日均额下限(元)", 5.0e7, 0.0, 1.0e12),
             _param("trend_dev", "MA120 趋势容忍度", 0.9, 0.5, 1.5),
         ],
@@ -125,16 +128,21 @@ SPECS: dict[str, StrategySpec] = {
         name="海龟突破",
         algo_type="breakout",
         sort_order=3,
-        short_desc="20 日新高 + 成交额过亿 + 阳线真涨，按流通市值降序",
+        short_desc="20 日新高 + 中期动量为正 + 低波动 + 成交额过亿，按流通市值降序",
         full_desc=(
             "前 lookback（默认 20）个交易日最高价被今日收盘突破；今日成交额 >= min_amount；"
-            "今日收阳（close > open）且真涨（close > 昨收）；按流通市值降序取前 limit 只。"
+            "今日收阳（close > open）且真涨（close > prev_close）；"
+            "60 日动量 >= mom60_min（默认 0，剔除下跌趋势中的假突破）；"
+            "20 日收益波动率（日标准差）<= vol_cap（默认 0.05，剔除高波动题材股）；"
+            "当日涨停不入选（T+1 开盘难以成交）；按流通市值降序取前 limit 只。"
         ),
         defaults=dict(STRATEGY_DEFAULTS["c1"]),
         params_schema=[
             _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
             _param("lookback", "突破窗口(日)", 20, 5, 60, kind="integer"),
             _param("min_amount", "当日成交额下限(元)", 1.0e8, 0.0, 1.0e12),
+            _param("mom60_min", "60日动量下限", 0.0, -1.0, 1.0),
+            _param("vol_cap", "20日波动率上限", 0.05, 0.005, 0.5),
         ],
     ),
     "c2": StrategySpec(
@@ -144,19 +152,20 @@ SPECS: dict[str, StrategySpec] = {
         sort_order=4,
         short_desc="40 日强动量后 10 日极度收敛缩量，按 40 日区间比降序",
         full_desc=(
-            "40 日最高/最低 > mom_min（默认 1.6）；最近 10 日最高/最低 < tight_max（默认 1.15）；"
-            "10 日最低 >= high_level × 40 日最高（默认 0.8）；今日成交量 < shrink_max（默认 0.6）"
-            "× 前 20 日均量；20 日均额达标；按 40 日区间比降序取前 limit 只。"
+            "40 日最高/最低 > mom_min（默认 1.6）；最近 10 日最高/最低 < tight_max（默认 1.12）；"
+            "10 日最低 >= high_level × 40 日最高（默认 0.8）；今日成交量 < shrink_max（默认 0.5）"
+            "× 前 20 日均量；20 日均额 >= min_amount（默认 1 亿）；按 40 日区间比降序取前 limit 只。"
+            "收敛与缩量阈值比旧版更严（1.15→1.12、0.6→0.5），换取更高的形态成功率。"
         ),
         defaults=dict(STRATEGY_DEFAULTS["c2"]),
         params_schema=[
             _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
             _param("lookback", "动量窗口(日)", 40, 20, 80, kind="integer"),
             _param("mom_min", "40日区间比下限", 1.6, 1.0, 5.0),
-            _param("tight_max", "10日收敛上限", 1.15, 1.0, 2.0),
+            _param("tight_max", "10日收敛上限", 1.12, 1.0, 2.0),
             _param("high_level", "高位保持比例", 0.8, 0.5, 1.0),
-            _param("shrink_max", "缩量比例上限", 0.6, 0.1, 1.0),
-            _param("min_amount", "20日均额下限(元)", 5.0e7, 0.0, 1.0e12),
+            _param("shrink_max", "缩量比例上限", 0.5, 0.1, 1.0),
+            _param("min_amount", "20日均额下限(元)", 1.0e8, 0.0, 1.0e12),
         ],
     ),
     "c3": StrategySpec(
@@ -164,18 +173,24 @@ SPECS: dict[str, StrategySpec] = {
         name="RPS 相对强度突破",
         algo_type="breakout",
         sort_order=5,
-        short_desc="120 日相对强度前 10% 且接近 120 日新高，按 RPS 降序",
+        short_desc="120 日相对强度前 10% + 接近新高 + 短期未过热 + 低波动，按 RPS 降序",
         full_desc=(
             "lookback（默认 120）日收益率在合格股票池内的横截面百分位 >= rps_threshold（默认 90）；"
-            "收盘 >= near_high_ratio（默认 0.9）× lookback 日最高；20 日均额达标；按 RPS 降序。"
+            "收盘 >= near_high_ratio（默认 0.85）× lookback 日最高；"
+            "20 日涨幅 <= roc20_max（默认 0.08，剔除已加速的追高标的）；"
+            "20 日收益波动率（日标准差）<= vol_cap（默认 0.05）；"
+            "20 日均额达标；沪深300 收盘 >= MA20 × 0.995 且 >= MA60 才开仓"
+            "（指数缺失按放行）；按 RPS 降序。"
         ),
         defaults=dict(STRATEGY_DEFAULTS["c3"]),
         params_schema=[
             _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
             _param("lookback", "RPS 窗口(日)", 120, 60, 250, kind="integer"),
             _param("rps_threshold", "RPS 下限(分位)", 90.0, 50.0, 100.0),
-            _param("near_high_ratio", "接近新高比例", 0.9, 0.5, 1.0),
+            _param("near_high_ratio", "接近新高比例", 0.85, 0.5, 1.0),
             _param("min_amount", "20日均额下限(元)", 1.0e8, 0.0, 1.0e12),
+            _param("vol_cap", "20日波动率上限", 0.05, 0.005, 0.5),
+            _param("roc20_max", "20日涨幅上限", 0.08, 0.0, 1.0),
         ],
     ),
     "c4": StrategySpec(
@@ -266,7 +281,7 @@ _METRIC_FIELDS: dict[str, tuple[str, ...]] = {
         "amount_ma20", "ma120", "close", "pct_chg", "industry_l1",
     ),
     "c1": (
-        "high20_prev", "adj_close", "adj_open", "prev_adj_close",
+        "high20_prev", "adj_close", "adj_open", "prev_adj_close", "mom60", "vol20",
         "amount", "float_cap", "close", "pct_chg", "industry_l1",
     ),
     "c2": (
@@ -274,7 +289,7 @@ _METRIC_FIELDS: dict[str, tuple[str, ...]] = {
         "vol_ma20_prev", "volume", "close", "pct_chg", "amount_ma20", "industry_l1",
     ),
     "c3": (
-        "rps", "roc120", "high120", "adj_close", "close", "pct_chg",
+        "rps", "roc120", "roc20", "vol20", "high120", "adj_close", "close", "pct_chg",
         "amount_ma20", "industry_l1",
     ),
     "c4": (

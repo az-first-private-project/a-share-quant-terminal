@@ -237,6 +237,7 @@ export interface MarketGate {
   available: boolean
   close: number | null
   ma20: number | null
+  ma60?: number | null
   pct_chg: number | null
   passed: boolean | null
   rule?: string | null

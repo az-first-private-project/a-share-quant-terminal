@@ -276,8 +276,8 @@ def test_validate_params_defaults_and_bounds() -> None:
     """默认值补齐 + 越界/未知参数抛错。"""
     normalized = _validate_params("a4", {})
     assert normalized == {
-        "limit": 20, "pe_max": 15.0, "div_min": 4.0,
-        "dv_max": 15.0, "pb_max": 2.5, "min_score": 5.0,
+        "limit": 20, "pe_min": 3.0, "pe_max": 15.0, "div_min": 4.5,
+        "dv_max": 15.0, "pb_max": 2.5, "min_score": 6.5,
         "min_amount": 5.0e7, "trend_dev": 0.9,
     }
 
@@ -338,33 +338,49 @@ def test_v8_enabled_specs_current() -> None:
 def test_rank_signals_a4_upgrade_filters() -> None:
     """A4 升级：股息上限、PB 上限、质量评分、流动性、趋势过滤均生效。"""
     frame = _a4_upgrade_frame()
+    # 用旧阈值做基线，逐条验证每个过滤条件本身（不受 2026-11 默认值调整影响）
+    base = {"pe_min": 0.0, "div_min": 4.0, "min_score": 5.0}
 
-    # 默认参数：600101(PB)、600102(评分)、600103(成交额)、600104(趋势)、600105(股息上限) 出局
-    result = rank_signals("a4", frame, {})
+    # 基线：600101(PB)、600102(评分)、600103(成交额)、600104(趋势)、600105(股息上限) 出局
+    result = rank_signals("a4", frame, base)
     assert list(result["code"]) == ["600100", "600106"]
     assert result["dv_ttm"].is_monotonic_decreasing
 
-    assert list(rank_signals("a4", frame, {"pb_max": 3.5})["code"]) == [
+    assert list(rank_signals("a4", frame, {**base, "pb_max": 3.5})["code"]) == [
         "600100", "600101", "600106",
     ]
-    assert list(rank_signals("a4", frame, {"min_score": 3.0})["code"]) == [
+    assert list(rank_signals("a4", frame, {**base, "min_score": 3.0})["code"]) == [
         "600100", "600102", "600106",
     ]
-    assert list(rank_signals("a4", frame, {"min_amount": 1.0e7})["code"]) == [
+    assert list(rank_signals("a4", frame, {**base, "min_amount": 1.0e7})["code"]) == [
         "600100", "600103", "600106",
     ]
-    assert list(rank_signals("a4", frame, {"trend_dev": 0.8})["code"]) == [
+    assert list(rank_signals("a4", frame, {**base, "trend_dev": 0.8})["code"]) == [
         "600100", "600104", "600106",
     ]
-    assert list(rank_signals("a4", frame, {"dv_max": 20.0})["code"]) == [
+    assert list(rank_signals("a4", frame, {**base, "dv_max": 20.0})["code"]) == [
         "600105", "600100", "600106",
     ]
-    assert list(rank_signals("a4", frame, {"div_min": 5.0})["code"]) == ["600100"]
+    assert list(rank_signals("a4", frame, {**base, "div_min": 5.0})["code"]) == ["600100"]
+
+
+def test_a4_defaults_reject_low_pe_and_low_quality() -> None:
+    """A4 新默认值：pe_min=3、div_min=4.5、min_score=6.5 同时生效。"""
+    frame = _a4_upgrade_frame()
+    # 600106（dv=4.0 低于 4.5）与 600102（评分 4.0 低于 6.5）均出局
+    assert list(rank_signals("a4", frame, {})["code"]) == ["600100"]
+
+    low_pe = frame.copy()
+    low_pe["pe_ttm"] = [2.0] * len(frame)
+    assert len(rank_signals("a4", low_pe, {})) == 0
+    # 放宽 pe_min 后同一批标的重新入选
+    assert list(rank_signals("a4", low_pe, {"pe_min": 0.0})["code"]) == ["600100"]
 
 
 def test_rank_signals_a4_defensive_regime_gate() -> None:
     """A4 防御型门槛：仅 bottoming/pull_down/risk_off 放行；阶段缺失放行。"""
     frame = _a4_upgrade_frame()
+    base = {"pe_min": 0.0, "div_min": 4.0, "min_score": 5.0}
 
     for regime in ("bottoming", "pull_down", "risk_off"):
         gated = frame.copy()
@@ -375,7 +391,7 @@ def test_rank_signals_a4_defensive_regime_gate() -> None:
             "regime_days": 5,
             "regime_since": "2026-11-01",
         }
-        assert list(rank_signals("a4", gated, {})["code"]) == ["600100", "600106"]
+        assert list(rank_signals("a4", gated, base)["code"]) == ["600100", "600106"]
 
     for regime in ("trend_up", "repair_up"):
         gated = frame.copy()
@@ -384,11 +400,60 @@ def test_rank_signals_a4_defensive_regime_gate() -> None:
             "regime_code": regime,
             "regime_label": regime,
         }
-        assert len(rank_signals("a4", gated, {})) == 0
+        assert len(rank_signals("a4", gated, base)) == 0
 
     missing = frame.copy()
     missing.attrs["market"] = {"regime_available": False}
-    assert len(rank_signals("a4", missing, {})) == 2
+    assert len(rank_signals("a4", missing, base)) == 2
+
+
+def test_rank_signals_c1_momentum_vol_and_limit_up_filters() -> None:
+    """C1 新增因子：60 日动量为正、20 日波动受限、当日涨停不入选。"""
+    frame = pd.DataFrame(
+        {
+            "code": ["000001", "000002", "000003", "000004"],
+            "name": ["通过", "动量负", "高波动", "涨停"],
+            "high20_prev": [10.0] * 4,
+            "adj_close": [11.0] * 4,
+            "adj_open": [10.0] * 4,
+            "prev_adj_close": [10.5] * 4,
+            "amount": [2.0e8] * 4,
+            "float_cap": [1.0e9] * 4,
+            "mom60": [0.10, -0.10, 0.10, 0.10],
+            "vol20": [0.02, 0.02, 0.08, 0.02],
+            "is_limit_up": [False, False, False, True],
+        }
+    )
+    assert list(rank_signals("c1", frame, {})["code"]) == ["000001"]
+    # 放宽阈值后其余标的重新入选（证明失败确由对应因子导致）
+    relaxed = {"mom60_min": -1.0, "vol_cap": 0.5}
+    assert list(rank_signals("c1", frame, relaxed)["code"]) == ["000001", "000002", "000003"]
+
+
+def test_rank_signals_c3_overheat_vol_and_market_gate() -> None:
+    """C3 新增因子：20 日涨幅上限、波动上限、沪深300 双均线闸门。"""
+    frame = pd.DataFrame(
+        {
+            "code": ["000001", "000002", "000003"],
+            "name": ["通过", "短期过热", "高波动"],
+            "rps": [95.0] * 3,
+            "adj_close": [10.0] * 3,
+            "high120": [11.0] * 3,
+            "roc20": [0.03, 0.20, 0.03],
+            "vol20": [0.03, 0.03, 0.09],
+            "amount_ma20": [2.0e8] * 3,
+            "close": [10.0] * 3,
+        }
+    )
+    assert list(rank_signals("c3", frame, {})["code"]) == ["000001"]
+
+    blocked = frame.copy()
+    blocked.attrs["market"] = {"available": True, "c3_ok": False}
+    assert len(rank_signals("c3", blocked, {})) == 0
+
+    passed = frame.copy()
+    passed.attrs["market"] = {"available": True, "c3_ok": True}
+    assert list(rank_signals("c3", passed, {})["code"]) == ["000001"]
 
 
 def test_market_gate_payload_a4_regime() -> None:
@@ -429,7 +494,8 @@ def test_market_gate_payload_a4_regime() -> None:
 def test_rank_signals_a4_dividend_and_pe_filters() -> None:
     """A4：PE>0 且 <pe_max、股息率在 [div_min, dv_max]、PB/评分/流动性/趋势过滤，按股息率降序。"""
     frame = _strategy_frame()
-    result = rank_signals("a4", frame, {})
+    # 用旧阈值验证过滤口径本身；新默认值另有 test_a4_defaults_reject_low_pe_and_low_quality 覆盖
+    result = rank_signals("a4", frame, {"pe_min": 0.0, "div_min": 4.0, "min_score": 5.0})
     # 命中：pe=10/dv=6, pe=12/dv=10, pe=8/dv=4（pe=15 不满足严格 <15）
     assert list(result["code"]) == ["600006", "600000", "600009"]
     assert (result["pe_ttm"] > 0).all()
@@ -513,13 +579,15 @@ def test_a3_score_breakdown_uses_persisted_detail() -> None:
 
 
 def test_market_gate_payload_for_run_level_hint() -> None:
-    """C6 的 run 级门槛摘要：0 信号时前端可解释原因，缓存 run 也能现算。"""
+    """C3/C6 的 run 级门槛摘要：0 信号时前端可解释原因，缓存 run 也能现算。"""
     market = {
         "available": True,
         "index_code": "000300",
         "close": 4103.54,
         "ma20": 4275.67,
+        "ma60": 4200.0,
         "pct_chg": -0.8,
+        "c3_ok": False,
         "c6_ok": False,
     }
     c6 = market_gate_payload(market, "c6")
@@ -529,8 +597,15 @@ def test_market_gate_payload_for_run_level_hint() -> None:
     assert c6["rule"] == "沪深300 收盘 ≥ MA20 × 0.995"
     assert c6["close"] == pytest.approx(4103.54)
 
+    c3 = market_gate_payload(market, "c3")
+    assert c3 is not None
+    assert c3["passed"] is False
+    assert c3["ma60"] == pytest.approx(4200.0)
+    assert c3["rule"] == "沪深300 收盘 ≥ MA20 × 0.995 且 ≥ MA60"
+
     missing = market_gate_payload(
-        {"available": False, "index_code": "000300", "c6_ok": True}, "c6"
+        {"available": False, "index_code": "000300", "c3_ok": True, "c6_ok": True},
+        "c6",
     )
     assert missing is not None
     assert missing["available"] is False
@@ -538,6 +613,7 @@ def test_market_gate_payload_for_run_level_hint() -> None:
     assert "放行" in missing["rule"]
     assert market_gate_payload(None, "c6") is None
     json.dumps(c6, ensure_ascii=False, allow_nan=False)
+    json.dumps(c3, ensure_ascii=False, allow_nan=False)
 
 
 # =====================================================================
@@ -575,7 +651,7 @@ def test_rank_signals_accepts_decimal_columns() -> None:
         decimal_frame[column] = [
             None if pd.isna(value) else Decimal(str(value)) for value in decimal_frame[column]
         ]
-    result = rank_signals("a4", decimal_frame, {})
+    result = rank_signals("a4", decimal_frame, {"pe_min": 0.0, "div_min": 4.0, "min_score": 5.0})
     assert len(result) == 3
     assert result["dv_ttm"].dtype == "float64"
     assert list(result["code"]) == ["600006", "600000", "600009"]

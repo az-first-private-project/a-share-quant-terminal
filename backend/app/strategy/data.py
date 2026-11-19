@@ -12,7 +12,7 @@ from decimal import Decimal
 from typing import Any, Sequence
 import numpy as np
 import pandas as pd
-from sqlalchemy import or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import HISTORY_START
@@ -190,14 +190,27 @@ _WINDOW_STRATEGIES = frozenset({"c1", "c2", "c3", "c4", "c5"})
 
 #: 各候选策略的派生列（用于空窗口时补齐，避免上层 KeyError）
 _DERIVED_COLUMNS: dict[str, tuple[str, ...]] = {
-    "c1": ("high20_prev", "prev_adj_close", "adj_close", "adj_open"),
+    "c1": ("high20_prev", "prev_adj_close", "adj_close", "adj_open", "mom60", "vol20"),
     "c2": ("range40_ratio", "high40", "low40", "high10", "low10", "vol_ma20_prev"),
-    "c3": ("roc120", "high120", "adj_close", "rps"),
+    "c3": ("roc120", "roc20", "vol20", "high120", "adj_close", "rps"),
     "c4": ("prev_is_limit_up", "prev_volume", "prev_adj_close",
            "adj_close", "adj_open", "adj_low"),
     "c5": ("ma5_today", "ma20_today", "ma5_prev", "ma20_prev",
            "vol_ma20_prev", "vol_ratio_20"),
 }
+
+def _realized_vol(closes: np.ndarray) -> float:
+    """区间收益波动率（日标准差，ddof=0，与回测/研究口径一致）。
+
+    ``closes`` 是 N 个收盘价，返回 N-1 个日收益的标准差；出现非正/非有限值时
+    返回 NaN，由调用方的 notna 条件自然过滤，不做插补。
+    """
+    values = np.asarray(closes, dtype=float)
+    if values.size < 3 or not np.isfinite(values).all() or (values <= 0).any():
+        return float("nan")
+    returns = values[1:] / values[:-1] - 1.0
+    return float(np.std(returns, ddof=0))
+
 
 def _window_features(
     bars: pd.DataFrame, algo_code: str, lookback: int
@@ -218,16 +231,23 @@ def _window_features(
 
     if algo_code == "c1":
         n = int(lookback)
-        if len(bars) < n + 1:
+        # 60 日动量需要 61 根 K 线；突破窗口只在其一
+        if len(bars) < max(n + 1, 61):
             return None
         window_high = adj_high[-n - 1:-1]
-        if not np.isfinite(window_high).all() or not np.isfinite(adj_close[-2:]).all():
+        if not np.isfinite(window_high).all() or not np.isfinite(adj_close[-61:]).all():
             return None
+        if adj_close[-61] <= 0 or adj_close[-21] <= 0:
+            return None
+        mom60 = float(adj_close[-1] / adj_close[-61] - 1.0)
+        vol20 = _realized_vol(adj_close[-21:])
         return {
             "high20_prev": float(np.max(window_high)),
             "prev_adj_close": float(adj_close[-2]),
             "adj_close": float(adj_close[-1]),
             "adj_open": float(adj_open[-1]),
+            "mom60": mom60,
+            "vol20": vol20,
         }
 
     if algo_code == "c2":
@@ -252,16 +272,20 @@ def _window_features(
 
     if algo_code == "c3":
         n = int(lookback)
-        if len(bars) < n + 1:
+        if len(bars) < max(n + 1, 21):
             return None
         start, end = adj_close[-n - 1], adj_close[-1]
         if not np.isfinite(start) or start <= 0 or not np.isfinite(end):
             return None
         high_n = adj_high[-n:]
-        if not np.isfinite(high_n).all():
+        if not np.isfinite(high_n).all() or not np.isfinite(adj_close[-21:]).all():
+            return None
+        if adj_close[-21] <= 0:
             return None
         return {
             "roc120": float(end / start - 1.0),
+            "roc20": float(adj_close[-1] / adj_close[-21] - 1.0),
+            "vol20": _realized_vol(adj_close[-21:]),
             "high120": float(np.max(high_n)),
             "adj_close": float(end),
         }
@@ -313,7 +337,9 @@ async def _enrich_history(
         return frame
     attrs = dict(frame.attrs)
     lookback = int(params.get("lookback", 0) or 0)
-    calendar_days = max(lookback, 2) * 2 + 30
+    # c1 的 60 日动量需要额外历史：窗口取 max(lookback, 60)，日历天数留足节假日余量
+    required = max(lookback, 60) if algo_code == "c1" else max(lookback, 2)
+    calendar_days = required * 2 + 30
     start = trade_date - timedelta(days=calendar_days)
     codes = sorted(set(frame["code"].astype(str).str.zfill(6).tolist()))
 

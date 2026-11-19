@@ -1,7 +1,7 @@
 # GFNA V5 · 接口契约（API Contract）
 
 > 本文件是**前后端并行的唯一事实源**。任何一端要改字段，先改这里。
-> 版本：5.0 ｜ 基础前缀：`/api/v1` ｜ 编码：UTF-8 ｜ 时间：ISO-8601（含时区）
+> 版本：5.1（2026-11 因子优化） ｜ 基础前缀：`/api/v1` ｜ 编码：UTF-8 ｜ 时间：ISO-8601（含时区）
 
 ---
 
@@ -335,7 +335,9 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 ```json
 [ { "algo_code": "a4", "algo_name": "高股息质量 × 低估值", "algo_type": "value",
     "short_desc": "…", "full_desc": "…",
-    "params_schema": [ { "key": "pe_max", "label": "PE_TTM 上限", "type": "number",
+    "params_schema": [ { "key": "pe_min", "label": "PE_TTM 下限", "type": "number",
+                         "default": 3.0, "min": 0.0, "max": 1000 },
+                       { "key": "pe_max", "label": "PE_TTM 上限", "type": "number",
                          "default": 15.0, "min": 0.01, "max": 1000 },
                        { "key": "pb_max", "label": "PB 上限", "type": "number",
                          "default": 2.5, "min": 0.1, "max": 50 } ],
@@ -347,9 +349,9 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 { "algo": "a4", "algo_name": "高股息质量 × 低估值", "trade_date": "2026-11-13",
   "run": { "run_id": "9f2c…", "created_at": "2026-11-13T16:02:11+08:00",
            "elapsed_ms": 812, "universe_count": 5216, "signal_count": 8,
-           "data_version": "2026-11-13:b5382", "signal_schema": 3,
-           "params": { "pe_max": 15.0, "div_min": 4.0, "dv_max": 15.0,
-                       "pb_max": 2.5, "min_score": 5.0, "limit": 20 } },
+           "data_version": "2026-11-13:b5382", "signal_schema": 4,
+           "params": { "pe_min": 3.0, "pe_max": 15.0, "div_min": 4.5, "dv_max": 15.0,
+                       "pb_max": 2.5, "min_score": 6.5, "limit": 20 } },
   "from_cache": true, "count": 8,
   "total": 8, "has_more": false, "page": 1, "page_size": 20,
   "data": [ { "code": "601668", "name": "中国建筑", "rank": 1,
@@ -372,7 +374,7 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 - `data[].metrics` 为策略依据的完整指标，前端表格列由 `metrics` 动态生成。
 - `run` 额外字段：`status`（running/success/failed/superseded；superseded 表示同参数旧 run 已被新 run 取代，仍可审计但不参与统计）、失败时 `error`、回测 run 带 `is_backtest`、快照版本 `signal_schema`（见下）。
 
-**run 级市场门槛 `market_gate`（A4/C6）**
+**run 级市场门槛 `market_gate`（A4/C3/C6）**
 
 C6 每次响应顶层带 `market_gate`（新 run 与缓存 run 均按 `trade_date` 现算，不落库）：
 ```json
@@ -382,6 +384,15 @@ C6 每次响应顶层带 `market_gate`（新 run 与缓存 run 均按 `trade_dat
 ```
 - `passed` 为该策略对应的门槛（c6=`c6_ok`）；`rule` / `threshold` 供 UI 展示。
 - 指数数据缺失时 `available=false`、`passed=true`（按放行处理），`rule` 说明原因。
+
+C3 使用沪深300 双均线闸门（2026-11 新增）：
+```json
+{ "index_code": "000300", "available": true, "close": 4103.54, "ma20": 4275.67,
+  "ma60": 4200.0, "pct_chg": -0.8, "passed": false,
+  "rule": "沪深300 收盘 ≥ MA20 × 0.995 且 ≥ MA60", "threshold": 4254.2916 }
+```
+- `passed = close ≥ MA20 × 0.995 且 close ≥ MA60`（任一均线缺失时按放行处理）。
+- 空仓是策略设计的一部分：闸门未通过时不产生信号，前端应提示“市场环境要求未满足”。
 
 a4 额外返回市场阶段字段；仅防御型阶段放行：
 ```json
@@ -397,13 +408,18 @@ a4 额外返回市场阶段字段；仅防御型阶段放行：
 - `available` 仍表示沪深300 指数是否可用，与 `regime_available` 相互独立。
 - 0 信号时前端据此显示“防御型门槛未满足…”或“市场环境要求未满足…”，而非笼统的“没有选股信号”。
 
-**逐条依据 `metrics.triggered`（A4/C6 市场门槛）**
+**逐条依据 `metrics.triggered`（A4/C3/C6 市场门槛）**
 
-A4/C6 的市场门槛会写入 `metrics.triggered`（`scope="market"`），与选股共用同一份判定：
+A4/C3/C6 的市场门槛会写入 `metrics.triggered`（`scope="market"`），与选股共用同一份判定：
 ```json
 [ { "key": "a4_regime", "label": "仅在防御型市场阶段启用（震荡筑底/向下调整/避险下跌）",
     "scope": "market", "required": true, "passed": false, "actual": false,
     "threshold": ["bottoming", "pull_down", "risk_off"] } ]
+```
+```json
+[ { "key": "c3_market", "label": "沪深300 收盘 ≥ MA20 × 0.995 且 ≥ MA60",
+    "scope": "market", "required": true, "passed": false, "actual": false,
+    "detail": "沪深300 close=4103.54 ma20=4275.67 ma60=4200.0" } ]
 ```
 ```json
 [ { "key": "c6_market", "label": "沪深300 收盘 ≥ MA20 × 0.995", "scope": "market",
@@ -415,12 +431,13 @@ A4/C6 的市场门槛会写入 `metrics.triggered`（`scope="market"`），与�
 - `detail` 为人类可读字段快照；所有值均为 JSON 原生类型（numpy / Decimal 已在后端转换）。
 - **快照版本 `run.signal_schema`**（P2-7）：`1` = 重构前的历史 run，`metrics` 不含
   `triggered` / `score_breakdown`；`2` = 结构化依据（triggered/score_breakdown）；
-  `3` = V8 M1 a4 防御门槛 + 策略逻辑变更（结构同 2，缓存不再复用 `<3` 的旧 run）。
+  `3` = V8 M1 a4 防御门槛；`4` = 2026-11 因子优化（A4/C1/C2/C3 逻辑与参数变更，结构同 3）。
+  缓存只复用当前版本，`<4` 的历史 run 不再命中缓存。
   前端对 `signal_schema < 2` 且存在信号的 run 显示「旧版本快照」，对 `schema >= 2` 但单条信号
   缺字段显示“当前版本未记录该信号依据”，不得混为一谈、渲染成空列表或伪造全通过。
 - 历史 run **只读标注，不批量重算**：重跑会生成新 run 并把同参数旧成功 run 置为
   `superseded`，改变历史与统计口径；确需最新依据时由用户显式执行或强制刷新。
-- A3 与 C1–C5 不产生结构化 `triggered`；A4 带 `a4_regime`，C6 带 `c6_market`。
+- A3 与 C1/C2/C4/C5 不产生结构化 `triggered`；A4 带 `a4_regime`，C3 带 `c3_market`，C6 带 `c6_market`。
 
 **A3 评分拆解 `metrics.score_breakdown`（仅 A3，V6 T7）**
 
