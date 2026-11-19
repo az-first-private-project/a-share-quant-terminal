@@ -101,6 +101,24 @@ def _upgrade(config: Config, engine) -> int:
     return 0
 
 
+def _database_exists(target) -> bool:
+    """目标库是否已创建（全新环境 pre 阶段允许库还不存在）。"""
+    admin = create_engine(
+        target.set(database="postgres").render_as_string(hide_password=False),
+        pool_pre_ping=True,
+    )
+    try:
+        with admin.connect() as conn:
+            return bool(
+                conn.execute(
+                    text("SELECT 1 FROM pg_database WHERE datname = :name"),
+                    {"name": target.database},
+                ).scalar()
+            )
+    finally:
+        admin.dispose()
+
+
 def main() -> int:
     import argparse
 
@@ -112,8 +130,18 @@ def main() -> int:
     args = parser.parse_args()
 
     setup_logging()
+    target = _target_url()
+    if not _database_exists(target):
+        if args.phase == "pre":
+            logger.info(
+                "目标数据库 %s 不存在，跳过预迁移（bootstrap 将创建）", target.database
+            )
+            return 0
+        logger.error("目标数据库 %s 不存在，bootstrap 建库未成功", target.database)
+        return 1
+
     engine = create_engine(
-        _target_url().render_as_string(hide_password=False), pool_pre_ping=True
+        target.render_as_string(hide_password=False), pool_pre_ping=True
     )
     try:
         has_version = inspect(engine).has_table("alembic_version")
