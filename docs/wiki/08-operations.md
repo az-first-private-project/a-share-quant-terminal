@@ -133,12 +133,17 @@ python scripts/bootstrap_db.py --recreate       # 危险：删全部业务表后
 3. 预建年度分区 + default，创建 `v_stock_latest` / `v_stock_features`；
 4. 写 `algo_meta` 种子，按需回填 `dim_stock.ownership`。
 
-已有库增量迁移：
+已有库增量迁移（容器启动时会自动执行）：
 
 ```bash
 cd backend
-alembic upgrade head
+python scripts/migrate_db.py     # 有 alembic_version 时 upgrade head；无版本且结构完整时 stamp head
+alembic upgrade head             # 等价的手动方式
 ```
+
+> `bootstrap_db.py` 的 `create_all` 只补“缺失的表”，不会给旧表补列。
+> 已有数据卷升级镜像后，必须执行增量迁移，否则会出现
+> `column ... does not exist` 导致接口 500（典型：`margin_trading.margin_buy_amount`）。
 
 ---
 
@@ -238,8 +243,27 @@ docker compose logs -f backend
 
 - Playwright Chromium（新闻爬虫）；
 - `bootstrap_db.py` 自动初始化；
+- `migrate_db.py` 启动前自动应用增量迁移（已有数据卷升级不会因缺列 500）；
 - `first_run.py` 空库灌演示数据（`SEED_DEMO_ON_EMPTY=1` 默认）；
 - HEALTHCHECK `/health`。
+
+启动顺序：`bootstrap_db.py` → `migrate_db.py` → `first_run.py` → `uvicorn`。
+
+### 升级已有数据卷
+
+```bash
+docker compose up -d --build
+docker compose logs -f backend      # 应看到「应用数据库增量迁移 ... ✅ 数据库迁移完成」
+```
+
+若日志出现 `column ... does not exist`：
+
+```bash
+docker compose exec backend python -m alembic upgrade head
+docker compose restart backend
+```
+
+只有确认数据可丢弃时才使用 `bootstrap_db.py --recreate`（会删除全部业务表）。
 
 前端 Nginx：
 

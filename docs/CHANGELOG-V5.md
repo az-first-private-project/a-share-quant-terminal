@@ -6,6 +6,18 @@
 
 ---
 
+## 0. Docker 升级修复：启动自动应用数据库迁移（2026-11-19）
+
+| 变更 | 文件 |
+|---|---|
+| 新增 `migrate_db.py`：有 `alembic_version` 时 `upgrade head`，无版本且结构完整时 `stamp head`，检测到未版本化缺列时拒绝启动并给出修复指引 | `backend/scripts/migrate_db.py` |
+| 容器入口在 bootstrap 之后、uvicorn 之前自动执行迁移，修复旧数据卷缺列导致的 500（如 `margin_trading.margin_buy_amount`） | `backend/docker/entrypoint.sh` |
+| README / Wiki 运维章节补充升级与排障步骤 | `README.md`、`docs/wiki/08-operations.md` |
+
+根因：`bootstrap_db.py` 的 `create_all` 只建缺失表，不给旧表补列；已有数据卷停在 `0010`，而代码已到 `0017`。
+
+---
+
 ## 0. 2026-11 策略因子优化（2026-11-19）
 
 依据 `docs/FACTOR-OPTIMIZATION-2026-11.md`（2024-01-02 ~ 2026-11-17，20 日调仓、沪深300 基准）：

@@ -231,6 +231,10 @@ docker compose exec backend python scripts/pipeline_cli.py all
 ```
 
 > 数据库端口映射到宿主机 `5433`，容器内部仍使用 `postgres:5432`；所有端口只绑定 `127.0.0.1`。
+>
+> **升级已有数据卷**：entrypoint 会在启动前自动执行 `python scripts/migrate_db.py`
+> （内部走 `alembic upgrade head`），无需删卷。若日志出现 `column ... does not exist`，可手动执行
+> `docker compose exec backend python -m alembic upgrade head && docker compose restart backend`。
 
 ### 方式二：本地运行
 

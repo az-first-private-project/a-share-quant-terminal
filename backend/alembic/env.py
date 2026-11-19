@@ -50,7 +50,8 @@ config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL_SYNC)
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # 保留应用自身 logger：迁移脚本内后续的 migrate 日志不应被静默
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

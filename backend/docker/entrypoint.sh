@@ -9,8 +9,17 @@
 # ============================================================
 set -e
 
+# 已有数据卷升级镜像时必须先走增量迁移：create_all 只补“缺失的表”，
+# 不会给旧表补列，否则会出现“表在但缺列”（如 margin_buy_amount）导致接口 500。
+# 对全新库 pre 阶段直接跳过，bootstrap 建完表后由 post 阶段 stamp head。
+echo "[entrypoint] 应用数据库增量迁移（已有版本库）..."
+python scripts/migrate_db.py --phase pre
+
 echo "[entrypoint] 引导数据库结构 ..."
 python scripts/bootstrap_db.py
+
+echo "[entrypoint] 校验数据库版本 ..."
+python scripts/migrate_db.py --phase post
 
 if [ "${SEED_DEMO_ON_EMPTY:-1}" = "1" ]; then
   echo "[entrypoint] 检查是否需要首次灌数据 ..."
