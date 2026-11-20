@@ -112,3 +112,16 @@ def test_recover_marks_only_stale_rows_and_keeps_fresh():
 
     assert stale_bt.status == "failed" and stale_bt.error == RESTART_ERROR
     assert fresh_bt.status == "running" and fresh_bt.error is None
+
+
+def test_env_stale_after_parsing(monkeypatch):
+    from app.services import task_recovery
+
+    monkeypatch.setenv("TASK_RECOVERY_STALE_SEC", "0")
+    assert task_recovery._env_stale_after() == timedelta(0)
+    monkeypatch.setenv("TASK_RECOVERY_STALE_SEC", "90")
+    assert task_recovery._env_stale_after() == timedelta(seconds=90)
+    monkeypatch.setenv("TASK_RECOVERY_STALE_SEC", "abc")
+    assert task_recovery._env_stale_after() == timedelta(hours=2)
+    monkeypatch.delenv("TASK_RECOVERY_STALE_SEC")
+    assert task_recovery._env_stale_after() == timedelta(hours=2)

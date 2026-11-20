@@ -101,6 +101,8 @@ python scripts/pipeline_cli.py algos
 | `DATA_PRIMARY_PROVIDER` / `DATA_FALLBACK_PROVIDER` | akshare / baostock | 采集链 |
 | `INGEST_NETWORK_ENABLED` | 1 | 0 = 离线 |
 | `SCHEDULER_ENABLED` | 1 | 0 = 不启动定时任务 |
+| `DB_POOL_SIZE` | 10 | 连接池大小（并发回测/前端轮询占满会导致 pool timeout） |
+| `TASK_RECOVERY_STALE_SEC` | 7200 | 启动清理遗留 running/queued 的阈值；Docker Compose 设为 0 |
 | `AUTO_CREATE_TABLES` | 1 | 启动兜底建表 |
 | `CATCH_UP_ENABLED` | 1 | 启动补缺 |
 | `ADMIN_API_KEY` | 空 | 空 = 管理接口仅本机 |
@@ -264,6 +266,34 @@ docker compose restart backend
 ```
 
 只有确认数据可丢弃时才使用 `bootstrap_db.py --recreate`（会删除全部业务表）。
+
+### 8.1 回测在 Docker 下随机失败
+
+典型现象：同一策略同一区间，回测有时 failed；把「调仓周期」从 20 改成 21（或改起止日）
+后又能成功。
+
+根因：调仓日为 `trading_days[::rebalance_days]`。其中任一调仓日缺行情/指标/评分
+（节假日兜底日历把非交易日算进来、盘中数据未落库、历史回填缺口、显式传入未来 `end`），
+旧实现会让整次回测 `failed`；改动调仓周期只是改变信号日相位，绕开缺口后看起来"恢复"。
+
+现状（2026-11 起）：
+
+- 缺数据的调仓日会被跳过并记录到 `metrics.skipped_signal_days / skipped_signal_dates`，
+  其余调仓日照常计算；只有全部调仓日都缺数据才 failed；
+- 后台回测对瞬时数据库错误自动退避重试 2 次；
+- Compose 已设置 `TASK_RECOVERY_STALE_SEC=0`：容器重启后遗留 `running/queued` 立即标 failed；
+- 时区：compose / Dockerfile 均为 `TZ=Asia/Shanghai`，数据库会话也固定为该时区。
+
+排查命令：
+
+```bash
+docker compose logs backend --since 30m | findstr /i "回测 failed 重试"
+docker compose exec backend date
+docker exec gfna-postgres psql -U postgres -d gfna_db -c "show timezone; select now();"
+# 交易日历与实际行情缺口（应尽量为空）
+docker exec gfna-postgres psql -U postgres -d gfna_db -c \
+  "SELECT c.cal_date FROM trade_calendar c LEFT JOIN (SELECT DISTINCT trade_date FROM fact_stock_daily) d ON d.trade_date=c.cal_date WHERE c.is_open AND d.trade_date IS NULL AND c.cal_date <= current_date ORDER BY c.cal_date DESC LIMIT 20;"
+```
 
 前端 Nginx：
 

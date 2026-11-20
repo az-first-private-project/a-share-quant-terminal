@@ -36,7 +36,7 @@ from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Callable, Mapping, NamedTuple, Sequence
+from typing import Any, Awaitable, Callable, Mapping, NamedTuple, Sequence
 
 import pandas as pd
 from sqlalchemy import select, update
@@ -446,6 +446,63 @@ async def load_benchmark_closes(
         if value is not None and value > 0:
             closes[_as_date(trade_day, field_name="trade_date")] = value
     return closes
+
+
+async def collect_signal_executions(
+    signal_dates: Sequence[date],
+    next_trading_day: Mapping[date, date],
+    *,
+    runner: Callable[[date], Awaitable[dict]],
+    max_positions: int,
+    can_continue: Callable[[], bool] | None = None,
+) -> tuple[dict[date, list[dict]], list[dict], set[str]]:
+    """逐个调仓日取信号，单日数据不可用只跳过该日，不让整次回测失败。
+
+    背景（Docker 下"回测随机失败、改调仓周期就恢复"的根因）：
+    调仓日由 ``trading_days[::rebalance_days]`` 决定，任一调仓日缺少行情/
+    指标/评分（节假日兜底日历、盘中未落库、历史回填缺口）都会让
+    ``run_strategy`` 抛 ``DataUnavailableError``。旧实现把它当致命错误，
+    导致整次回测 failed；改动 ``rebalance_days`` 会改变信号日相位，于是
+    碰巧绕开缺口、表现为"随机失败"。
+
+    返回 ``(executions, skipped, involved_codes)``：
+      - ``executions``：成交日 → 目标持仓（T+1 开盘执行）；
+      - ``skipped``：[{date, execution_date, reason}] 被跳过的调仓日；
+      - ``involved_codes``：信号涉及的股票代码（用于行情预取）。
+
+    ``can_continue`` 用于区分"业务性数据缺失"与"数据库事务已被破坏"：
+    后者不能继续复用同一会话，必须向上抛出。
+    """
+    executions: dict[date, list[dict]] = {}
+    skipped: list[dict] = []
+    involved: set[str] = set()
+    for signal_day in signal_dates:
+        execution_day = next_trading_day.get(signal_day)
+        if execution_day is None:
+            continue  # 最后一个调仓日没有 T+1，跳过
+        try:
+            result = await runner(signal_day)
+        except DataUnavailableError as exc:
+            if can_continue is not None and not can_continue():
+                raise  # 事务已失效（如缺表/缺列），不能吞掉
+            skipped.append({
+                "date": signal_day.isoformat(),
+                "execution_date": execution_day.isoformat(),
+                "reason": str(exc)[:300],
+            })
+            logger.warning(
+                "回测调仓日数据不可用，跳过 signal=%s execution=%s: %s",
+                signal_day, execution_day, exc,
+            )
+            continue
+        signals = list(result.get("data") or [])[:max_positions]
+        if not signals:
+            logger.info("回测信号日 %s 无信号，T+1 目标为空仓", signal_day)
+        executions[execution_day] = signals
+        involved.update(
+            str(item.get("code")).zfill(6) for item in signals if item.get("code")
+        )
+    return executions, skipped, involved
 
 
 # =====================================================================
@@ -1014,17 +1071,14 @@ async def _run_backtest_impl(
             signal_dates = trading_days[:: backtest_params.rebalance_days]
 
         # ---- 2) 逐个调仓日取信号（只使用 T 日及之前数据）----
-        executions: dict[date, list[dict]] = {}
         # 续算时持仓标的即使不在新信号里，也要预取行情用于估值与卖出
         involved_codes: set[str] = {
             str(code).zfill(6)
             for code in dict((initial_state or {}).get("positions") or {})
         }
-        for signal_day in signal_dates:
-            execution_day = next_trading_day.get(signal_day)
-            if execution_day is None:
-                continue  # 最后一个调仓日没有 T+1，跳过
-            result = await stg_runner.run_strategy(
+
+        async def _run_signal(signal_day: date) -> dict:
+            return await stg_runner.run_strategy(
                 spec.code,
                 signal_day,
                 strategy_params,
@@ -1032,13 +1086,29 @@ async def _run_backtest_impl(
                 db=db,
                 is_backtest=True,
             )
-            signals = list(result.get("data") or [])[: backtest_params.max_positions]
-            if not signals:
-                # 该调仓日无信号 → 目标持仓为空（T+1 清仓），但仍是一次有效调仓
-                logger.info("回测 %s 信号日 %s 无信号，T+1 目标为空仓", spec.code, signal_day)
-            executions[execution_day] = signals
-            involved_codes.update(
-                str(item.get("code")).zfill(6) for item in signals if item.get("code")
+
+        executions, skipped_signal_days, signal_codes = await collect_signal_executions(
+            signal_dates,
+            next_trading_day,
+            runner=_run_signal,
+            max_positions=backtest_params.max_positions,
+            can_continue=lambda: bool(db.is_active),
+        )
+        involved_codes.update(signal_codes)
+        if skipped_signal_days and not executions:
+            dates = ", ".join(item["date"] for item in skipped_signal_days[:5])
+            raise DataUnavailableError(
+                f"{len(skipped_signal_days)} 个调仓日均无可用数据（{dates}…），无法回测",
+                next_action="先补齐行情/指标/评分（pipeline_cli.py all），或调整回测区间与调仓周期",
+                detail={
+                    "skipped_signal_days": len(skipped_signal_days),
+                    "dates": [item["date"] for item in skipped_signal_days[:20]],
+                },
+            )
+        if skipped_signal_days:
+            logger.warning(
+                "回测 %s 跳过 %d 个数据缺口调仓日（共 %d 个信号日），继续用其余调仓日计算",
+                spec.code, len(skipped_signal_days), len(signal_dates),
             )
 
         # ---- 3) 区间行情 / 基准一次性预取到内存 ----
@@ -1082,6 +1152,12 @@ async def _run_backtest_impl(
             backtest_params.initial_cash,
         )
         metrics["adjusted"] = bool(adjusted_ok)
+        if skipped_signal_days:
+            # 跳过是"数据缺口"而不是"无信号"：写入结果便于前端/审计区分
+            metrics["skipped_signal_days"] = len(skipped_signal_days)
+            metrics["skipped_signal_dates"] = [
+                item["date"] for item in skipped_signal_days[:50]
+            ]
 
         elapsed_ms = int((time.perf_counter() - started) * 1000)
 
@@ -1117,7 +1193,7 @@ async def _run_backtest_impl(
         )
         return _build_backtest_response(
             record, spec, backtest_params, strategy_params, calendar_source,
-            curve, trades, metrics,
+            curve, trades, metrics, skipped_signal_days,
         )
 
     except Exception as exc:  # noqa: BLE001 - 失败也要落 backtest_run 记录
@@ -1175,6 +1251,7 @@ def _build_backtest_response(
     curve: list[dict],
     trades: list[dict],
     metrics: dict,
+    skipped_signal_days: list[dict] | None = None,
 ) -> dict:
     """组装契约 6.1 响应。"""
     return {
@@ -1189,6 +1266,7 @@ def _build_backtest_response(
         "created_at": _iso(record.created_at),
         "elapsed_ms": record.elapsed_ms,
         "calendar_source": calendar_source,
+        "skipped_signal_days": (skipped_signal_days or [])[:50],
     }
 
 
@@ -1202,6 +1280,7 @@ __all__ = [
     "load_price_book",
     "load_benchmark_closes",
     "build_pending_orders",
+    "collect_signal_executions",
     "simulate_portfolio",
     "run_backtest",
 ]

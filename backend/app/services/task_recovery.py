@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -21,8 +22,27 @@ from app.db.models.strategy import BacktestRun, StgRun
 
 logger = get_logger(__name__)
 
+
+def _env_stale_after() -> timedelta:
+    """遗留任务判定阈值。
+
+    默认 2 小时（本机可能同时跑 CLI 长任务）；Docker 单容器部署可设
+    ``TASK_RECOVERY_STALE_SEC=0``：容器启动时旧进程必然已退出，
+    所有 running/queued 行都应按僵尸任务立即清理，避免前端一直转圈。
+    """
+    raw = os.getenv("TASK_RECOVERY_STALE_SEC", "").strip()
+    if not raw:
+        return timedelta(hours=2)
+    try:
+        seconds = int(raw)
+    except ValueError:
+        logger.warning("TASK_RECOVERY_STALE_SEC 不是整数: %r，回退默认 2 小时", raw)
+        return timedelta(hours=2)
+    return timedelta(seconds=max(0, seconds))
+
+
 #: 超过该时长仍未结束的 running/queued 视为遗留任务
-STALE_AFTER = timedelta(hours=2)
+STALE_AFTER = _env_stale_after()
 
 #: 启动清理写入的固定错误文案（可按前缀审计/筛出）
 RESTART_ERROR = "进程重启遗留：服务启动时任务仍处于 running/queued 状态，已标记 failed"

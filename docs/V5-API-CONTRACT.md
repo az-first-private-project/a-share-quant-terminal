@@ -650,8 +650,13 @@ Query：`start`（默认近 1 年）、`end`（默认库内最新行情交易日
 - 入队即落 `backtest_run.status=queued` 并提交；后台任务随后改为 `running`，
   成功写 `metrics/equity_curve/trades`，失败写 `status=failed` + `error`。
 - 客户端必须轮询 `poll` 指向的 6.2；回测时长（可达数十秒）不再受 HTTP 30 秒超时约束。
-- 后台任务运行在 API 进程内：进程重启时，超过 2 小时的 `running/queued` 行由启动清理
-  标为 failed；2 小时内重启的任务会停留在原状态，需要重新提交。
+- 后台任务运行在 API 进程内：进程重启时，超过 `TASK_RECOVERY_STALE_SEC`（默认 7200 秒）
+  的 `running/queued` 行由启动清理标为 failed；Docker Compose 将该值设为 `0`，
+  容器启动即清理全部遗留活跃行。（2026-11 起）
+- 调仓日（`trading_days[::rebalance_days]`）的数据缺口**不再让整次回测失败**：
+  缺行情/指标/评分的调仓日会被跳过并记录，仅当所有调仓日都缺数据时才返回 failed。
+- 后台执行遇到瞬时数据库错误（连接被回收 / 网络抖动 / 连接池等待超时）会自动
+  指数退避重试（最多 2 次），复用同一 `bt_id`；业务性错误不重试。
 - **契约变更**：旧版 POST 同步返回的完整结果（metrics/曲线/成交/6.4 派生视图）
   现在只在 6.2 的 `success` 响应中出现。
 
@@ -690,6 +695,10 @@ Query：`start`（默认近 1 年）、`end`（默认库内最新行情交易日
   四个派生数组为空；`error=null`。
 - `failed`：`error` 为失败原因，其余结果字段为 `null`；失败记录不自动重试，可重新 POST。
 - `success`：字段与旧版同步响应一致，6.4 五项派生视图全部可用。
+- `success.metrics` 可能附带数据缺口标记（2026-11 起）：
+  `skipped_signal_days`（被跳过的调仓日数量）、`skipped_signal_dates`（日期数组，最多 50 个）。
+  缺省表示无缺口。跳过日期不参与调仓，但净值曲线仍按交易日连续计算；仅当所有调仓日
+  都缺数据时 `status=failed`，`error` 会给出缺口日期。
 - 回测不存在返回 404 `NOT_FOUND`；`export.csv` 在未完成时只输出表头与空 block。
 
 ### 6.3 GET `/api/v1/backtest/{bt_id}/trades?code=`

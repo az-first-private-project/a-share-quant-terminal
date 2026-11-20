@@ -7,6 +7,7 @@ GET  /api/v1/backtest/{bt_id}/export.csv   净值曲线导出
 """
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import uuid
@@ -17,6 +18,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import (
+    DBAPIError,
+    InterfaceError,
+    OperationalError,
+    TimeoutError as SATimeoutError,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import BACKTEST
@@ -180,6 +187,22 @@ async def _load_extras(
     )
 
 
+#: 后台回测遇到瞬时数据库错误时的额外重试次数与退避基数（秒）
+_TRANSIENT_RETRIES = 2
+_TRANSIENT_BACKOFF_SEC = 2.0
+
+
+def _is_transient_db_error(exc: BaseException) -> bool:
+    """是否是可通过重试恢复的瞬时数据库/连接错误。
+
+    只覆盖连接被回收、容器网络抖动、连接池等待超时；业务性错误
+    （数据缺失、参数非法）重试没有意义，直接落 failed。
+    """
+    if isinstance(exc, (OperationalError, InterfaceError, SATimeoutError, TimeoutError)):
+        return True
+    return isinstance(exc, DBAPIError) and bool(exc.connection_invalidated)
+
+
 async def execute_backtest(
     *,
     bt_id: str,
@@ -189,18 +212,35 @@ async def execute_backtest(
     strategy_params: dict,
     bt_params: dict,
 ) -> None:
-    """后台执行回测；成功/失败都由引擎落库，异常只记日志不向事件循环抛出。"""
-    try:
-        await run_backtest(
-            algo_code=algo_code,
-            start=start,
-            end=end,
-            strategy_params=strategy_params,
-            bt_params=bt_params,
-            bt_id=bt_id,
-        )
-    except Exception:  # noqa: BLE001 - 失败已写入 backtest_run.status=failed
-        logger.exception("后台回测失败 bt_id=%s algo=%s", bt_id, algo_code)
+    """后台执行回测；成功/失败都由引擎落库，异常只记日志不向事件循环抛出。
+
+    瞬时数据库错误（连接被服务器回收、Docker 网络抖动、连接池等待超时）
+    按指数退避重试，复用同一 ``bt_id``：引擎会把它重新置为 running，
+    不会产生重复回测记录。业务性失败（数据不可用/参数非法）不重试。
+    """
+    attempts = _TRANSIENT_RETRIES + 1
+    for attempt in range(1, attempts + 1):
+        try:
+            await run_backtest(
+                algo_code=algo_code,
+                start=start,
+                end=end,
+                strategy_params=strategy_params,
+                bt_params=bt_params,
+                bt_id=bt_id,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001 - 失败已写入 backtest_run.status=failed
+            if _is_transient_db_error(exc) and attempt < attempts:
+                delay = _TRANSIENT_BACKOFF_SEC * (2 ** (attempt - 1))
+                logger.warning(
+                    "后台回测遇到瞬时数据库错误，%.0fs 后重试（%d/%d）bt_id=%s: %s",
+                    delay, attempt, attempts, bt_id, exc,
+                )
+                await asyncio.sleep(delay)
+                continue
+            logger.exception("后台回测失败 bt_id=%s algo=%s", bt_id, algo_code)
+            return
 
 
 async def execute_oos(

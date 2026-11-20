@@ -37,6 +37,10 @@ services:
       dockerfile: Dockerfile
     container_name: gfna-backend
     restart: unless-stopped
+    # 回收 Playwright 等子进程，避免长期运行产生僵尸进程
+    init: true
+    # 重启/停止时给在途回测留出收尾时间，避免连接被硬断后留下 running 行
+    stop_grace_period: 30s
     environment:
       TZ: Asia/Shanghai
       POSTGRES_HOST: postgres
@@ -44,6 +48,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gfna_secret}
       POSTGRES_DATABASE: ${POSTGRES_DATABASE:-gfna_db}
+      # 回测/选股/前端轮询会并发占连接：池过小会出现 pool timeout 导致回测随机失败
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      # 容器启动即视为旧进程已退出，running/queued 遗留任务立即标 failed
+      TASK_RECOVERY_STALE_SEC: ${TASK_RECOVERY_STALE_SEC:-0}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}

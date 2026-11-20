@@ -6,6 +6,19 @@
 
 ---
 
+## 0. 回测韧性修复：调仓日缺口容错 + 瞬时错误重试（2026-11-20）
+
+| 变更 | 文件 |
+|---|---|
+| 调仓日数据缺口不再让整次回测 failed：缺行情/指标/评分的调仓日跳过并记录，仅全部调仓日缺数据才失败 | `backend/app/strategy/backtest.py` |
+| 结果新增 `metrics.skipped_signal_days / skipped_signal_dates` 与响应 `skipped_signal_days`，跳过可审计 | `backend/app/strategy/backtest.py`、`docs/V5-API-CONTRACT.md` |
+| 后台回测对瞬时数据库错误（连接回收/网络抖动/池等待超时）指数退避重试 2 次，复用同一 `bt_id` | `backend/app/api/v1/backtest.py` |
+| Compose 增加 `init`、`stop_grace_period`、`DB_POOL_SIZE`、`TASK_RECOVERY_STALE_SEC=0`（重启即清理遗留 running/queued） | `docker-compose.yml`、`backend/app/services/task_recovery.py` |
+
+根因：调仓日为 `trading_days[::rebalance_days]`，任一调仓日缺数据（节假日兜底日历、盘中未落库、回填缺口、显式未来 `end`）旧实现直接抛错导致整次回测失败；调整调仓周期只是改变信号日相位绕开缺口，表现为"随机失败"。
+
+---
+
 ## 0. Docker 升级修复：启动自动应用数据库迁移（2026-11-19）
 
 | 变更 | 文件 |
