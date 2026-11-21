@@ -81,7 +81,7 @@ def run_schema(recreate: bool = False) -> None:
         logger.info("表结构已就绪：%d 张表", len(Base.metadata.tables))
 
         end_year = date.today().year + 1
-        created = ensure_partitions(conn, HISTORY_START.year, end_year)
+        ensure_partitions(conn, HISTORY_START.year, end_year)
         logger.info("分区已就绪：%s ~ %s + default", HISTORY_START.year, end_year)
 
         create_views(conn)

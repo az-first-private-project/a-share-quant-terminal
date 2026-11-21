@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import time
 from datetime import date, timedelta
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable
 
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import bind_run, get_logger

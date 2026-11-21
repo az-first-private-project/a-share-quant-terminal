@@ -6,6 +6,22 @@
 
 ---
 
+## 0. 垃圾代码与冗余文件清理（2026-11-21）
+
+| 变更 | 范围 |
+|---|---|
+| 清理 71 处未使用导入（仅保留 `em_tls_patch`、`app.db.models` 等 4 处副作用导入） | `backend/app/**`、`backend/scripts/**` |
+| 删除 4 个零引用 Pydantic schema（`ArticleCreate/ArticleUpdate/PaginationParams/SearchParams`） | `backend/app/schemas/article.py` |
+| 删除 3 个零引用私有函数（`_missing_ratio`、`_last`、`_fetch_list_dates`） | `quality.py`、`market_factors.py`、`akshare_provider.py` |
+| 前端删除未使用导入/重复工具：`isWatched`、`SkeletonBlock`、`AlgoExecuteOptions` | `frontend/src/**` |
+| 删除 V2 遗留根测试 `tests/test_api.py` 与空目录 `tests/`、`site-packages/` | 根目录 |
+| 修复 `backfill_stock_history` 引用未定义 `db` 的运行时 NameError | `backend/app/ingest/service.py` |
+| 清理未使用局部变量与无占位符 f-string | `bootstrap_db.py`、`ingest_cli.py`、`install_backend_watchdog.py` |
+
+验证：`pyflakes` 无未使用导入（4 处副作用导入除外）、后端 666 项单测通过、前端 `tsc --noUnusedLocals` 零告警、`npm run build` 与 4 组前端测试通过、`/health` `/docs` `/api/v1/algo/list` 均 200。
+
+---
+
 ## 0. 回测韧性修复：调仓日缺口容错 + 瞬时错误重试（2026-11-20）
 
 | 变更 | 文件 |

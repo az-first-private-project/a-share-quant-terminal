@@ -277,12 +277,6 @@ export interface AlgoRunSummary extends AlgoRun {
  */
 export type AlgoRunDetail = AlgoResult
 
-/** 执行算法时的选项 */
-export interface AlgoExecuteOptions {
-  tradeDate?: string
-  forceRefresh?: boolean
-}
-
 /** 天梯 sparkline 单点（5.4；win_rate 为 0–1 小数） */
 export interface LadderSparkPoint {
   trade_date: string

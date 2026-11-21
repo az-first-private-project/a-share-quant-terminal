@@ -91,14 +91,10 @@ EPS / BPS 的取值优先级（踩过坑，务必别改回去）
 from __future__ import annotations
 
 import asyncio
-import math
 import re
 import time
-import uuid
-from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, AsyncIterator, Iterable, Sequence
-from zoneinfo import ZoneInfo
+from typing import TYPE_CHECKING, Any, Sequence
 
 import numpy as np
 import pandas as pd
@@ -111,8 +107,8 @@ except ImportError:  # pragma: no cover
 from app.core import config
 from app.core.logging import get_logger
 from app.core.status import QualityStatus
-from app.ingest.base import FetchResult, chunked, make_history_limiter, upsert_rows
-from app.ingest.quality import QualityReport, make_error_report, record_quality
+from app.ingest.base import FetchResult, chunked, make_history_limiter
+from app.ingest.quality import QualityReport, make_error_report
 
 if TYPE_CHECKING:  # pragma: no cover —— 只为类型标注，运行期不 import 数据库栈
     from sqlalchemy.ext.asyncio import AsyncSession

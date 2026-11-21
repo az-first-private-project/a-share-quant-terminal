@@ -5,15 +5,10 @@
 """
 from __future__ import annotations
 
-import asyncio
 import math
 import re
-import time
-import uuid
-from contextlib import asynccontextmanager
-from datetime import date, datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, AsyncIterator, Iterable, Sequence
-from zoneinfo import ZoneInfo
+from datetime import date, datetime
+from typing import Any, Iterable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -23,14 +18,7 @@ try:  # pragma: no cover —— 依赖是否安装由运行环境决定
 except ImportError:  # pragma: no cover
     ak = None  # type: ignore[assignment]
 
-from app.core import config
 from app.core.logging import get_logger
-from app.core.status import QualityStatus
-from app.ingest.base import FetchResult, chunked, make_history_limiter, upsert_rows
-from app.ingest.quality import QualityReport, make_error_report, record_quality
-
-if TYPE_CHECKING:  # pragma: no cover —— 只为类型标注，运行期不 import 数据库栈
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 

@@ -28,7 +28,7 @@ if sys.platform == "win32":
 from sqlalchemy import select  # noqa: E402
 
 from app.core.logging import get_logger, setup_logging  # noqa: E402
-from app.db.models.fact import FactMarketDaily, MarketTemperatureDaily  # noqa: E402
+from app.db.models.fact import FactMarketDaily  # noqa: E402
 from app.db.session import AsyncSessionLocal, dispose_engines  # noqa: E402
 from app.engine.market_temperature import (  # noqa: E402
     _RAW_COLUMNS,

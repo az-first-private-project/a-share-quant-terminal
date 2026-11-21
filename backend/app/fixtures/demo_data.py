@@ -19,7 +19,6 @@ import numpy as np
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import TIMEZONE
 from app.core.constants import BENCHMARK_INDEX, board_of, exchange_of
 from app.core.logging import get_logger
 from app.core.soe import classify_ownership

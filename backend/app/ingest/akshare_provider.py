@@ -28,11 +28,9 @@ akshare 未安装时本模块仍可 import（``ak = None``），``available()`` 
 from __future__ import annotations
 
 import math
-import re
 import time
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Sequence
-from zoneinfo import ZoneInfo
+from datetime import date, timedelta
+from typing import Any
 
 import pandas as pd
 import requests
@@ -46,7 +44,6 @@ from app.core import config
 from app.core.errors import ProviderError
 from app.core.logging import get_logger
 from app.ingest.base import BaseProvider, FetchResult
-from app.ingest.em_board import CONCEPT_ALIASES
 
 # 东财接口 TLS 指纹补丁：必须在调用任何 akshare 东财接口之前生效（见 em_tls_patch.py）
 from app.ingest import em_tls_patch  # noqa: F401  (import 即生效)
@@ -475,14 +472,6 @@ class AkshareProvider(BaseProvider):
                     "list_date": _to_date(_pick(row, LIST_DATE)),
                 }
         return result
-
-    def _fetch_list_dates(self) -> dict[str, date]:
-        """上市日期（代码 → list_date），基于 :meth:`_fetch_cn_stock_lists`。"""
-        return {
-            row["code"]: row["list_date"]
-            for row in self._fetch_cn_stock_lists()
-            if row.get("list_date") is not None
-        }
 
     # ---------- A4 板块 ----------
     def fetch_sector_list(self, trade_date: date) -> FetchResult:

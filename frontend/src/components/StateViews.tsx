@@ -213,8 +213,3 @@ export function EmptyState({
     </div>
   )
 }
-
-/** 骨架块（复用 index.css 的 .skeleton 动画） */
-export function SkeletonBlock({ className = 'h-24' }: { className?: string }) {
-  return <div className={`skeleton ${className}`} />
-}

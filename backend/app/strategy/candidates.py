@@ -5,10 +5,10 @@
 """
 
 from __future__ import annotations
-from datetime import date, datetime, timedelta
+from datetime import date
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.errors import DataUnavailableError, InvalidParamError, UnknownAlgoError
+from app.core.errors import DataUnavailableError, InvalidParamError
 
 from app.strategy.specs import *  # noqa: F401,F403
 from app.strategy.data import *  # noqa: F401,F403

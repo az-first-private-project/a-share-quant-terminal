@@ -5,7 +5,7 @@
 """
 
 from __future__ import annotations
-from typing import Any, Sequence
+from typing import Any
 import pandas as pd
 from app.engine.stock_score import FACTOR_WEIGHTS
 from app.strategy import condition as cond_dsl

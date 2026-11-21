@@ -1454,7 +1454,7 @@ async def backfill_stock_history(
             pending = [code for code in code_list if code not in completed]
             await job.update(total=len(code_list), done=len(completed))
 
-            chain = _provider_chain("history", trade_date, db)
+            chain = _provider_chain("history", trade_date, None)
             batch_rows: list[dict[str, Any]] = []
             batch_codes: list[str] = []
 

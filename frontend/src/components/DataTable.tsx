@@ -5,7 +5,7 @@
  * - 传入 csvFilename 时显示「导出 CSV」按钮（纯前端导出当前数据）；
  * - 服务端 CSV 导出（如 /algo/{code}/export.csv）由页面单独调用 api/client 的 downloadCsv。
  */
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight, Download } from 'lucide-react'
 import { downloadText, toCsv } from '../lib/csv'
 import RangeNotice from './RangeNotice'

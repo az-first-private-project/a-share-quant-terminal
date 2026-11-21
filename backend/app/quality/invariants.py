@@ -20,14 +20,11 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import (
-    BacktestRun,
     FactFeatureDaily,
     FactMoneyflow,
     FactStockDaily,
     FactStockScoreDaily,
-    IngestJob,
     MetaDataQuality,
-    StgRun,
     TradeCalendar,
 )
 

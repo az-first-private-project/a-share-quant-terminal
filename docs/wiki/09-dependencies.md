@@ -247,7 +247,7 @@ news_collector.collect_news
 | 空 `sql/` 目录 | 实际 DDL 在 ORM + `db/views.py` + Alembic | 不要在本目录寻找建表脚本 |
 | 密钥风险 | `.env` 可能含数据库密码/DeepSeek Key/Webhook | 确保被 `.gitignore` 忽略；泄露即轮换 |
 | 大文件/构建产物 | `.venv`、`site-packages`、`frontend/node_modules`、`dist*` 在工作区 | 不属于源码；提交前检查 `.gitignore` |
-| 根 `tests/test_api.py` | 与 `backend/tests/` 并存 | 以 `backend/tests` 为主；避免重复/失修 |
+| 根 `tests/` | 已于 2026-11-21 清理删除（V2 遗留、与 `backend/tests/` 重复且失修） | 测试统一放 `backend/tests/` |
 
 ---
 

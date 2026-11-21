@@ -144,15 +144,6 @@ def _num_series(df: pd.DataFrame, column: str) -> pd.Series | None:
     return pd.to_numeric(df[column], errors="coerce")
 
 
-def _missing_ratio(df: pd.DataFrame, column: str) -> float:
-    """某列缺失率；列不存在视为 100% 缺失。"""
-    if column not in df.columns:
-        return 1.0
-    if len(df) == 0:
-        return 1.0
-    return float(df[column].isna().mean())
-
-
 def _traded_mask(df: pd.DataFrame) -> pd.Series:
     """当日有成交痕迹（成交量>0 或成交额>0）的行。
 

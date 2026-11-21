@@ -127,7 +127,6 @@ async def main() -> int:
         from app.engine.features import compute_features_for_range
         from app.engine.sector_analysis import save_sector_scores, score_all_sectors
         from app.engine.stock_score import compute_stock_scores_range
-        from app.pipeline import run_task
         from app.strategy.runner import run_strategy
         from app.strategy.strategies import SPECS
 

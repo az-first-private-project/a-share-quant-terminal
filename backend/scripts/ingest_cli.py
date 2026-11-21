@@ -128,7 +128,6 @@ async def _run(args: argparse.Namespace) -> int:
     start = _parse_date(args.start)
     end = _parse_date(args.end)
     command = args.command
-    exit_code = 0
 
     async with AsyncSessionLocal() as db:
         try:

@@ -10,7 +10,6 @@ import { motion, useReducedMotion } from 'framer-motion'
 import {
   CalendarClock,
   RefreshCw,
-  TrendingUp,
   Wallet,
 } from 'lucide-react'
 import {

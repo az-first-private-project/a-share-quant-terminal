@@ -12,7 +12,7 @@
  */
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import {
   Area,
   AreaChart,
@@ -34,7 +34,7 @@ import {
 import { useBullBearValuation } from '../hooks/useBullBearValuation'
 import SectionHeader from './SectionHeader'
 import { ErrorState, SkeletonChart, SkeletonLine } from './StateViews'
-import type { BroadNormalizedPoint, BroadValuationIndex } from '../types/market'
+import type { BroadValuationIndex } from '../types/market'
 
 type RangeKey = '3y' | '10y' | 'full'
 type ValuationKey = 'pe' | 'erp'

@@ -106,10 +106,6 @@ export function getWatchlist(): string[] {
   }
 }
 
-export function isWatched(code: string): boolean {
-  return getWatchlist().includes(code)
-}
-
 /** 已读的命中键（algo_code:signal_date），用于计算导航栏新提醒 */
 export function getSeenHitIds(): string[] {
   if (storageBroken) return [...seenMemory]

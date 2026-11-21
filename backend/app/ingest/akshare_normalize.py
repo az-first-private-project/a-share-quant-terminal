@@ -7,13 +7,11 @@ from __future__ import annotations
 
 import math
 import re
-import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Sequence
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-import requests
 
 try:  # pragma: no cover —— 依赖是否安装由运行环境决定
     import akshare as ak
@@ -21,9 +19,7 @@ except ImportError:  # pragma: no cover
     ak = None  # type: ignore[assignment]
 
 from app.core import config
-from app.core.errors import ProviderError
 from app.core.logging import get_logger
-from app.ingest.base import BaseProvider, FetchResult
 from app.ingest.em_board import CONCEPT_ALIASES
 
 # 东财接口 TLS 指纹补丁：必须在调用任何 akshare 东财接口之前生效（见 em_tls_patch.py）

@@ -137,15 +137,6 @@ def annualized_vol(returns: pd.Series, period: int) -> pd.Series:
     return returns.rolling(period).std(ddof=1) * math.sqrt(252)
 
 
-def _last(series: pd.Series, default: float | None = None) -> float | None:
-    if series is None or len(series) == 0:
-        return default
-    value = series.iloc[-1]
-    if value is None or not np.isfinite(value):
-        return default
-    return float(value)
-
-
 # ============================================================
 # 数据加载
 # ============================================================

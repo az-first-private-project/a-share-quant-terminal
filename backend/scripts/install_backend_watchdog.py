@@ -35,7 +35,7 @@ def patch_battery_xml(xml: str) -> tuple[str, list[str]]:
     for tag in BATTERY_TAGS:
         pattern = re.compile(rf"(<{tag}>)true(</{tag}>)")
         if pattern.search(patched):
-            patched = pattern.sub(rf"\g<1>false\g<2>", patched)
+            patched = pattern.sub(r"\g<1>false\g<2>", patched)
             changed.append(tag)
     return patched, changed
 

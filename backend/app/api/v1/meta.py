@@ -12,7 +12,6 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import AdminDep
 from app.core.config import INGEST_NETWORK_ENABLED, SNAPSHOT_READY_HOUR, SNAPSHOT_READY_MINUTE
 from app.core.logging import get_logger
 from app.core.pagination import pagination_meta

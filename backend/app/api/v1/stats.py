@@ -5,7 +5,6 @@
 """
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, text, desc

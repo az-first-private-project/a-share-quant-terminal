@@ -16,7 +16,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import HISTORY_START
-from app.core.errors import DataUnavailableError, InvalidParamError
+from app.core.errors import DataUnavailableError
 from app.db.models.dim import DimStock
 from app.db.models.fact import (
     FactFeatureDaily,

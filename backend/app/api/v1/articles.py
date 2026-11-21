@@ -4,12 +4,11 @@
 使用 SQLAlchemy 2.0 异步查询 + PostgreSQL 全文搜索。
 """
 import logging
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, or_, select, text, desc
-from sqlalchemy.orm import joinedload
 
 from app.db.session import get_db
 from app.db.models import NewsArticle, NewsSource, CrawlLog
