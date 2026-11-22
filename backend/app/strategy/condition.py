@@ -110,7 +110,7 @@ FIELD_SPECS: dict[str, dict[str, Any]] = {
     "amount": _field("成交额", "number", _NUM_OPS, unit="元"),
     "amount_ma20": _field("20 日均成交额", "number", _NUM_OPS, unit="元"),
     "turnover_rate": _field("换手率", "number", _NUM_OPS, unit="%"),
-    "vol_ratio_20": _field("20 日量比", "number", _NUM_OPS),
+    "volume_ratio": _field("量比", "number", _NUM_OPS),
     "ma5": _field("MA5", "number", _NUM_OPS, unit="元"),
     "ma20": _field("MA20", "number", _NUM_OPS, unit="元"),
     "ma60": _field("MA60", "number", _NUM_OPS, unit="元"),

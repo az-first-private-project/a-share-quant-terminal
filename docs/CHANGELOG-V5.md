@@ -42,6 +42,7 @@
 |---|---|
 | 从 `CANDIDATE_SPECS` 永久移除 C4（涨停洗盘）、C5（均线放量突破），`/algo/list?include_observation=true`、回测/OOS/观察运行不再接受这两个代码 | `backend/app/strategy/specs.py` |
 | 删除参数默认值、条件分支、窗口特征、排序/指标字段、推送归因分支 | `core/config.py`、`strategy/conditions.py`、`strategy/data.py`、`strategy/specs.py`、`notify/push.py` |
+| 条件树移除仅由 C5 计算、无数据来源的 `vol_ratio_20` 字段，统一使用已有 `volume_ratio` | `strategy/condition.py` |
 | 删除 C4/C5 单测与观察候选断言，更新契约集合 | `backend/tests/test_candidates.py`、`test_api_v5.py`、`test_strategy.py`、`test_push.py`、`test_consensus.py` |
 | 前端移除 C4/C5 表格列、导出表头、演示清单条目 | `AlgoDataTable.tsx`、`AlgoCenter.tsx`、`SignalExplanation.tsx`、`frontend/public/demo/algo_list.json` |
 | README / 因子清单 / Wiki / 契约同步；历史诊断报告加存档说明 | `README.md`、`docs/STRATEGY-FACTORS.md`、`docs/V5-API-CONTRACT.md`、`docs/wiki/*`、`docs/FACTOR-OPTIMIZATION-2026-11.md`、`docs/WASHOUT-FACTORS.md` |
