@@ -1,0 +1,87 @@
+{
+  "card_id": "demo-attack-20261120",
+  "trade_date": "2026-11-20",
+  "rule_version": "compass-1.0.0",
+  "signal_version": "sector-v5.1",
+  "regime": { "state": "trend_up", "tier": "attack", "label": "进攻" },
+  "temperature": { "score": 74, "band": "温热" },
+  "budget": { "market_cap": 80, "exec_cap": 80, "per_sector_cap": 20 },
+  "candidates": [
+    {
+      "rank": 1, "sector_code": "BK1036", "sector_name": "半导体",
+      "composite": 8.4, "technical": 8.6, "sentiment": 8.1, "news": 8.6,
+      "sentiment_percentile": 86, "crowding_level": "偏热",
+      "etf_code": "512480", "etf_name": "半导体ETF",
+      "etf_aum": 12800000000, "etf_adv20": 940000000,
+      "tag": "关注",
+      "reasons": ["技术面：20 日新高，量能放大 1.8 倍", "情绪面：主力净流入 42 亿，融资余额 5 日增 6.2%", "广度：上涨占比 71%，非权重独涨"],
+      "checks": ["绝对门槛：综合 8.4 ≥ 6.5", "连续性：2/2 个交易日", "广度一致性：上涨占比 71% ≥ 55%", "相关性去重：通过", "ETF 可交易：512480 · 规模 128 亿 / 日成交 9.4 亿"]
+    },
+    {
+      "rank": 2, "sector_code": "THS_光伏设备", "sector_name": "光伏设备",
+      "composite": 7.9, "technical": 8.0, "sentiment": 7.6, "news": 8.3,
+      "sentiment_percentile": 74, "crowding_level": "正常",
+      "etf_code": "515790", "etf_name": "光伏ETF",
+      "etf_aum": 9600000000, "etf_adv20": 610000000,
+      "tag": "关注",
+      "reasons": ["技术面：站上 60 日线，回撤未破前低", "情绪面：北向净流入 11 亿，资金流连续 3 日为正", "广度：上涨占比 64%"],
+      "checks": ["绝对门槛：综合 7.9 ≥ 6.5", "连续性：2/2 个交易日", "广度一致性：上涨占比 64% ≥ 55%", "相关性去重：通过", "ETF 可交易：515790 · 规模 96 亿 / 日成交 6.1 亿"]
+    },
+    {
+      "rank": 3, "sector_code": "THS_军工电子", "sector_name": "军工电子",
+      "composite": 7.4, "technical": 7.6, "sentiment": 7.2, "news": 7.3,
+      "sentiment_percentile": 68, "crowding_level": "正常",
+      "etf_code": "512660", "etf_name": "军工ETF",
+      "etf_aum": 5400000000, "etf_adv20": 320000000,
+      "tag": "关注",
+      "reasons": ["技术面：突破 20 日平台，成交量温和放大", "情绪面：融资余额 5 日增 4.1%，无背离", "广度：上涨占比 58%"],
+      "checks": ["绝对门槛：综合 7.4 ≥ 6.5", "连续性：2/2 个交易日", "广度一致性：上涨占比 58% ≥ 55%", "相关性去重：通过", "ETF 可交易：512660 · 规模 54 亿 / 日成交 3.2 亿"]
+    },
+    {
+      "rank": 4, "sector_code": "THS_创新药", "sector_name": "创新药",
+      "composite": 7.1, "technical": 6.8, "sentiment": 7.4, "news": 7.0,
+      "sentiment_percentile": 61, "crowding_level": "正常",
+      "etf_code": "159992", "etf_name": "创新药ETF",
+      "etf_aum": 4100000000, "etf_adv20": 270000000,
+      "tag": "关注",
+      "reasons": ["技术面：底部抬升，尚未确认趋势", "情绪面：主力净流入 8 亿，融资余额持平", "广度：上涨占比 56%"],
+      "checks": ["绝对门槛：综合 7.1 ≥ 6.5", "连续性：2/2 个交易日", "广度一致性：上涨占比 56% ≥ 55%", "相关性去重：通过", "ETF 可交易：159992 · 规模 41 亿 / 日成交 2.7 亿"]
+    }
+  ],
+  "rejected": [
+    { "sector_code": "THS_消费电子", "sector_name": "消费电子", "composite": 6.9, "reason_code": "CORRELATION_DUPLICATE", "reason_text": "与半导体相关系数 0.87 > 0.85" },
+    { "sector_code": "BK0437", "sector_name": "煤炭", "composite": 6.2, "reason_code": "ABSOLUTE_FAILED", "reason_text": "综合分 6.2 < 6.5" },
+    { "sector_code": "BK0475", "sector_name": "银行", "composite": 5.9, "reason_code": "ABSOLUTE_FAILED", "reason_text": "综合分 5.9 < 6.5" },
+    { "sector_code": "BK0477", "sector_name": "白酒", "composite": 6.0, "reason_code": "ABSOLUTE_FAILED", "reason_text": "技术分 5.8 < 6.0" }
+  ],
+  "empty_reasons": [],
+  "derivation": [
+    { "step": 1, "key": "市场温度", "value": "74 / 100", "note": "温热区间，作为背景指标" },
+    { "step": 2, "key": "市场状态", "value": "进攻", "note": "读取状态机输出 trend_up，叠加 3 日迟滞" },
+    { "step": 3, "key": "初筛池", "value": "8 个", "note": "通过五道门槛 4 个" },
+    { "step": 4, "key": "单板块上限", "value": "min(20%, 80% × 40%) = 20%", "note": "按 5% 步长向下取整" },
+    { "step": 5, "key": "执行结论", "value": "预算 80%，候选 4 个", "note": "开盘后由用户自行分配，系统不代下单" }
+  ],
+  "check": {
+    "status": "PASS",
+    "title": "T+1 09:35 校验通过",
+    "text": "4 个候选 ETF 开盘偏离均小于 2%，按预算执行。",
+    "items": []
+  },
+  "scenarios": [
+    { "id": "SC-01", "title": "空仓优先", "condition": "IF 市场状态 ∈ {pull_down, risk_off} AND 候选池为空", "action": "执行仓位归零；只保留观察，不新开仓，不补仓。", "invalid": "市场状态回到 repair_up 以上，且至少 1 个板块通过五道门槛。", "basis": "2021-02、2022-04、2024-01 三次防守区间，空仓期沪深 300 中位回撤 -8.6%。", "status": "ARMED", "evidence": {} },
+    { "id": "SC-02", "title": "单板块上限", "condition": "IF 候选池 ≥ 2 个", "action": "单个板块不超过 min(20%, 总预算 × 40%)，按 5% 步长向下取整。", "invalid": "候选池只剩 1 个板块时，该上限不变。", "basis": "2025-03 至 2026-11 纸面组合，单板块超配是回撤扩大的第一归因。", "status": "STANDING", "evidence": {} },
+    { "id": "SC-03", "title": "停止加仓", "condition": "IF 情绪分位 ≥ 90 AND 主力净流转负", "action": "停止加仓，不新开仓；已有仓位不因情绪单独卖出。", "invalid": "情绪分位回落至 80 以下，且资金流转正 2 日。", "basis": "2026-08-14 半导体分位 93 仍加仓，5 日回撤 -6.4%。", "status": "ARMED", "evidence": {} },
+    { "id": "SC-04", "title": "延迟执行", "condition": "IF T+1 开盘偏离绝对值 > 2% 或 ETF 停牌", "action": "延迟至 10:00 复核；仍超阈值则放弃本次。", "invalid": "开盘偏离回到 2% 以内。", "basis": "2026-01 至 2026-11，开盘偏离 > 2% 的样本中，当日回归中位数 1.1%。", "status": "ARMED", "evidence": {} },
+    { "id": "SC-05", "title": "退出", "condition": "IF 板块指数收盘跌破 20 日线 OR 60% 成分股跌破", "action": "清仓该方向，不摊平；资金回到预算池。", "invalid": "指数重新站上 20 日线，且广度恢复 55% 以上。", "basis": "2024-01、2025-09、2026-10 三次退潮，20 日线规则平均少亏 4.2%。", "status": "ARMED", "evidence": {} },
+    { "id": "SC-06", "title": "失效降级", "condition": "IF 滚动 60 日超额转负", "action": "全系统降级为“仅供参考”，暂停情景卡推送，公开失效报告。", "invalid": "连续 20 日超额回正，且通过样本外复核。", "basis": "产品的自我否决条款：信号失效时，先停用，不解释。", "status": "ARMED", "evidence": {} }
+  ],
+  "idle_days": 0,
+  "locked_scenario_ids": [],
+  "freshness": [
+    { "dataset": "sector_daily", "status": "ok", "last_trade_date": "2026-11-20" },
+    { "dataset": "moneyflow", "status": "ok", "last_trade_date": "2026-11-20" },
+    { "dataset": "etf_daily", "status": "ok", "last_trade_date": "2026-11-20" },
+    { "dataset": "etf_sector_map", "status": "ok", "last_trade_date": "2026-11-20" }
+  ]
+}

@@ -41,6 +41,9 @@ DATASET_META: dict[str, tuple[str, int, bool]] = {
     "algo_run": ("选股任务", 30, False),
     "signal_perf": ("信号前瞻统计", 30, False),
     "daily_report": ("AI 日报", 30, False),
+    # 仓位罗盘专用：卡片生成时由 compass 服务自行判定关键性，不影响全局 data_ready
+    "etf_daily": ("ETF 日行情", 30, False),
+    "etf_sector_map": ("ETF 板块映射", 24 * 30, False),
 }
 
 _TZ = ZoneInfo(TIMEZONE)

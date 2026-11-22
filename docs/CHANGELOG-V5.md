@@ -6,6 +6,23 @@
 
 ---
 
+## 0. 仓位罗盘 V9：风险预算与决策约束 + 三项核心修复（2026-11-22）
+
+| 变更 | 范围 |
+|---|---|
+| 新增 `/compass` 四视图（今日决策 / 情景卡 / 复盘验证 / 规则与边界）、导航项与三态演示快照 | `frontend/src/pages/CompassPage.tsx`、`frontend/src/api/compass.ts`、`frontend/public/demo/compass_*.json` |
+| 新增 `app/compass` 领域层、9 张表、幂等迁移 0018、`/api/v1/compass` API 与 16:10/16:20/17:00/17:40 调度 | `backend/app/compass/**`、`backend/app/api/v1/compass.py`、`backend/alembic/versions/20261121_0018_compass.py`、`backend/app/worker.py` |
+| 纸面组合回填：active 组合净值等权聚合，共同起始日归一 100，回填 581 行（2024-06-28~2026-11-19）；复盘 252 点，最大回撤 -7.67% / 基准 -21.41% | `backend/app/compass/paper_backfill.py` |
+| 成分股广度：SCD2 当日有效成员 `close < MA20` 占比，剔除停牌/缺值，接入候选字段与 SC-05；真实库半导体 76.37%、汽车零部件 95.08% | `backend/app/compass/breadth.py` |
+| ETF 映射：种子池 + Sina 历史 → `fact_etf_daily` → SCD2 映射；全行业覆盖 85.6%，候选池 100%，写入 3,120 行 | `backend/app/compass/etf_mapping.py`、`backend/app/compass/etf_sync.py` |
+| 修复：asyncpg 参数超限分批、并发 akshare 触发 `py_mini_racer` 崩溃改串行、同日重复同步 SCD2 唯一键冲突 | `backend/app/compass/etf_sync.py` |
+| 文档同步：API 契约、开发需求文档、README、本变更清单 | `docs/V5-API-CONTRACT.md`、`docs/GFNA_仓位罗盘开发需求文档.md`、`README.md` |
+
+验证：后端全量 733 passed / 75 skipped；DB 集成 34 passed（空 schema）+ 33 passed（演示数据克隆）；仓位罗盘单测与契约 67 passed；前端纯函数 36 passed；`tsc -b && vite build` 通过。
+已知限制：13 个细分行业暂无对应 ETF；Sina 不提供折溢价，当前按 0 处理；违规次数待罗盘情景卡历史积累后启用。
+
+---
+
 ## 0. 垃圾代码与冗余文件清理（2026-11-21）
 
 | 变更 | 范围 |

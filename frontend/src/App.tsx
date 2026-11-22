@@ -25,6 +25,7 @@ import { DEMO_MODE } from './api/demo'
 const HomePage = lazy(() => import('./pages/HomePage'))
 const DetailPage = lazy(() => import('./pages/DetailPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const CompassPage = lazy(() => import('./pages/CompassPage'))
 const IndexComparePage = lazy(() => import('./pages/IndexComparePage'))
 const AlgoCenter = lazy(() => import('./pages/AlgoCenter'))
 const PaperPage = lazy(() => import('./pages/PaperPage'))
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/article/:id" element={<DetailPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/compass" element={<CompassPage />} />
           <Route path="/index-compare" element={<IndexComparePage />} />
           <Route path="/algo-center" element={<AlgoCenter />} />
           <Route path="/ladder" element={<Navigate to="/algo-center#ladder" replace />} />

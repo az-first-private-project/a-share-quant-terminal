@@ -894,6 +894,7 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
 | `/` | 新闻首页（保留） |
 | `/article/:id` | 新闻详情（保留） |
 | `/dashboard` | 盘后分析（原 `/dashboard-v3`，旧新闻统计页删除） |
+| `/compass` | 仓位罗盘（V9：今日决策 / 情景卡 / 复盘验证 / 规则与边界） |
 | `/algo-center` | 选股中心（参数/run 元信息/CSV、纸面跟踪入口） |
 | `/ladder` | 重定向到 `/algo-center#ladder`（策略天梯锚点） |
 | `/paper` | 纸面组合跟踪（V6 T11） |
@@ -908,3 +909,107 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
   迁移到 `/api/v1/market/*` 与 `/api/v1/admin/*`。
 - 旧 `/api/v1/stocks` 不存在，新增。
 - 新闻相关接口**完全兼容**，前端新闻页无需改动字段。
+
+## 9. 仓位罗盘（V9 追加，向后兼容）
+
+前缀：`/api/v1/compass`。成功响应不包 `data` 壳；错误沿用 0.2；所有展示接口附带 `freshness`。
+`freshness` 新增数据集：`etf_daily`、`etf_sector_map`（均为非全局关键，卡片服务自行判定）。
+
+### 9.1 权限
+
+- 内部 beta 默认 `professional`；请求头 `X-Compass-Tier: free` 返回免费视图。
+- 免费视图：候选截断为 1 个、移除 `etf_code/etf_name`、情景卡仅保留 SC-01/SC-03，
+  并返回 `locked_scenario_ids`。
+- 生产环境必须替换为服务端订阅权益校验，禁止信任请求头。
+
+### 9.2 接口
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/compass/today?trade_date=` | 当日决策卡 + 仪表盘 + 候选池 + T+1 校验条；无卡返回 409 `DATA_NOT_READY` |
+| GET | `/compass/cards?limit=&offset=` | 历史卡片摘要；免费版最多 7 条 |
+| GET | `/compass/cards/{card_id}` | 卡片详情；不存在 404 |
+| GET | `/compass/scenarios?trade_date=` | 六张情景卡与当前状态、`action_priority` |
+| POST | `/compass/checks/{check_id}/action` | body `{"action":"DELAY|DROP|EXECUTED"}`，需 `Idempotency-Key`；过期 400 `CHECK_EXPIRED`，非 WARN 状态 400 `CHECK_NOT_ACTIONABLE` |
+| GET | `/compass/review?days=` | 回撤、错误次数、空仓避损、失效记录；样本 <60 日返回 `sample_insufficient=true` |
+| GET | `/compass/rules` | 规则、承诺、非目标、判据、规则版本；公开、不依赖行情 |
+| GET | `/compass/subscription` | 当前 tier 与 beta 标记 |
+| POST | `/compass/admin/generate?trade_date=` | 生成决策卡（`X-Admin-Key`） |
+| POST | `/compass/admin/check/{card_id}` | 执行 T+1 校验（`X-Admin-Key`） |
+| POST | `/compass/admin/push/{card_id}` | 企业微信推送（`X-Admin-Key`，幂等） |
+| POST | `/compass/admin/backfill-paper` | 聚合 active 纸面组合净值回填 `fact_paper_portfolio` |
+| POST | `/compass/admin/etf-sync?trade_date=&mode=auto\|seed\|live&limit=` | 同步 ETF 日行情并重建板块映射 |
+| GET | `/compass/admin/etf-coverage?trade_date=` | 映射覆盖率、候选池覆盖、缺失板块与数据源标注 |
+| POST | `/compass/admin/failure` | 追加失效记录（只追加） |
+| POST | `/compass/admin/etf-map` | 新增 ETF 主映射（主映射冲突返回 422） |
+
+### 9.3 `GET /compass/today` 核心字段
+
+```json
+{
+  "card_id": "…", "trade_date": "2026-11-20",
+  "rule_version": "compass-1.0.0", "signal_version": "sector-v5.1",
+  "regime": { "state": "repair_up", "tier": "range", "label": "震荡" },
+  "temperature": { "score": 56, "band": "平稳" },
+  "budget": { "market_cap": 40, "exec_cap": 40, "per_sector_cap": 15 },
+  "candidates": [ /* 含 composite/technical/sentiment/news/情绪分位/ETF/reasons/checks；
+                     V9.1 追加 breadth_below_ma20 / breadth_below_count / breadth_valid_members */ ],
+  "rejected": [ /* reason_code + reason_text，含 TOP_N_CUTOFF */ ],
+  "empty_reasons": [ /* code + text，按优先级 */ ],
+  "derivation": [ /* 5 步推导链，服务端生成 */ ],
+  "check": { "status": "PASS|WARN|DELAYED|SUSPENDED|IDLE|PENDING", "title": "…", "text": "…" },
+  "scenarios": [ /* 六张卡，含 condition/action/invalid/basis */ ],
+  "idle_days": 0,
+  "freshness": [ /* Freshness[] */ ]
+}
+```
+
+### 9.4 口径
+
+- 状态读取现有五态状态机，不重算；5→3 聚合：`trend_up`→进攻 80%，`repair_up`→震荡 40%，
+  `bottoming/pull_down/risk_off`→防守 10%。
+- 输出为空时 `exec_cap=0`，主视觉为“空仓”，不回退到市场层 10%。
+- 单板块上限：`floor(min(20%, exec_cap×40%)/5%)×5%`。
+- 候选输出最多 3 个，不补位；`rejected` 同时包含门槛失败与 `TOP_N_CUTOFF`。
+- T+1 偏离判定用 `abs(gap) > 2.00%`，恰好 2.00% 不触发；10:00 未处理转 `EXPIRED`。
+
+### 9.5 数据表
+
+`dim_etf_sector_map`、`fact_etf_daily`、`fact_sector_sentiment_percentile`、
+`fact_decision_card`、`fact_decision_check`、`fact_scenario_trigger`、
+`fact_signal_failure`、`fact_paper_portfolio`、`compass_push_log`。
+迁移：`alembic/versions/20261121_0018_compass.py`（幂等）。
+
+### 9.6 纸面组合回填与 ETF 数据依赖（V9.1 追加）
+
+**纸面组合回填**：`POST /compass/admin/backfill-paper` 读取 `paper_portfolio` 中
+`status=active` 且净值记录数 ≥60 的组合，按共同起始日归一为 100，等权聚合后
+upsert `fact_paper_portfolio`。`review` 追加：
+
+```json
+{
+  "source": "paper_portfolio",
+  "violations_available": false,
+  "label_rule": "纸面组合综合",
+  "label_unconstrained": "组合基准",
+  "method_note": "回填自 active 纸面组合净值，等权归一；违规次数待罗盘情景卡历史积累后启用"
+}
+```
+
+**成分股广度**：`breadth_below_ma20` 口径为当日 SCD2 有效成分中
+`close < MA20` 的比例；仅统计有有效收盘价、MA20>0 且未停牌的成分；
+有效成分少于 5 只时返回 `null`（前端显示“样本不足”），不用 0 代替。
+接入 SC-05：候选级 `breadth_below_ma20 > 0.60` 触发退出。
+
+**ETF 映射依赖链**：
+
+1. ETF 池：优先实时现货接口；失败回退 `SEED_ETF_UNIVERSE`（种子池）；
+2. 历史行情：Sina `fund_etf_hist_sina`（OHLC/成交额）；
+3. 规模：种子池或实时池提供；缺失按 0，G5 会拦截；
+4. 溢价：当前数据源不提供，按 0 处理，覆盖率报告 `premium_source=unavailable_assumed_zero`；
+5. 映射：按板块名/别名匹配，SCD2 写入 `dim_etf_sector_map`，同日重复同步幂等。
+
+覆盖率报告字段：`total / mapped / coverage`（全行业）、
+`pool_total / pool_mapped / pool_coverage`（当日综合分前 8 候选池，产品门槛看这一项）、
+`etf_daily_covered`（有当日行情的已映射 ETF 数）、`missing`。当前真实库：
+全行业 77/90（85.6%），候选池 8/8（100%），已映射 ETF 当日行情 31 只。

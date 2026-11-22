@@ -161,6 +161,85 @@ async def run_backfill_job(db) -> None:
     await run_task("backfill", db=db)
 
 
+async def run_etf_sync_job(db) -> None:
+    """16:10 同步 ETF 日行情与板块映射，供 16:20 决策卡使用。"""
+    from app.compass.etf_sync import sync_etf_data
+    from app.ingest.calendar import is_trade_day
+
+    today = date.today()
+    if not await is_trade_day(db, today):
+        logger.info("%s 非交易日，跳过 ETF 同步", today)
+        return
+    try:
+        result = await sync_etf_data(db, today, mode="auto")
+        logger.info("ETF 同步结束 status=%s mapped=%s coverage=%s",
+                    result.get("status"), result.get("mapped"), result.get("coverage"))
+    except Exception as exc:  # noqa: BLE001 - ETF 同步失败不阻断其他任务
+        logger.error("ETF 同步失败: %s", type(exc).__name__)
+
+
+async def run_compass_card_job(db) -> None:
+    """16:20 生成仓位罗盘决策卡。数据未就绪时记录错误，不生成半成品。"""
+    from app.compass.service import generate_card
+    from app.ingest.calendar import is_trade_day
+
+    today = date.today()
+    if not await is_trade_day(db, today):
+        logger.info("%s 非交易日，跳过仓位罗盘卡片", today)
+        return
+    try:
+        card = await generate_card(db, today)
+        logger.info("仓位罗盘卡片完成 date=%s card_id=%s exec_cap=%s",
+                    today, card.card_id, card.exec_cap)
+    except Exception as exc:  # noqa: BLE001 - 数据未就绪不阻断其他任务
+        logger.error("仓位罗盘卡片生成失败 date=%s: %s", today, type(exc).__name__)
+
+
+async def run_compass_paper_backfill_job(db) -> None:
+    """17:40 把纸面组合净值聚合回填到罗盘复盘表（依赖 17:30 纸面组合同步）。"""
+    from app.compass.paper_backfill import backfill_paper_portfolio
+    from app.ingest.calendar import is_trade_day
+
+    today = date.today()
+    if not await is_trade_day(db, today):
+        logger.info("%s 非交易日，跳过罗盘复盘回填", today)
+        return
+    try:
+        result = await backfill_paper_portfolio(db)
+        logger.info("罗盘复盘回填结束 rows=%s portfolios=%s status=%s",
+                    result.get("rows"), result.get("portfolios"), result.get("status"))
+    except Exception as exc:  # noqa: BLE001 - 回填失败不影响其他任务
+        logger.error("罗盘复盘回填失败: %s", type(exc).__name__)
+
+
+async def run_compass_push_job(db) -> None:
+    """17:00 推送当日仓位罗盘卡片；无卡片或已推送时跳过。"""
+    from sqlalchemy import select
+
+    from app.compass.push import send_card_push
+    from app.db.models import FactDecisionCard
+    from app.ingest.calendar import is_trade_day
+
+    today = date.today()
+    if not await is_trade_day(db, today):
+        logger.info("%s 非交易日，跳过仓位罗盘推送", today)
+        return
+    card = (await db.execute(
+        select(FactDecisionCard)
+        .where(FactDecisionCard.trade_date == today)
+        .order_by(FactDecisionCard.generated_at.desc())
+        .limit(1)
+    )).scalar_one_or_none()
+    if card is None:
+        logger.warning("仓位罗盘推送跳过：%s 无决策卡", today)
+        return
+    try:
+        result = await send_card_push(db, card.card_id)
+        logger.info("仓位罗盘推送结束 card_id=%s status=%s", card.card_id, result.get("status"))
+    except Exception as exc:  # noqa: BLE001 - 推送失败不影响页面
+        logger.error("仓位罗盘推送失败 card_id=%s: %s", card.card_id, type(exc).__name__)
+
+
 # ============================================================
 # 调度器
 # ============================================================
@@ -182,6 +261,18 @@ def start_scheduler() -> AsyncIOScheduler:
                       args=["algos", run_algo_job],
                       id="algos", name="策略选股", replace_existing=True,
                       misfire_grace_time=_DAY_GRACE_SEC)
+    scheduler.add_job(_with_lock, CronTrigger(hour=16, minute=10, timezone=_TZ),
+                      args=["etf_sync", run_etf_sync_job],
+                      id="etf_sync", name="ETF 同步与映射", replace_existing=True,
+                      misfire_grace_time=_DAY_GRACE_SEC)
+    scheduler.add_job(_with_lock, CronTrigger(hour=16, minute=20, timezone=_TZ),
+                      args=["compass_card", run_compass_card_job],
+                      id="compass_card", name="仓位罗盘卡片", replace_existing=True,
+                      misfire_grace_time=_DAY_GRACE_SEC)
+    scheduler.add_job(_with_lock, CronTrigger(hour=17, minute=0, timezone=_TZ),
+                      args=["compass_push", run_compass_push_job],
+                      id="compass_push", name="仓位罗盘推送", replace_existing=True,
+                      misfire_grace_time=_DAY_GRACE_SEC)
     scheduler.add_job(_with_lock, CronTrigger(hour=17, minute=10, timezone=_TZ),
                       args=["signal_perf", run_signal_perf_job],
                       id="signal_perf", name="信号前瞻统计", replace_existing=True,
@@ -189,6 +280,10 @@ def start_scheduler() -> AsyncIOScheduler:
     scheduler.add_job(_with_lock, CronTrigger(hour=17, minute=30, timezone=_TZ),
                       args=["paper", run_paper_job],
                       id="paper", name="纸面组合跟踪", replace_existing=True,
+                      misfire_grace_time=_DAY_GRACE_SEC)
+    scheduler.add_job(_with_lock, CronTrigger(hour=17, minute=40, timezone=_TZ),
+                      args=["compass_paper", run_compass_paper_backfill_job],
+                      id="compass_paper", name="罗盘复盘回填", replace_existing=True,
                       misfire_grace_time=_DAY_GRACE_SEC)
     scheduler.add_job(_with_lock, CronTrigger(hour=2, minute=0, timezone=_TZ),
                       args=["backfill", run_backfill_job],
@@ -199,8 +294,9 @@ def start_scheduler() -> AsyncIOScheduler:
                       id="news_crawl", name="新闻采集", replace_existing=True)
 
     scheduler.start()
-    logger.info("定时任务已启动：15:36 盘后 / 16:30 选股 / 17:10 信号统计 / 17:30 纸面"
-                " / 02:00 补齐 / 每 %d 分钟新闻", CRAWL_INTERVAL_MINUTES)
+    logger.info("定时任务已启动：15:36 盘后 / 16:10 ETF 同步 / 16:20 仓位罗盘"
+                " / 16:30 选股 / 17:00 罗盘推送 / 17:10 信号统计 / 17:30 纸面"
+                " / 17:40 罗盘复盘回填 / 02:00 补齐 / 每 %d 分钟新闻", CRAWL_INTERVAL_MINUTES)
     return scheduler
 
 
@@ -227,4 +323,6 @@ def job_status() -> list[dict]:
 
 __all__ = ["start_scheduler", "stop_scheduler", "job_status",
            "run_daily_pipeline_job", "run_algo_job", "run_signal_perf_job",
-           "run_paper_job", "run_news_crawl_job", "run_backfill_job"]
+           "run_paper_job", "run_news_crawl_job", "run_backfill_job",
+           "run_compass_card_job", "run_compass_push_job",
+           "run_compass_paper_backfill_job", "run_etf_sync_job"]

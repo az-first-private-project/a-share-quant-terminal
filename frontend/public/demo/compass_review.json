@@ -1,0 +1,50 @@
+{
+  "sample_insufficient": false,
+  "source": "paper_portfolio",
+  "violations_available": true,
+  "label_rule": "纸面组合综合",
+  "label_unconstrained": "组合基准",
+  "method_note": "演示数据：回填自 active 纸面组合净值，等权归一；违规次数为演示值",
+  "stats": {
+    "max_drawdown_rule": -11.2,
+    "max_drawdown_unconstrained": -18.7,
+    "violations_rule": 3,
+    "violations_unconstrained": 14,
+    "empty_avoidance": 4.8,
+    "missed_upside": 2.1,
+    "net_avoidance": 2.7,
+    "empty_days": 23
+  },
+  "chart": {
+    "dates": ["2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"],
+    "drawdown_rule": [0, -2.1, -4.8, -3.2, -6.5, -8.1, -5.4, -7.2, -9.6, -7.8, -10.4, -11.2],
+    "drawdown_unconstrained": [0, -3.8, -7.6, -6.1, -10.2, -13.5, -9.8, -12.4, -16.1, -14.7, -17.9, -18.7]
+  },
+  "failures": [
+    {
+      "date": "2026-08-14",
+      "type": "SC-03 未触发减仓",
+      "impact_pct": -6.4,
+      "root_cause": "半导体情绪分位 93，5 日回撤 -6.4%；阈值过松 → v1.4.1 改为“分位 > 90 且主力净流转负”",
+      "fix_version": "v1.4.1",
+      "status": "fixed"
+    },
+    {
+      "date": "2026-09-02",
+      "type": "空仓建议",
+      "impact_pct": -3.1,
+      "root_cause": "空仓第 12 日，市场反弹 +3.1%；接受，空仓规则不因单次结果修改，计入错过涨幅",
+      "fix_version": null,
+      "status": "accepted"
+    },
+    {
+      "date": "2026-10-21",
+      "type": "SC-04 延迟执行",
+      "impact_pct": -1.1,
+      "root_cause": "开盘 -2.4% 触发延迟，10:00 反弹 +1.1%；延迟误伤，样本不足，保留规则并继续记录",
+      "fix_version": null,
+      "status": "open"
+    }
+  ],
+  "upgrade_required": false
+}

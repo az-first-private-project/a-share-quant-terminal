@@ -7,6 +7,11 @@ ORM 模型聚合导出
 from app.db.models.dim import (
     DimSectorMember, DimStock, DimStockDividend, DimStockFinancial,
 )
+from app.db.models.compass import (
+    CompassPushLog, DimEtfSectorMap, FactDecisionCard, FactDecisionCheck, FactEtfDaily,
+    FactPaperPortfolio, FactScenarioTrigger, FactSectorSentimentPercentile,
+    FactSignalFailure,
+)
 from app.db.models.fact import (
     DailyReport, FactFeatureDaily, FactMarketDaily, FactMoneyflow, FactSectorDaily,
     FactStockDaily, FactStockScoreDaily, MacroRate, MarginTrading, MarketIndex,
@@ -43,4 +48,8 @@ __all__ = [
     "PushLog",
     # 应用状态
     "WatchlistState",
+    # 仓位罗盘
+    "DimEtfSectorMap", "FactEtfDaily", "FactSectorSentimentPercentile",
+    "FactDecisionCard", "FactDecisionCheck", "FactScenarioTrigger",
+    "FactSignalFailure", "FactPaperPortfolio", "CompassPushLog",
 ]
