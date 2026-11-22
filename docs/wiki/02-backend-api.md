@@ -191,6 +191,7 @@ api_router.include_router(paper.router)
 api_router.include_router(meta.router)
 api_router.include_router(admin.router)
 api_router.include_router(watchlist.router)
+api_router.include_router(compass.router)
 ```
 
 ### 5.1 管理接口鉴权
@@ -297,6 +298,28 @@ api_router.include_router(watchlist.router)
 | POST | `/api/v1/admin/catch-up` | 检查并补跑缺失交易日 |
 | POST | `/api/v1/admin/seed-demo` | 演示数据（仅 `ENV=demo`） |
 
+#### 仓位罗盘（V9）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/api/v1/compass/today` | 当日决策卡 + 预算 + 候选 + T+1 校验 |
+| GET | `/api/v1/compass/cards` | 历史卡片摘要 |
+| GET | `/api/v1/compass/cards/{card_id}` | 卡片详情（按 tier 脱敏） |
+| GET | `/api/v1/compass/scenarios` | 六张情景卡与触发状态 |
+| POST | `/api/v1/compass/checks/{check_id}/action` | T+1 延迟/放弃/已执行（幂等） |
+| GET | `/api/v1/compass/review` | 纸面组合复盘（回撤/避损/失效记录） |
+| GET | `/api/v1/compass/rules` | 规则、承诺、边界（公开） |
+| GET | `/api/v1/compass/subscription` | 当前 tier（beta） |
+| GET | `/api/v1/compass/admin/cards/{card_id}` | 管理端卡片详情 |
+| POST | `/api/v1/compass/admin/generate` | 生成决策卡（管理员） |
+| POST | `/api/v1/compass/admin/check/{card_id}` | 执行 T+1 校验（管理员） |
+| POST | `/api/v1/compass/admin/push/{card_id}` | 企业微信推送（管理员） |
+| POST | `/api/v1/compass/admin/backfill-paper` | 纸面组合聚合回填（管理员） |
+| POST | `/api/v1/compass/admin/etf-sync` | ETF 同步与板块映射（管理员） |
+| GET | `/api/v1/compass/admin/etf-coverage` | 映射覆盖率与缺失板块（管理员） |
+| POST | `/api/v1/compass/admin/failure` | 追加失效记录（管理员） |
+| POST | `/api/v1/compass/admin/etf-map` | 新增 ETF 主映射（管理员） |
+
 ---
 
 ## 6. 分页与响应约定
@@ -310,18 +333,19 @@ api_router.include_router(watchlist.router)
 
 ## 7. 各 API 文件职责
 
-| 文件 | 行数级 | 核心函数 | 说明 |
+| 文件 | 行数 | 核心函数 | 说明 |
 |---|---:|---|---|
-| `market.py` | ~950 | `get_dashboard` L81、`get_market_overview` L329、`get_index_compare` L480、`get_bull_bear_valuation` L535、`get_sector_detail` L573 | 行情/板块/市场状态；大量私有查询函数 `_query_*` |
-| `algo.py` | ~340 | `get_algo_list` L102、`get_algo_ladder` L127、`get_algo_consensus` L171、`get_algo_result` L230、`refresh_algo` L269、`export_algo_csv` L310 | 选股中心 |
-| `backtest.py` | ~470 | `create_backtest` L206、`create_backtest_grid` L295、`get_backtest` L404、`get_backtest_trades` L418、`export_backtest_csv` L448 | 回测与矩阵 |
-| `stocks.py` | ~360 | `search_stocks` L48、`get_sparkline_batch` L109、`get_stock_detail` L150、`get_kline` L270、`get_benchmark_series` L329 | 个股 |
-| `paper.py` | ~74 | `get_paper_portfolios` L43、`get_paper_portfolio` L49、`sync_paper_portfolio_api` L58 | 纸面组合 |
-| `watchlist.py` | ~51 | `get_watchlist_state` L39、`put_watchlist_state` L44 | 单租户自选 |
-| `meta.py` | ~134 | `get_freshness` L28、`get_trade_calendar` L39、`list_jobs` L63、`get_partitions` L119 | 元信息 |
-| `admin.py` | ~100 | `trigger_ingest` L38、`trigger_catch_up` L68、`seed_demo` L88 | 管理 |
-| `articles.py` | ~350 | `list_articles` L33、`get_article_detail` L104、`search_articles` L144、`get_stats` L234、爬虫触发 | 新闻 |
-| `stats.py` | ~200 | `get_daily_trend` L21、`get_source_distribution` L70、`get_keywords` L121、`get_processing_status` L158 | 新闻统计 |
+| `market.py` | 974 | `get_dashboard`、`get_market_overview`、`get_index_compare`、`get_bull_bear_valuation`、`get_sector_detail` | 行情/板块/市场状态；大量私有查询函数 `_query_*` |
+| `algo.py` | 422 | `get_algo_list`、`get_algo_ladder`、`get_algo_consensus`、`get_algo_result`、`refresh_algo`、`export_algo_csv` | 选股中心 |
+| `backtest.py` | 738 | `create_backtest`、`create_backtest_grid`、`get_backtest`、`get_backtest_trades`、`export_backtest_csv`、OOS | 回测、矩阵与样本外 |
+| `stocks.py` | 377 | `search_stocks`、`get_sparkline_batch`、`get_stock_detail`、`get_kline`、`get_benchmark_series` | 个股 |
+| `paper.py` | 73 | `get_paper_portfolios`、`get_paper_portfolio`、`sync_paper_portfolio_api` | 纸面组合 |
+| `watchlist.py` | 50 | `get_watchlist_state`、`put_watchlist_state` | 单租户自选 |
+| `meta.py` | 149 | `get_freshness`、`get_trade_calendar`、`list_jobs`、`get_partitions`、`get_provider_health` | 元信息 |
+| `admin.py` | 100 | `trigger_ingest`、`trigger_catch_up`、`seed_demo` | 管理 |
+| `articles.py` | 382 | `list_articles`、`get_article_detail`、`search_articles`、`get_stats`、爬虫触发 | 新闻 |
+| `stats.py` | 207 | `get_daily_trend`、`get_source_distribution`、`get_keywords`、`get_processing_status` | 新闻统计 |
+| `compass.py` | 275 | `today`、`cards`、`card_detail`、`scenarios`、`check_action`、`review`、`rules`、`subscription`、`admin_*` | 仓位罗盘 |
 
 ---
 

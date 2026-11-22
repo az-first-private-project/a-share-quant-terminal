@@ -255,7 +255,7 @@ PUSH_ALGOS = tuple(
 PUSH_TOP_N = _env_int("PUSH_TOP_N", 10)
 PUSH_MODE = _env("PUSH_MODE", "always")
 PUSH_DRY_RUN = _env_bool("PUSH_DRY_RUN", False)
-PUSH_FRONTEND_URL = _env("PUSH_FRONTEND_URL", "http://127.0.0.1:5173/algo")
+PUSH_FRONTEND_URL = _env("PUSH_FRONTEND_URL", "http://127.0.0.1:5173/algo-center")
 # 观察策略：每日运行/推送，但不进入 SPECS/API/共识
 OBSERVATION_ALGOS = tuple(
     item.strip() for item in _env("OBSERVATION_ALGOS", "").split(",") if item.strip()

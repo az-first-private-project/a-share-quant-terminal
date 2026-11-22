@@ -2,7 +2,7 @@
 
 # A-Share Quant Terminal
 
-**A 股行情采集 · 因子评分 · 条件选股 · 回测验证 · 机器人播报**
+**A 股行情采集 · 因子评分 · 条件选股 · 回测验证 · 仓位罗盘 · 机器人播报**
 
 把「数据 → 指标 → 信号 → 验证」做成一条可复现的本地闭环。
 
@@ -33,6 +33,7 @@
 - **计算本地化**：指标、六维因子、市场温度、市场状态、板块评分都在本地库完成，接口请求不访问外部数据源；
 - **结果可复现**：每次选股都带 `run_id`、参数快照与数据版本，改参数必然产生新 run；
 - **验证闭环**：同一套成交规则支持回测、参数敏感性矩阵与纸面组合跟踪；
+- **决策约束**：仓位罗盘按风险预算输出“做不做、做多大、何时撤”，用情景卡与空仓建议约束行为，不承诺收益；
 - **结论到手**：每个交易日选股完成后，企业微信机器人自动把各策略 TOP N 推到群里，不用守着页面；
 - **诚实表达**：缺失数据保留 `NULL`，不补 0；数据新鲜度由前端徽标显式标注。
 
@@ -146,12 +147,12 @@ api/ ──────────────► strategy/ ──► engine/ �
 **高股息质量 × 低估值（a4）**（0 只）
 无信号
 
-查看：http://127.0.0.1:5173/algo
+查看：http://127.0.0.1:5173/algo-center
 
 条件复述，非投资建议
 ```
 
-**配置**（写入 `backend/.env`，模板见 [.env.example](backend/.env.example#L86-L105)）
+**配置**（写入 `backend/.env`，模板见 [.env.example](backend/.env.example)）
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
@@ -164,7 +165,7 @@ api/ ──────────────► strategy/ ──► engine/ �
 | `PUSH_OBSERVATION` | `0` | 是否推送观察候选（C1–C6） |
 | `PUSH_WATCHLIST_ONLY` | `0` | `1`=只推送自选命中；`0`=推送全部（自选命中仍标 `[自选]`） |
 | `OBSERVATION_ALGOS` | 空 | 每日运行并入库的观察候选（如 `c1,c2`），与 `PUSH_OBSERVATION` 配合使用 |
-| `PUSH_FRONTEND_URL` | `http://127.0.0.1:5173/algo` | 消息末尾的查看链接 |
+| `PUSH_FRONTEND_URL` | `http://127.0.0.1:5173/algo-center` | 消息末尾的查看链接 |
 
 **手动触发**
 
@@ -182,6 +183,60 @@ python scripts/push_cli.py --date 2026-11-16          # 补发指定交易日
 | 重试 | 单次推送最多 3 次、指数退避；仍失败则记 `failed` 与脱敏错误，后续可再次触发 |
 | 隔离 | 推送异常只记日志，不影响选股与采集主流程 |
 | 安全 | Webhook 仅从环境变量读取，不提交仓库、不写入日志 |
+
+---
+
+## 仓位罗盘（V9.1）
+
+`/compass` 是面向散户的**风险预算与决策约束**模块，不推荐个股、不承诺收益。四个视图：
+
+- **今日决策**：执行仓位上限、市场状态、候选 ETF、T+1 校验条与推导链；
+- **情景卡**：6 张 if-then 规则，含触发条件、执行动作、失效条件与依据；
+- **复盘验证**：纸面组合综合 vs 组合基准的回撤、错误次数、空仓避损与失效记录；
+- **规则与边界**：权限、承诺、非目标与共同判据。
+
+**每日流程**
+
+| 时间 | 任务 |
+|---|---|
+| 15:36 | 盘后数据流水线 |
+| 16:10 | ETF 同步与板块映射 |
+| 16:20 | 生成决策卡 |
+| 17:00 | 企业微信推送（复用 `WECOM_WEBHOOK_URL`） |
+| 17:30 | 纸面组合净值同步 |
+| 17:40 | 纸面组合聚合回填复盘表 |
+
+**使用**
+
+1. 打开 `/compass`，先看「今日执行结论」。**空仓是正常结论**，不表示数据故障。
+2. 候选池只展示通过五道门槛的板块；点击行可展开归因理由与门槛校验。
+3. 复盘样本不足 60 个交易日时先执行回填：
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/compass/admin/backfill-paper" `
+  -H "X-Admin-Key: $env:ADMIN_API_KEY"
+```
+
+4. ETF 映射缺失或覆盖率偏低时：
+
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/compass/admin/etf-sync?mode=seed" `
+  -H "X-Admin-Key: $env:ADMIN_API_KEY"
+curl.exe "http://127.0.0.1:8000/api/v1/compass/admin/etf-coverage" `
+  -H "X-Admin-Key: $env:ADMIN_API_KEY"
+```
+
+当前真实库：全行业映射 **77/90（85.6%）**，候选池 **8/8（100%）**；13 个细分行业暂无对应 ETF。
+
+> 以上管理命令需先设置 `$env:ADMIN_API_KEY`，值与 `backend/.env` 的 `ADMIN_API_KEY` 一致。
+
+**数据依赖与边界**
+
+- 关键数据：板块评分、SCD2 成分、资金流、市场状态/温度、ETF 日行情与映射；任一关键数据缺失时不出卡、不推送。
+- 成分股广度：SCD2 当日有效成员中 `close < MA20` 的占比；有效成员 <5 时显示「样本不足」，不用 0 代替。
+- ETF 溢价：Sina 历史不提供折溢价，当前按 0 处理；接入其他源前，G5 溢价门槛仅作占位。
+- 复盘违规次数暂显示「—」，待情景卡历史积累后启用。
+- 纸面组合复盘只纳入 ≥60 条净值的 active 组合；短历史组合仍在 `/paper` 单独展示。
 
 ---
 
@@ -210,7 +265,7 @@ npm run build:demo
 npm run preview
 ```
 
-演示数据来自 `backend/scripts/export_demo_snapshot.py` 生成的静态快照（`frontend/public/demo/`），页面顶部有「演示数据 · 只读」提示。在线版本：[GitHub Pages](https://hui-Elna.github.io/a-share-quant-terminal/)（首次使用需在仓库 Settings → Pages 选择 GitHub Actions）。
+演示数据来自 `backend/scripts/export_demo_snapshot.py` 生成的静态快照（`frontend/public/demo/`），页面顶部有「演示数据 · 只读」提示。演示站包含 `/compass` 的进攻/震荡/防守三态快照。在线版本：[GitHub Pages](https://hui-Elna.github.io/a-share-quant-terminal/)（首次使用需在仓库 Settings → Pages 选择 GitHub Actions）。
 
 ---
 
@@ -236,6 +291,9 @@ docker compose exec backend python scripts/pipeline_cli.py all
 > **升级已有数据卷**：entrypoint 会在启动前自动执行 `python scripts/migrate_db.py`
 > （内部走 `alembic upgrade head`），无需删卷。若日志出现 `column ... does not exist`，可手动执行
 > `docker compose exec backend python -m alembic upgrade head && docker compose restart backend`。
+>
+> 迁移 `0018_compass` 会创建仓位罗盘 9 张表；首次启动后 16:10 自动同步 ETF，
+> 实时源不可用时回退种子池。手动触发与覆盖率检查见「仓位罗盘」章节。
 
 ### 方式二：本地运行
 
@@ -251,6 +309,9 @@ copy backend\.env.example backend\.env  # 填写 POSTGRES_PASSWORD；DEEPSEEK_AP
 # 3. 建库 + 建表 + 分区 + 视图 + 策略种子
 cd backend
 python scripts/bootstrap_db.py
+
+# 已有库升级到最新迁移（全新库可跳过）
+python scripts/migrate_db.py
 
 # 4. 无网验收：确定性演示数据
 python scripts/pipeline_cli.py demo
@@ -298,6 +359,7 @@ python scripts/pipeline_cli.py backtest a3 --start 2025-10-21 --end 2026-10-21
 python scripts/oos_cli.py --algo a3 --start 2024-01-02 --end 2026-11-16  # 样本外 walk-forward
 python scripts/push_cli.py --dry-run             # 预览当日选股播报
 python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
+python scripts/check_doc_routes.py               # 校验 API 契约与代码路由一致
 ```
 
 顺序硬约束：**日线 → 估值 → 指标 → 因子 → 选股**。
@@ -346,6 +408,13 @@ python scripts/push_cli.py --date 2026-11-16     # 补发指定交易日播报
 | GET | `/api/v1/meta/freshness` | 数据集新鲜度 |
 | GET | `/api/v1/meta/provider-health?days=7` | 数据源 × 任务成功率、降级次数与最近错误 |
 | POST | `/api/v1/admin/ingest/{task}` | 手动触发采集（需 `X-Admin-Key`） |
+| GET | `/api/v1/compass/today` | 当日决策卡 + 预算 + 候选 + T+1 校验 |
+| GET | `/api/v1/compass/scenarios` | 六张情景卡与触发状态 |
+| GET | `/api/v1/compass/review` | 纸面组合复盘（回撤 / 避损 / 失效记录） |
+| GET | `/api/v1/compass/rules` | 规则、承诺与边界 |
+| POST | `/api/v1/compass/admin/etf-sync` | 同步 ETF 行情并重建映射（需 `X-Admin-Key`） |
+| GET | `/api/v1/compass/admin/etf-coverage` | 全行业 / 候选池覆盖率（需 `X-Admin-Key`） |
+| POST | `/api/v1/compass/admin/backfill-paper` | 纸面组合聚合回填（需 `X-Admin-Key`） |
 
 > 机器人推送由定时任务在选股完成后触发，不暴露 HTTP 接口；手动预览/补发用 [`backend/scripts/push_cli.py`](backend/scripts/push_cli.py)。
 
@@ -381,6 +450,7 @@ backend/
 │   ├── db/                ORM、会话、分区与视图、种子
 │   ├── ingest/            Provider 链、各数据源、质量校验、批量回补
 │   ├── engine/            指标 / 因子 / 评分 / 市场 / 板块 / 信号 / 纸面
+│   ├── compass/           仓位罗盘：决策卡 / 情景卡 / T+1 / 复盘 / ETF 映射
 │   ├── strategy/          条件树、策略、runner、回测、参数矩阵
 │   ├── services/          新鲜度、LLM、新闻、日报、任务恢复
 │   ├── notify/            企业微信群机器人（选股播报）
@@ -391,12 +461,14 @@ backend/
 frontend/
 ├── src/api/               HTTP 封装
 ├── src/hooks/             React Query
-├── src/pages/             新闻 / 盘后 / 选股 / 纸面 / 个股 / 任务
+├── src/pages/             新闻 / 盘后 / 选股 / 纸面 / 个股 / 仓位罗盘 / 任务
 ├── src/components/        图表、表格、回测、任务、命令面板
 └── src/lib/               纯函数与本地状态
 docs/
 ├── wiki/                  Code Wiki（架构、API、数据模型、引擎、策略、前端）
 ├── V5-API-CONTRACT.md     接口契约
+├── GFNA_仓位罗盘开发需求文档.md  交互、边界、实现状态与测试记录
+├── CHANGELOG-V5.md        版本变更与验证记录
 └── evidence/              回测基线与校准证据
 ```
 
@@ -418,24 +490,33 @@ docs/
 
 ## 测试与 CI
 
-```bash
-# 后端单元测试（不需要数据库）
+```powershell
+# 后端单元 / 契约
 cd backend
 ..\.venv\Scripts\python.exe -m pytest tests -q
+..\.venv\Scripts\python.exe -m pytest tests\test_compass_*.py -q
 
-# 后端集成测试（需要独立 _test 数据库）
-$env:GFNA_TEST_DB=1
-$env:SCHEDULER_ENABLED=0
-$env:CATCH_UP_ENABLED=0
+# 文档路由一致性（实际路由 vs API 契约表格）
+..\.venv\Scripts\python.exe scripts\check_doc_routes.py
+
+# DB 集成 A：空 schema 测试库
+$env:GFNA_TEST_DB=1; $env:GFNA_TEST_DATABASE_NAME="gfna_test"
+$env:SCHEDULER_ENABLED=0; $env:CATCH_UP_ENABLED=0
 ..\.venv\Scripts\python.exe -m pytest tests/integration -q
+
+# DB 集成 B：演示数据克隆库（gfna_db → gfna_api_test，并升级到 head）
+$env:GFNA_TEST_DATABASE_NAME="gfna_api_test"
+..\.venv\Scripts\python.exe -m pytest tests/test_api_v5.py -q
 
 # 前端
 cd frontend
 npm run build
-npm run test:treemap
-npm run test:sparkline
-npm run test:palette
+npm run test:treemap; npm run test:sparkline; npm run test:palette
+npm run test:sample; npm run test:compass
 ```
+
+> 双库隔离：`tests/integration` 假设测试库只有 schema，`test_api_v5.py` 依赖完整演示数据；
+> 两者共库会互相污染，因此 `gfna_test` 只放 schema，`gfna_api_test` 从 `gfna_db` 克隆。
 
 CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、前端构建 + 纯函数测试、Playwright 多视口视觉验收。
 
@@ -452,6 +533,8 @@ CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、�
 | [API 契约](docs/V5-API-CONTRACT.md) | 接口字段与响应结构 |
 | [V8 回测基线](docs/evidence/V8-backtest-baseline.md) | 策略汰换与回测证据（样本内基线） |
 | [V9 样本外验证](docs/evidence/V9-oos-validation.md) | 4 折 walk-forward、A3 样本外分布、A4 `pe_max=12` 对照 |
+| [仓位罗盘开发需求文档](docs/GFNA_仓位罗盘开发需求文档.md) | 交互、模块边界、成本/盈利路径、实现状态与测试记录 |
+| [变更清单](docs/CHANGELOG-V5.md) | 版本变更、根因与验证结果 |
 | [数据源与使用限制](docs/DATA_USAGE_NOTICE.md) | 数据源清单、用途限制、采集边界与脱敏约定 |
 | [V5 架构说明](docs/architecture.md) | 早期架构设计（部分内容已被 V6/V7/V8 扩展） |
 
@@ -470,6 +553,11 @@ CI 四组任务：后端单元测试、后端集成测试（PostgreSQL 16）、�
 | 已有库缺 `push_log` / score 精度 | `cd backend && python -m alembic upgrade head` |
 | 没有收到企业微信推送 | 确认 `PUSH_ENABLED=1`、`WECOM_WEBHOOK_URL` 已填、`PUSH_DRY_RUN=0`；先用 `push_cli.py --dry-run` 预览；同一 `run_id` 已推送不会重发 |
 | 回测一直 `running` | 后台任务；启动时会清理僵尸任务，失败格可在矩阵内重试 |
+| `/compass` 全为空仓/无候选 | 先看 `empty_reasons`；市场防守或综合分不足时为空仓是正确结论，不是数据故障 |
+| 复盘显示样本不足 | 先 `POST /api/v1/compass/admin/backfill-paper`；聚合需 ≥60 条净值，且 `paper_nav` 已同步 |
+| ETF 全部 `NO_TRADABLE_ETF` | 先 `POST /api/v1/compass/admin/etf-sync?mode=seed`，再用 `etf-coverage` 查看缺口；13 个细分行业暂无 ETF |
+| 罗盘管理接口 403 | 配置 `ADMIN_API_KEY` 并携带 `X-Admin-Key` |
+| 罗盘 ETF 溢价恒为 0 | Sina 历史不提供折溢价，当前按 0 处理；接入其他源前该门槛仅作占位 |
 
 更多排障见 [Code Wiki · 运行与部署](docs/wiki/08-operations.md)。
 

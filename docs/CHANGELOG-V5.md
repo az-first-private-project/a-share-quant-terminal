@@ -6,6 +6,19 @@
 
 ---
 
+## 0. 文档一致性同步（2026-11-22）
+
+| 变更 | 范围 |
+|---|---|
+| API 契约升级到 5.3：仓位罗盘全路径、V6–V9 路由索引、错误码补充、真实响应示例 | `docs/V5-API-CONTRACT.md` |
+| README 新增仓位罗盘章节、每日流程、管理命令、双库测试、FAQ 与项目结构 | `README.md` |
+| Code Wiki 补齐 compass 路由与文件职责表，移除过期行号 | `docs/wiki/02-backend-api.md` |
+| 修正 `PUSH_FRONTEND_URL` 默认值与示例：`/algo` → `/algo-center` | `backend/app/core/config.py`、`backend/.env.example`、`README.md` |
+
+验证：`scripts/check_doc_routes.py` 契约 78/78、Wiki 78/78；本地 Markdown 链接 24 项 0 失效；后端 733 passed / 75 skipped；`test_push.py` 11 passed。
+
+---
+
 ## 0. 仓位罗盘 V9：风险预算与决策约束 + 三项核心修复（2026-11-22）
 
 | 变更 | 范围 |

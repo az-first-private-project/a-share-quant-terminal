@@ -38,11 +38,11 @@ def _sections() -> list[dict]:
 
 
 def test_build_message_contains_sections_and_no_signal() -> None:
-    message = push.build_message(date(2026, 11, 13), _sections(), "http://127.0.0.1:5173/algo")
+    message = push.build_message(date(2026, 11, 13), _sections(), "http://127.0.0.1:5173/algo-center")
     assert "GFNA 选股播报 | 2026-11-13" in message
     assert "中国建筑(601668)" in message
     assert "无信号" in message
-    assert "http://127.0.0.1:5173/algo" in message
+    assert "http://127.0.0.1:5173/algo-center" in message
 
 
 def test_build_message_truncates_to_wecom_limit() -> None:

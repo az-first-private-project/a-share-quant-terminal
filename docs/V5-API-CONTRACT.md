@@ -1,7 +1,16 @@
 # GFNA V5 · 接口契约（API Contract）
 
 > 本文件是**前后端并行的唯一事实源**。任何一端要改字段，先改这里。
-> 版本：5.1（2026-11 因子优化） ｜ 基础前缀：`/api/v1` ｜ 编码：UTF-8 ｜ 时间：ISO-8601（含时区）
+> 版本：5.3（V9.1 仓位罗盘与三项修复） ｜ 基础前缀：`/api/v1` ｜ 编码：UTF-8 ｜ 时间：ISO-8601（含时区）
+
+**变更记录**
+
+| 版本 | 日期 | 变更 |
+|---|---|---|
+| 5.0 | 2026-10-21 | V5 基线：行情 / 个股 / 选股 / 回测 / 新闻 |
+| 5.1 | 2026-11-19 | 2026-11 因子优化、信号 schema v4 |
+| 5.2 | 2026-11-21 | 仓位罗盘 V9：决策卡 / 情景卡 / T+1 / 复盘 / 推送 |
+| 5.3 | 2026-11-22 | 纸面组合回填、成分股广度、ETF 映射；补充 V6–V9 路由索引与错误码 |
 
 ---
 
@@ -25,7 +34,7 @@ C1 只追加字段，不改变任何成功响应的包裹形状与默认值；�
 {
   "ok": false,
   "error": { "code": "DATA_NOT_READY", "message": "2026-10-20 的行情尚未采集",
-             "detail": { "next_action": "POST /api/v1/admin/ingest/daily_snapshot" },
+             "detail": { "next_action": "POST /api/v1/admin/ingest/{task}", "task": "snapshot" },
              "suggestion": "先运行日行情采集，数据就绪后重试" },
   "request_id": "..."
 }
@@ -878,7 +887,7 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
 
 ```json
 { "status": "accepted", "algo": "b3", "mode": "background",
-  "hint": "轮询 GET /api/v1/paper/portfolio/b3 查看结果" }
+  "hint": "轮询 GET /api/v1/paper/portfolio/{algo_code} 查看结果" }
 ```
 
 - 后台执行同步（默认检查点续算，周首个同步日或增量失败时全量校准），单组合 advisory lock，
@@ -926,24 +935,25 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
-| GET | `/compass/today?trade_date=` | 当日决策卡 + 仪表盘 + 候选池 + T+1 校验条；无卡返回 409 `DATA_NOT_READY` |
-| GET | `/compass/cards?limit=&offset=` | 历史卡片摘要；免费版最多 7 条 |
-| GET | `/compass/cards/{card_id}` | 卡片详情；不存在 404 |
-| GET | `/compass/scenarios?trade_date=` | 六张情景卡与当前状态、`action_priority` |
-| POST | `/compass/checks/{check_id}/action` | body `{"action":"DELAY|DROP|EXECUTED"}`，需 `Idempotency-Key`；过期 400 `CHECK_EXPIRED`，非 WARN 状态 400 `CHECK_NOT_ACTIONABLE` |
-| GET | `/compass/review?days=` | 回撤、错误次数、空仓避损、失效记录；样本 <60 日返回 `sample_insufficient=true` |
-| GET | `/compass/rules` | 规则、承诺、非目标、判据、规则版本；公开、不依赖行情 |
-| GET | `/compass/subscription` | 当前 tier 与 beta 标记 |
-| POST | `/compass/admin/generate?trade_date=` | 生成决策卡（`X-Admin-Key`） |
-| POST | `/compass/admin/check/{card_id}` | 执行 T+1 校验（`X-Admin-Key`） |
-| POST | `/compass/admin/push/{card_id}` | 企业微信推送（`X-Admin-Key`，幂等） |
-| POST | `/compass/admin/backfill-paper` | 聚合 active 纸面组合净值回填 `fact_paper_portfolio` |
-| POST | `/compass/admin/etf-sync?trade_date=&mode=auto\|seed\|live&limit=` | 同步 ETF 日行情并重建板块映射 |
-| GET | `/compass/admin/etf-coverage?trade_date=` | 映射覆盖率、候选池覆盖、缺失板块与数据源标注 |
-| POST | `/compass/admin/failure` | 追加失效记录（只追加） |
-| POST | `/compass/admin/etf-map` | 新增 ETF 主映射（主映射冲突返回 422） |
+| GET | `/api/v1/compass/today?trade_date=` | 当日决策卡 + 仪表盘 + 候选池 + T+1 校验条；无卡返回 409 `DATA_NOT_READY` |
+| GET | `/api/v1/compass/cards?limit=&offset=` | 历史卡片摘要；免费版最多 7 条 |
+| GET | `/api/v1/compass/cards/{card_id}` | 卡片详情；不存在 404 |
+| GET | `/api/v1/compass/scenarios?trade_date=` | 六张情景卡与当前状态、`action_priority` |
+| POST | `/api/v1/compass/checks/{check_id}/action` | body `{"action":"DELAY|DROP|EXECUTED"}`，需 `Idempotency-Key`；过期 400 `CHECK_EXPIRED`，非 WARN 状态 400 `CHECK_NOT_ACTIONABLE` |
+| GET | `/api/v1/compass/review?days=` | 回撤、错误次数、空仓避损、失效记录；样本 <60 日返回 `sample_insufficient=true` |
+| GET | `/api/v1/compass/rules` | 规则、承诺、非目标、判据、规则版本；公开、不依赖行情 |
+| GET | `/api/v1/compass/subscription` | 当前 tier 与 beta 标记 |
+| POST | `/api/v1/compass/admin/generate?trade_date=` | 生成决策卡（`X-Admin-Key`） |
+| POST | `/api/v1/compass/admin/check/{card_id}` | 执行 T+1 校验（`X-Admin-Key`） |
+| POST | `/api/v1/compass/admin/push/{card_id}` | 企业微信推送（`X-Admin-Key`，幂等） |
+| POST | `/api/v1/compass/admin/backfill-paper` | 聚合 active 纸面组合净值回填 `fact_paper_portfolio` |
+| POST | `/api/v1/compass/admin/etf-sync?trade_date=&mode=auto\|seed\|live&limit=` | 同步 ETF 日行情并重建板块映射 |
+| GET | `/api/v1/compass/admin/etf-coverage?trade_date=` | 映射覆盖率、候选池覆盖、缺失板块与数据源标注 |
+| GET | `/api/v1/compass/admin/cards/{card_id}` | 管理端读取卡片详情（含未脱敏字段） |
+| POST | `/api/v1/compass/admin/failure` | 追加失效记录（只追加） |
+| POST | `/api/v1/compass/admin/etf-map` | 新增 ETF 主映射（主映射冲突返回 422） |
 
-### 9.3 `GET /compass/today` 核心字段
+### 9.3 `GET /api/v1/compass/today` 核心字段
 
 ```json
 {
@@ -957,7 +967,7 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
   "rejected": [ /* reason_code + reason_text，含 TOP_N_CUTOFF */ ],
   "empty_reasons": [ /* code + text，按优先级 */ ],
   "derivation": [ /* 5 步推导链，服务端生成 */ ],
-  "check": { "status": "PASS|WARN|DELAYED|SUSPENDED|IDLE|PENDING", "title": "…", "text": "…" },
+  "check": { "status": "PASS|WARN|DELAYED|DROPPED|SUSPENDED|IDLE|PENDING", "title": "…", "text": "…" },
   "scenarios": [ /* 六张卡，含 condition/action/invalid/basis */ ],
   "idle_days": 0,
   "freshness": [ /* Freshness[] */ ]
@@ -982,7 +992,7 @@ POST `/api/v1/paper/portfolio/{algo_code}/sync` → `202` 语义（HTTP 200）�
 
 ### 9.6 纸面组合回填与 ETF 数据依赖（V9.1 追加）
 
-**纸面组合回填**：`POST /compass/admin/backfill-paper` 读取 `paper_portfolio` 中
+**纸面组合回填**：`POST /api/v1/compass/admin/backfill-paper` 读取 `paper_portfolio` 中
 `status=active` 且净值记录数 ≥60 的组合，按共同起始日归一为 100，等权聚合后
 upsert `fact_paper_portfolio`。`review` 追加：
 
@@ -1013,3 +1023,86 @@ upsert `fact_paper_portfolio`。`review` 追加：
 `pool_total / pool_mapped / pool_coverage`（当日综合分前 8 候选池，产品门槛看这一项）、
 `etf_daily_covered`（有当日行情的已映射 ETF 数）、`missing`。当前真实库：
 全行业 77/90（85.6%），候选池 8/8（100%），已映射 ETF 当日行情 31 只。
+
+**响应示例（真实库值随日期变化）**
+
+```json
+// POST /api/v1/compass/admin/backfill-paper
+{ "status": "ok", "rows": 581, "portfolios": 2,
+  "start": "2024-06-28", "end": "2026-11-19" }
+
+// POST /api/v1/compass/admin/etf-sync?mode=seed
+{ "status": "ok", "trade_date": "2026-11-19", "mode": "seed",
+  "sectors": 90, "mapped": 75, "coverage": 0.8333,
+  "etf_fetched": 39, "etf_rows": 3120,
+  "premium_source": "unavailable_assumed_zero",
+  "aum_source": "seed_or_live_pool", "history_source": "sina" }
+
+// GET /api/v1/compass/admin/etf-coverage
+{ "status": "ok", "trade_date": "2026-11-19",
+  "total": 90, "mapped": 77, "coverage": 0.8556,
+  "pool_total": 8, "pool_mapped": 8, "pool_coverage": 1.0,
+  "etf_daily_covered": 31,
+  "missing": [ /* 13 个细分行业 */ ],
+  "mappings": [ /* 77 条当前有效映射 */ ] }
+
+// POST /api/v1/compass/checks/{check_id}/action
+{ "check_id": "…", "final_status": "DELAYED",
+  "action_at": "2026-11-23T09:41:12+08:00",
+  "recheck_at": "2026-11-23T10:00:00+08:00",
+  "idempotent_replay": false }
+
+// GET /api/v1/compass/review
+{ "sample_insufficient": false, "source": "paper_portfolio",
+  "violations_available": false, "label_rule": "纸面组合综合",
+  "label_unconstrained": "组合基准",
+  "stats": { "max_drawdown_rule": -7.67, "max_drawdown_unconstrained": -21.41,
+             "empty_days": 1, "empty_avoidance": 0.0, "missed_upside": 0.03 },
+  "chart": { "dates": [], "drawdown_rule": [], "drawdown_unconstrained": [] },
+  "failures": [] }
+```
+
+> 响应示例中的真实库数值仅用于说明字段结构，不构成收益承诺；实际值随交易日变化。
+> `etf-sync` 的 `mapped` 是本次匹配数（当前 75），覆盖率报告包含仍有效的旧映射（当前 77），两者可能不同。
+
+### 9.7 仓位罗盘错误码补充
+
+| 场景 | HTTP | code | `detail.reason` |
+|---|---|---|---|
+| 决策卡尚未生成 | 409 | `DATA_NOT_READY` | `CARD_NOT_GENERATED` |
+| 关键数据陈旧/质量不合格 | 409 | `DATA_QUALITY` | `STALE_DATASET` / `DATA_INCOMPLETE` |
+| 卡片/校验记录不存在 | 404 | `NOT_FOUND` | `CARD_NOT_FOUND` / `CHECK_NOT_FOUND` |
+| 日期或动作参数非法 | 422 | `INVALID_PARAM` | `INVALID_DATE` / `INVALID_ACTION` |
+| T+1 操作已过 10:00 | 400 | `BAD_REQUEST` | `CHECK_EXPIRED` |
+| 非 WARN 状态执行操作 | 400 | `BAD_REQUEST` | `CHECK_NOT_ACTIONABLE` |
+| 管理密钥缺失/错误 | 403 | `BAD_REQUEST` | `ADMIN_AUTH` |
+| ETF 主映射冲突 | 422 | `INVALID_PARAM` | `MULTIPLE_PRIMARY_ETF` |
+
+---
+
+## 10. V6–V9 追加接口索引
+
+以下接口已在运行，字段细节以各模块实现与 `/docs` OpenAPI 为准；本表保证“代码有、契约有”。
+
+| 方法 | 路径 | 说明 | 权限 |
+|---|---|---|---|
+| GET | `/api/v1/market/overview?trade_date=` | 市场状态 + 配置建议 + 一周温度计（V7） | 公开 |
+| GET | `/api/v1/market/index-compare?trade_date=&window_days=` | 创业板50 / 红利低波50 风格轮动（V7） | 公开 |
+| GET | `/api/v1/market/bull-bear` | 6 宽基牛熊位置 × 估值（V7） | 公开 |
+| GET | `/api/v1/stocks/{code}/benchmark?benchmark=sh000300` | 个股与基准归一化序列（V7） | 公开 |
+| GET | `/api/v1/algo/fields` | 条件树字段、算子与 AND/OR 逻辑 | 公开 |
+| GET | `/api/v1/algo/health` | 本地选股引擎健康状态（不再依赖外部 CLI） | 公开 |
+| POST | `/api/v1/algo/preview` | 条件树只读预览；不写 `stg_run`、不进入共识 | 公开（限频） |
+| GET | `/api/v1/backtest/{algo_code}/oos?oos_id=` | 样本外 walk-forward 结果；缺省取最新一组 | 公开 |
+| POST | `/api/v1/backtest/{algo_code}/oos` | 创建样本外任务（后台逐折执行） | 公开 |
+| GET | `/api/v1/watchlist` | 读取自选状态（单租户） | 公开 |
+| PUT | `/api/v1/watchlist` | 覆盖自选状态 | 公开 |
+| GET | `/api/v1/meta/provider-health?days=` | 数据源 × 任务成功率、降级次数与最近错误 | 公开 |
+| POST | `/api/v1/admin/catch-up` | 手动检查并补跑最近缺失交易日 | `X-Admin-Key` |
+| POST | `/api/v1/crawl/auto` | 启动/配置自动新闻采集 | 公开 |
+| GET | `/api/v1/crawl/auto/status` | 自动采集状态 | 公开 |
+| POST | `/api/v1/crawl/trigger` | 手动触发新闻爬虫 | 公开 |
+| POST | `/api/v1/crawl/process-summaries` | 处理待摘要新闻 | 公开 |
+
+> 一致性校验：`cd backend && ..\.venv\Scripts\python.exe scripts\check_doc_routes.py`
+> 会对比实际路由与本契约表格，缺失即非零退出。
