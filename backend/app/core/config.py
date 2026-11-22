@@ -175,7 +175,7 @@ PAPER_ENABLED_ALGOS: tuple[str, ...] = tuple(
     if item.strip()
 )
 
-# 策略默认参数（A1/A2/B1–B5 已下线并移除实现；现役 A3/A4 + C1–C6 观察候选）
+# 策略默认参数（A1/A2/B1–B5 已下线并移除实现；现役 A3/A4 + C1/C2/C3/C6 观察候选）
 STRATEGY_DEFAULTS = {
     "a3": {"limit": 20, "min_score": 6.0},     # 0–10 分制（不是 0–100！）
     "a4": {
@@ -195,8 +195,6 @@ STRATEGY_DEFAULTS = {
         "near_high_ratio": 0.85, "min_amount": 1.0e8,
         "vol_cap": 0.05, "roc20_max": 0.08,
     },
-    "c4": {"limit": 20, "vol_mult": 2.0, "min_amount": 5.0e7},
-    "c5": {"limit": 20, "lookback": 20, "vol_mult": 1.5, "min_amount": 5.0e7},
     "c6": {
         "limit": 20, "squeeze_pct": 20.0, "vol_mult": 1.5,
         "range_max": 10.0, "min_amount": 2.0e8,

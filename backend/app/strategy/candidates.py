@@ -22,7 +22,7 @@ async def build_candidates(
     params: dict | None = None,
     db: AsyncSession | None = None,
 ) -> pd.DataFrame:
-    """构建某策略某日的候选池（一次横截面 SQL；c1–c4 额外一次窗口查询）。
+    """构建某策略某日的候选池（一次横截面 SQL；c1–c3 额外一次窗口查询）。
 
     返回 DataFrame 的 attrs 中带：
       - ``universe_count``  当日全市场有行情的标的数（契约 5.2 的 run.universe_count）

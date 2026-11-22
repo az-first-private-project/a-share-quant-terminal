@@ -83,7 +83,7 @@ def test_single_strategy_below_min_count_keeps_evaluated_count():
 
 def test_zero_signal_strategy_counts_as_evaluated():
     rows = [
-        row("c4", None),  # 当日 run 成功但 0 信号
+        row("c3", None),  # 当日 run 成功但 0 信号
         row("c1", "600000", rank=1),
         row("c2", "600000", rank=2),
     ]

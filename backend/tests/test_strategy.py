@@ -331,7 +331,7 @@ def test_list_runs_excludes_backtest_by_default() -> None:
 def test_v8_enabled_specs_current() -> None:
     """V8：启用清单为 a3/a4；c1–c6 在候选注册表，回测达标后才加入。"""
     assert set(SPECS) == {"a3", "a4"}
-    assert set(CANDIDATE_SPECS) == {"c1", "c2", "c3", "c4", "c5", "c6"}
+    assert set(CANDIDATE_SPECS) == {"c1", "c2", "c3", "c6"}
     assert {item.code for item in list_specs()} == {"a3", "a4"}
 
 

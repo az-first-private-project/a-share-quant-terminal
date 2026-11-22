@@ -1,4 +1,4 @@
-"""V8 W2 候选策略（c1–c4）纯函数测试：窗口特征 + 策略掩码。"""
+"""V8 W2 候选策略（c1–c3、c6）纯函数测试：窗口特征 + 策略掩码。"""
 from __future__ import annotations
 
 import sys
@@ -79,22 +79,6 @@ def test_window_features_c3_rps_window() -> None:
     assert _window_features(bars.tail(120), "c3", 120) is None
 
 
-def test_window_features_c4_limit_up_shakeout() -> None:
-    bars = _bars(
-        open=[10.0, 10.5],
-        high=[10.0, 10.6],
-        low=[9.0, 10.0],
-        close=[10.0, 10.2],
-        volume=[100.0, 250.0],
-        is_limit_up=[True, False],
-    )
-    features = _window_features(bars, "c4", 0)
-    assert features is not None
-    assert features["prev_is_limit_up"] is True
-    assert features["prev_volume"] == pytest.approx(100.0)
-    assert features["adj_low"] >= features["prev_adj_close"]
-
-
 def _candidate_frame(codes: list[str]) -> pd.DataFrame:
     return pd.DataFrame(
         {
@@ -167,45 +151,6 @@ def test_rank_signals_c3_rps_breakout() -> None:
     assert list(result["code"]) == ["600021"]
 
 
-def test_rank_signals_c4_limit_up_shakeout() -> None:
-    frame = _candidate_frame(["600031", "600032"])
-    frame["prev_is_limit_up"] = [True, False]
-    frame["adj_close"] = [10.2, 10.2]
-    frame["adj_open"] = [10.5, 10.5]
-    frame["adj_low"] = [10.0, 10.0]
-    frame["prev_adj_close"] = [10.0, 10.0]
-    frame["prev_volume"] = [100.0, 100.0]
-    frame["volume"] = [250.0, 250.0]
-    frame["amount"] = [2.0e8, 1.0e8]
-    result = rank_signals("c4", frame, {})
-    assert list(result["code"]) == ["600031"]
-
-
-def test_window_features_c5_ma_volume_cross() -> None:
-    closes = [10.0] * 15 + [9.0] * 5 + [20.0]
-    volume = [100.0] * 20 + [200.0]
-    bars = _bars(open=closes, close=closes, high=closes, low=closes, volume=volume)
-    features = _window_features(bars, "c5", 20)
-    assert features is not None
-    assert features["ma5_prev"] == pytest.approx(9.0)
-    assert features["ma20_prev"] == pytest.approx(9.75)
-    assert features["ma5_today"] > features["ma20_today"]
-    assert features["vol_ratio_20"] == pytest.approx(2.0)
-
-
-def test_rank_signals_c5_ma_volume() -> None:
-    frame = _candidate_frame(["600051", "600052"])
-    frame["ma5_prev"] = [9.0, 10.5]
-    frame["ma20_prev"] = [9.75, 10.0]
-    frame["ma5_today"] = [11.2, 10.0]
-    frame["ma20_today"] = [10.75, 10.2]
-    frame["vol_ma20_prev"] = [100.0, 100.0]
-    frame["vol_ratio_20"] = [2.0, 0.8]
-    frame["volume"] = [200.0, 80.0]
-    result = rank_signals("c5", frame, {})
-    assert list(result["code"]) == ["600051"]
-
-
 def test_rank_signals_c6_boll_squeeze() -> None:
     frame = _candidate_frame(["600061", "600062"])
     frame["boll_width_pct60"] = [10.0, 40.0]
@@ -245,8 +190,5 @@ def test_candidate_param_bounds() -> None:
         _validate_params("c2", {"mom_min": 0.5})
     with pytest.raises(InvalidParamError):
         _validate_params("c3", {"rps_threshold": 120})
-    with pytest.raises(InvalidParamError):
-        _validate_params("c4", {"vol_mult": 0})
-    assert _validate_params("c5", {"vol_mult": 1.5})["vol_mult"] == 1.5
     with pytest.raises(InvalidParamError):
         _validate_params("c6", {"squeeze_pct": 0})

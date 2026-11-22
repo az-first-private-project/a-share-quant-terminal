@@ -186,17 +186,13 @@ async def _fetch_cross_section(db: AsyncSession, trade_date: date) -> pd.DataFra
     return frame
 
 #: 需要历史窗口的候选策略
-_WINDOW_STRATEGIES = frozenset({"c1", "c2", "c3", "c4", "c5"})
+_WINDOW_STRATEGIES = frozenset({"c1", "c2", "c3"})
 
 #: 各候选策略的派生列（用于空窗口时补齐，避免上层 KeyError）
 _DERIVED_COLUMNS: dict[str, tuple[str, ...]] = {
     "c1": ("high20_prev", "prev_adj_close", "adj_close", "adj_open", "mom60", "vol20"),
     "c2": ("range40_ratio", "high40", "low40", "high10", "low10", "vol_ma20_prev"),
     "c3": ("roc120", "roc20", "vol20", "high120", "adj_close", "rps"),
-    "c4": ("prev_is_limit_up", "prev_volume", "prev_adj_close",
-           "adj_close", "adj_open", "adj_low"),
-    "c5": ("ma5_today", "ma20_today", "ma5_prev", "ma20_prev",
-           "vol_ma20_prev", "vol_ratio_20"),
 }
 
 def _realized_vol(closes: np.ndarray) -> float:
@@ -290,39 +286,6 @@ def _window_features(
             "adj_close": float(end),
         }
 
-    if algo_code == "c5":
-        n = int(lookback)
-        if len(bars) < max(n + 1, 21):
-            return None
-        ma5_today = float(np.mean(adj_close[-5:]))
-        ma20_today = float(np.mean(adj_close[-n:]))
-        ma5_prev = float(np.mean(adj_close[-6:-1]))
-        ma20_prev = float(np.mean(adj_close[-n - 1:-1]))
-        vol_ma20_prev = float(np.mean(volume[-21:-1]))
-        if vol_ma20_prev <= 0:
-            return None
-        return {
-            "ma5_today": ma5_today,
-            "ma20_today": ma20_today,
-            "ma5_prev": ma5_prev,
-            "ma20_prev": ma20_prev,
-            "vol_ma20_prev": vol_ma20_prev,
-            "vol_ratio_20": float(volume[-1] / vol_ma20_prev),
-        }
-
-    if algo_code == "c4":
-        limit_flags = bars["is_limit_up"].fillna(False).astype(bool).to_numpy()
-        if not np.isfinite(volume[-2:]).all() or not np.isfinite(adj_close[-2:]).all():
-            return None
-        return {
-            "prev_is_limit_up": bool(limit_flags[-2]),
-            "prev_volume": float(volume[-2]),
-            "prev_adj_close": float(adj_close[-2]),
-            "adj_close": float(adj_close[-1]),
-            "adj_open": float(adj_open[-1]),
-            "adj_low": float(adj_low[-1]),
-        }
-
     return None
 
 async def _enrich_history(
@@ -332,7 +295,7 @@ async def _enrich_history(
     algo_code: str,
     params: dict,
 ) -> pd.DataFrame:
-    """为 c1–c4 一次性加载最近 N 根 K 线并计算派生列（无未来数据）。"""
+    """为 c1–c3 一次性加载最近 N 根 K 线并计算派生列（无未来数据）。"""
     if frame is None or len(frame) == 0:
         return frame
     attrs = dict(frame.attrs)
@@ -365,7 +328,7 @@ async def _enrich_history(
     if not rows:
         result = frame.copy()
         for column in _DERIVED_COLUMNS[algo_code]:
-            result[column] = False if column == "prev_is_limit_up" else np.nan
+            result[column] = np.nan
         result.attrs.update(attrs)
         return result
 
@@ -393,7 +356,7 @@ async def _enrich_history(
         result = result.merge(derived, on="code", how="left")
     for column in _DERIVED_COLUMNS[algo_code]:
         if column not in result.columns:
-            result[column] = False if column == "prev_is_limit_up" else np.nan
+            result[column] = np.nan
 
     if algo_code == "c3":
         roc = _to_float_series(result["roc120"])
@@ -610,8 +573,6 @@ def _assert_data_ready(algo_code: str, df: pd.DataFrame) -> None:
             "c1": "high20_prev",
             "c2": "high40",
             "c3": "roc120",
-            "c4": "prev_adj_close",
-            "c5": "ma5_today",
         }[spec.code]
         if _all_null(ready_column):
             raise DataUnavailableError(

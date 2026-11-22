@@ -538,8 +538,6 @@ export default function AlgoCenter() {
       c1: '流通市值（元）',
       c2: '40 日区间比',
       c3: 'RPS',
-      c4: '成交额（元）',
-      c5: '20 日量比',
       c6: '布林带宽 60 日分位（%）',
     }
     return `Top 10 ${labels[result.algo] ?? '排序指标'}`

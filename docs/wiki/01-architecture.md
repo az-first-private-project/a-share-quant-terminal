@@ -46,7 +46,7 @@ GFNA 不是“预测涨跌的策略系统”，而是一套 **让决策可复现
                                 ▼
 ┌─ L4 策略 strategy（backend/app/strategy）──────────────────────────┐
 │ condition：AND/OR/比较/between/in/top_pct/industry                  │
-│ strategies：A3/A4（启用）、C1–C6（候选）；A1/A2/B1–B5 已移除       │
+│ strategies：A3/A4（启用）、C1/C2/C3/C6（候选）；A1/A2/B1–B5/C4/C5 已移除 │
 │ runner：参数校验 → 指纹 → 数据版本 → 缓存 → run/signal 落库         │
 │ backtest：T+1 开盘、费用/滑点、涨跌停/停牌不可成交、后复权           │
 │ grid：rebalance_days × max_positions 敏感性矩阵                     │

@@ -1,9 +1,9 @@
-# 在用策略因子清单（A3 / A4 / C1–C6）
+# 在用策略因子清单（A3 / A4 / C1–C3 / C6）
 
-> 口径版本：2026-11-19（2026-11 因子优化后）
+> 口径版本：2026-11-22（C4/C5 永久移除后）
 > 事实源：`backend/app/strategy/specs.py`（`SPECS` / `CANDIDATE_SPECS` / `_SORT_SPEC` / `_METRIC_FIELDS`）、
 > `backend/app/strategy/conditions.py`（求值条件）、`backend/app/core/config.py`（`STRATEGY_DEFAULTS`）。
-> 本文档只描述**当前代码中存在**的策略；A1、A2、B1–B5 的实现已删除，仅保留历史 `stg_run` 记录。
+> 本文档只描述**当前代码中存在**的策略；A1、A2、B1–B5、C4、C5 的实现已删除，仅保留历史 `stg_run` 记录。
 > 优化依据与回测证据见 [FACTOR-OPTIMIZATION-2026-11.md](./FACTOR-OPTIMIZATION-2026-11.md)。
 
 ---
@@ -17,12 +17,10 @@
 | `c1` | 海龟突破 | breakout | 观察候选（建议 40 日调仓） | `float_cap` 降序 | 前 20 日最高价 + 中期动量/低波 |
 | `c2` | 高窄旗形 | breakout | 观察候选 | `range40_ratio` 降序 | 40 日窗口高低点 |
 | `c3` | RPS 相对强度突破 | breakout | 观察候选 | `rps` 降序 | 120 日收益率横截面 + 双均线闸门 |
-| `c4` | 涨停洗盘 | reversal | 观察候选（建议停用） | `amount` 降序 | 昨日涨停/成交量 |
-| `c5` | 均线放量突破 | breakout | 观察候选（建议停用） | `vol_ratio_20` 降序 | MA5/MA20/20 日均量 |
 | `c6` | 布林挤压突破 | breakout | 观察候选 | `boll_width_pct60` 升序 | 布林带宽分位/量能 |
 
 - 正式启用策略进入 `/api/v1/algo/list` 默认清单、每日 16:30 任务与共识榜。
-- 观察候选（C1–C6）需 `include_observation=true` 才出现在清单，可执行/回测，不进入共识与正式统计。
+- 观察候选（C1/C2/C3/C6）需 `include_observation=true` 才出现在清单，可执行/回测，不进入共识与正式统计。
 - 所有策略的 `limit` 默认 20（1–1000），同时参与 run 缓存键。
 
 ---
@@ -40,7 +38,7 @@
 | `close` | `> 0` | 当日无有效行情剔除 |
 | `list_date` | 上市交易日 ≥ 60 | 次新股过滤（无日历时按 84 个自然日近似） |
 
-窗口策略（C1–C5）在取历史 K 线时额外剔除停牌/零成交量交易日，并要求满足各自最小窗口长度。
+窗口策略（C1–C3）在取历史 K 线时额外剔除停牌/零成交量交易日，并要求满足各自最小窗口长度。
 
 ---
 
@@ -236,85 +234,11 @@
 
 ---
 
-## 8. C4 · 涨停洗盘
-
-> **建议停用（仅保留研究/回测）**：因子诊断显示「放量」「收阴」两个条件本身为负边际，
-> 合并后相对涨停后基准仅 +0.42pp，胜率还低于基准。详见
-> [WASHOUT-FACTORS.md](./WASHOUT-FACTORS.md)。
-
-### 8.1 参数
-
-| 参数 | 默认值 | 范围 | 说明 |
-|---|---|---|---|
-| `limit` | 20 | 1–1000 | 返回数量上限 |
-| `vol_mult` | 2.0 | 0.5–10.0 | 今日成交量 / 昨日成交量下限 |
-| `min_amount` | 5.0e7（5000 万元） | 0–1e12 | 20 日均额下限（元） |
-
-### 8.2 条件因子
-
-| 因子 | 中文名 | 数据源 | 说明 |
-|---|---|---|---|
-| `prev_is_limit_up` | 昨日涨停 | `fact_stock_daily.is_limit_up` | 必须为真（板块口径 10%/20%/5%） |
-| `adj_close` / `adj_open` | 复权收盘 / 开盘 | 日线 × `adj_factor` | `adj_close < adj_open`（收阴） |
-| `prev_volume` / `volume` | 昨日 / 今日成交量 | `fact_stock_daily` | `volume > vol_mult × prev_volume`（放量） |
-| `adj_low` / `prev_adj_close` | 复权最低价 / 昨收 | 日线 × `adj_factor` | `adj_low >= prev_adj_close`（不破昨收） |
-| `amount_ma20` | 20 日均成交额 | `fact_feature_daily` | `>= min_amount` |
-
-### 8.3 排序与输出
-
-- 排序：`amount`（当日成交额）降序。
-- 输出 `metrics`：`prev_is_limit_up`、`prev_volume`、`prev_adj_close`、`adj_close`、
-  `adj_open`、`adj_low`、`volume`、`amount`、`close`、`pct_chg`、`industry_l1`。
-
-### 8.4 数据门槛
-
-- `prev_adj_close` 全空时报“历史窗口不足”；需至少 2 根有效日线。
-
----
-
-## 9. C5 · 均线放量突破
-
-> **建议停用（仅保留研究/回测）**：MA5/MA20 金叉本身没有突破含义，按 `vol_ratio_20`
-> 降序又把毛收益从 +1.55% 压到 +0.32%；样本外调参结果为过拟合。
-> 详见 [WASHOUT-FACTORS.md](./WASHOUT-FACTORS.md)。
-
-### 9.1 参数
-
-| 参数 | 默认值 | 范围 | 说明 |
-|---|---|---|---|
-| `limit` | 20 | 1–1000 | 返回数量上限 |
-| `lookback` | 20 | 10–60 | 长均线窗口（交易日） |
-| `vol_mult` | 1.5 | 0.5–10.0 | 放量倍数下限 |
-| `min_amount` | 5.0e7（5000 万元） | 0–1e12 | 20 日均额下限（元） |
-
-### 9.2 条件因子
-
-| 因子 | 中文名 | 数据源 | 说明 |
-|---|---|---|---|
-| `ma5_prev` / `ma20_prev` | 昨日 MA5 / MA20 | 复权收盘计算 | `ma5_prev < ma20_prev`（金叉前） |
-| `ma5_today` / `ma20_today` | 今日 MA5 / MA20 | 复权收盘计算 | `ma5_today > ma20_today`（金叉） |
-| `vol_ma20_prev` | 前 20 日均量 | 日线窗口计算 | 放量基准 |
-| `volume` | 当日成交量 | `fact_stock_daily` | `> vol_mult × vol_ma20_prev` |
-| `vol_ratio_20` | 20 日量比 | `volume / vol_ma20_prev` | 排序指标 |
-| `amount_ma20` | 20 日均成交额 | `fact_feature_daily` | `>= min_amount` |
-
-### 9.3 排序与输出
-
-- 排序：`vol_ratio_20` 降序。
-- 输出 `metrics`：`ma5_today`、`ma20_today`、`ma5_prev`、`ma20_prev`、`vol_ma20_prev`、
-  `vol_ratio_20`、`volume`、`close`、`pct_chg`、`industry_l1`。
-
-### 9.4 数据门槛
-
-- `ma5_today` 全空时报“历史窗口不足”；需至少 `max(lookback + 1, 21)` 根有效日线。
-
----
-
-## 10. C6 · 布林挤压突破
+## 8. C6 · 布林挤压突破
 
 > 2026-11 优化未改动参数；跨四相位均值为正（+11.2%），保留观察候选。
 
-### 10.1 参数
+### 8.1 参数
 
 | 参数 | 默认值 | 范围 | 说明 |
 |---|---|---|---|
@@ -324,7 +248,7 @@
 | `range_max` | 10.0 | 0–100 | 20 日区间宽度上限（%） |
 | `min_amount` | 2.0e8（2 亿元） | 0–1e12 | 20 日均额下限（元） |
 
-### 10.2 条件因子
+### 8.2 条件因子
 
 | 因子 | 中文名 | 数据源 | 说明 |
 |---|---|---|---|
@@ -337,42 +261,39 @@
 | `amount_ma20` | 20 日均成交额 | `fact_feature_daily` | `>= min_amount` |
 | 市场门槛 | 沪深300 趋势 | `market_indices` | `close >= MA20 × 0.995`；指数缺失按放行 |
 
-### 10.3 排序与输出
+### 8.3 排序与输出
 
 - 排序：`boll_width_pct60` 升序（越挤压越靠前）。
 - 输出 `metrics`：`boll_width_pct60`、`boll_upper`、`high20_close`、`range20_pct`、
   `volume`、`vol_ma5`、`amount_ma20`、`close`、`pct_chg`、`industry_l1`。
 - `metrics.triggered` 带一条 `c6_market`（`scope="market"`）。
 
-### 10.4 数据门槛
+### 8.4 数据门槛
 
 - `boll_width_pct60`、`vol_ma5`、`amount_ma20` 任一全空时报“指标尚未生成”。
 
 ---
 
-## 11. 因子 × 策略引用矩阵
+## 9. 因子 × 策略引用矩阵
 
-| 因子 | A3 | A4 | C1 | C2 | C3 | C4 | C5 | C6 |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `composite_score` | ✓ | ✓ | | | | | | |
-| `ownership` | ✓ | | | | | | | |
-| `pe_ttm` / `pb` / `ps_ttm` | | ✓ | | | | | | |
-| `dv_ttm` | | ✓ | | | | | | |
-| `amount_ma20` | | ✓ | | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `ma120` | | ✓ | | | | | | |
-| `close` / `pct_chg` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `high20_prev` / `float_cap` | | | ✓ | | | | | |
-| `mom60` / `vol20` | | | ✓ | | | | | |
-| `range40_ratio` / `high40` / `low40` | | | | ✓ | | | | |
-| `high10` / `low10` / `vol_ma20_prev` | | | | ✓ | | | ✓ | |
-| `rps` / `roc120` / `high120` | | | | | ✓ | | | |
-| `roc20` / `vol20` | | | | | ✓ | | | |
-| `prev_is_limit_up` / `prev_volume` | | | | | | ✓ | | |
-| `adj_close` / `adj_open` / `adj_low` / `prev_adj_close` | | | ✓ | | ✓ | ✓ | | |
-| `ma5_today` / `ma20_today` / `ma5_prev` / `ma20_prev` | | | | | | | ✓ | |
-| `vol_ratio_20` | | | | | | | ✓ | |
-| `boll_width_pct60` / `boll_upper` | | | | | | | | ✓ |
-| `high20_close` / `range20_pct` / `vol_ma5` | | | | | | | | ✓ |
+| 因子 | A3 | A4 | C1 | C2 | C3 | C6 |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `composite_score` | ✓ | ✓ | | | | |
+| `ownership` | ✓ | | | | | |
+| `pe_ttm` / `pb` / `ps_ttm` | | ✓ | | | | |
+| `dv_ttm` | | ✓ | | | | |
+| `amount_ma20` | | ✓ | | ✓ | ✓ | ✓ |
+| `ma120` | | ✓ | | | | |
+| `close` / `pct_chg` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `high20_prev` / `float_cap` | | | ✓ | | | |
+| `mom60` / `vol20` | | | ✓ | | | |
+| `range40_ratio` / `high40` / `low40` | | | | ✓ | | |
+| `high10` / `low10` / `vol_ma20_prev` | | | | ✓ | | |
+| `rps` / `roc120` / `high120` | | | | | ✓ | |
+| `roc20` / `vol20` | | | | | ✓ | |
+| `adj_close` / `adj_open` | | | ✓ | | ✓ | |
+| `boll_width_pct60` / `boll_upper` | | | | | | ✓ |
+| `high20_close` / `range20_pct` / `vol_ma5` | | | | | | ✓ |
 
 > `close` 还作为所有策略的通用展示字段与统一过滤条件（`close > 0`）。
 

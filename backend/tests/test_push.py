@@ -134,7 +134,6 @@ def test_summary_for_candidates() -> None:
     assert "股息 6.00%" in push._summary_for("a4", 6.0, {"dv_ttm": 6.0, "pe_ttm": 10.0})  # noqa: SLF001
     assert "流通市值" in push._summary_for("c1", 1.0, {"float_cap": 1.2e11})  # noqa: SLF001
     assert "RPS 95.0" in push._summary_for("c3", 95.0, {"rps": 95.0})  # noqa: SLF001
-    assert "放量比 2.00" in push._summary_for("c5", 2.0, {"vol_ratio_20": 2.0})  # noqa: SLF001
     assert "带宽分位 10.0%" in push._summary_for("c6", 10.0, {"boll_width_pct60": 10.0})  # noqa: SLF001
 
 

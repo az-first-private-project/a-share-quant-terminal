@@ -152,7 +152,7 @@ def volume_ratio(volume: pd.Series, short: int = 5, long: int = 20) -> pd.Series
 
 
 # ============================================================
-# 短线技术指标（C1–C6 与自定义条件树）
+# 短线技术指标（C1/C2/C3/C6 与自定义条件树）
 # ============================================================
 
 def _ewm_seeded(series: pd.Series, alpha: float, seed: float) -> pd.Series:
@@ -252,7 +252,7 @@ FEATURE_COLUMNS = [
     "boll_mid", "boll_upper", "boll_lower", "atr14",
     "momentum_5", "momentum_20", "momentum_60",
     "volatility_20", "volume_ratio", "amount_ma20", "ma_bullish",
-    # 短线技术指标（C1–C6 与自定义条件树）
+    # 短线技术指标（C1/C2/C3/C6 与自定义条件树）
     "ema5", "ema20", "ema60", "ma120",
     "ema20_up", "ema_golden_cross", "ema_cross_3d",
     "rsi6", "roc10",

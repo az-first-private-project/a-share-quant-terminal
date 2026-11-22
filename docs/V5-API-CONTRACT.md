@@ -338,7 +338,7 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 ### 5.1 GET `/api/v1/algo/list`
 
 > V8 M1（2026-11-15）起当前正式启用策略只有 **a3 / a4**；A1/A2/B1–B5 的实现已在 V9 清理中删除（历史 run 仍可查询）。
-> `include_observation=true` 时额外返回 c1–c6 观察候选（`is_active=false`、`is_observation=true`），
+> `include_observation=true` 时额外返回 c1/c2/c3/c6 观察候选（`is_active=false`、`is_observation=true`），
 > 默认不返回。观察候选可查看/执行/回测，但不进入共识、天梯与正式统计。
 
 ```json
@@ -377,7 +377,7 @@ HTTP 语义：参数错 422，资源不存在 404，数据未就绪/质量问题
 - 由于一个 run 最多保存 `limit` 条信号，`total ≤ limit`；`offset > 0` 只截取该 run 已保存信号的尾部，
   `offset ≥ total` 返回空 `data`（`count=0`）。需要看到更多信号时应提高 `limit` 重新执行（会生成新 run），
   而不是反复翻页。
-- **`score` 是该策略的排序指标原始值**（A3=综合分、A4=股息率、C1–C6=各自排序指标），
+- **`score` 是该策略的排序指标原始值**（A3=综合分、A4=股息率、C1/C2/C3/C6=各自排序指标），
   **`composite_score` 才是 0–10 的综合因子得分**（可能为 null）。前端"得分"列请用后者。
 - **参数必须真生效**：不同 `pe_max` 必须产生不同 `run_id` 与不同结果。
 - `data[].metrics` 为策略依据的完整指标，前端表格列由 `metrics` 动态生成。
@@ -446,7 +446,7 @@ A4/C3/C6 的市场门槛会写入 `metrics.triggered`（`scope="market"`），�
   缺字段显示“当前版本未记录该信号依据”，不得混为一谈、渲染成空列表或伪造全通过。
 - 历史 run **只读标注，不批量重算**：重跑会生成新 run 并把同参数旧成功 run 置为
   `superseded`，改变历史与统计口径；确需最新依据时由用户显式执行或强制刷新。
-- A3 与 C1/C2/C4/C5 不产生结构化 `triggered`；A4 带 `a4_regime`，C3 带 `c3_market`，C6 带 `c6_market`。
+- A3 与 C1/C2 不产生结构化 `triggered`；A4 带 `a4_regime`，C3 带 `c3_market`，C6 带 `c6_market`。
 
 **A3 评分拆解 `metrics.score_breakdown`（仅 A3，V6 T7）**
 

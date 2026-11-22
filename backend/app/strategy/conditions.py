@@ -215,40 +215,6 @@ def _evaluate_strategy(
             details=[_c3_market_detail(frame)],
             frame=frame,
         )
-    elif code == "c4":
-        prev_limit = (
-            _to_bool_series(frame["prev_is_limit_up"])
-            if "prev_is_limit_up" in frame.columns
-            else pd.Series(False, index=frame.index, dtype=bool)
-        )
-        adj_close = _numeric_column(frame, "adj_close")
-        adj_open = _numeric_column(frame, "adj_open")
-        adj_low = _numeric_column(frame, "adj_low")
-        prev_close = _numeric_column(frame, "prev_adj_close")
-        prev_volume = _numeric_column(frame, "prev_volume")
-        volume = _numeric_column(frame, "volume")
-        amount_ma20 = _numeric_column(frame, "amount_ma20")
-        mask = (
-            prev_limit
-            & (adj_close < adj_open)
-            & (volume > float(normalized["vol_mult"]) * prev_volume)
-            & (adj_low >= prev_close)
-            & (amount_ma20 >= float(normalized["min_amount"]))
-        )
-    elif code == "c5":
-        ma5_today = _numeric_column(frame, "ma5_today")
-        ma20_today = _numeric_column(frame, "ma20_today")
-        ma5_prev = _numeric_column(frame, "ma5_prev")
-        ma20_prev = _numeric_column(frame, "ma20_prev")
-        vol_ma20_prev = _numeric_column(frame, "vol_ma20_prev")
-        volume = _numeric_column(frame, "volume")
-        amount_ma20 = _numeric_column(frame, "amount_ma20")
-        mask = (
-            (ma5_prev < ma20_prev)
-            & (ma5_today > ma20_today)
-            & (volume > float(normalized["vol_mult"]) * vol_ma20_prev)
-            & (amount_ma20 >= float(normalized["min_amount"]))
-        )
     elif code == "c6":
         band_pct = _numeric_column(frame, "boll_width_pct60")
         close = _numeric_column(frame, "close")
@@ -284,7 +250,7 @@ def _evaluate_strategy(
     )
 
 def strategy_mask(algo_code: str, df: pd.DataFrame, params: dict) -> pd.Series:
-    """返回策略条件命中的布尔 Series（A3/A4/C1–C6）。"""
+    """返回策略条件命中的布尔 Series（A3/A4/C1/C2/C3/C6）。"""
     return _evaluate_strategy(algo_code, df, params).mask
 
 def filter_by_strategy(algo_code: str, df: pd.DataFrame, params: dict) -> pd.DataFrame:

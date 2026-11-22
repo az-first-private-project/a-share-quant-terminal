@@ -1,4 +1,4 @@
-"""短线技术指标回填（C1–C6 与自定义条件树所需列），带断点续传。
+"""短线技术指标回填（C1/C2/C3/C6 与自定义条件树所需列），带断点续传。
 
 为什么单独一个脚本：新增的 EMA/KDJ/BOLL 带宽/振幅等列需要把 2024 年以来的
 全市场特征表整体重算一遍（约 350 万行）。`compute_features_for_range` 虽然能跑，
@@ -237,7 +237,7 @@ async def run(args) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="短线技术指标回填（C1–C6，断点续传）")
+    parser = argparse.ArgumentParser(description="短线技术指标回填（C1/C2/C3/C6，断点续传）")
     parser.add_argument("--start", default=DEFAULT_START.isoformat())
     parser.add_argument("--end", default=None, help="默认取日线表最新交易日")
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH)

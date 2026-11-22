@@ -70,7 +70,7 @@ class OOSRequest(BaseModel):
     step_months: int = Field(6, ge=1, le=24)
     strategy: dict[str, Any] | None = None
 
-#: 回测起点自动裁剪：A3 依赖评分、A4 依赖估值（C1–C6 从起点逐日判断）
+#: 回测起点自动裁剪：A3 依赖评分、A4 依赖估值（C1/C2/C3/C6 从起点逐日判断）
 async def _data_start(algo_code: str, db: AsyncSession) -> date | None:
     """该策略所需数据的最早可用日期。
 
@@ -305,7 +305,7 @@ async def create_backtest(
 
     同步阶段只做参数校验与数据起点裁剪（失败直接 4xx）；执行期错误（数据不足等）
     落 ``backtest_run.status=failed``，由前端轮询 GET 获取。策略参数从 query string
-    按该策略的 `params_schema` 收集（A3/A4/C1–C6 参数各异）。
+    按该策略的 `params_schema` 收集（A3/A4/C1/C2/C3/C6 参数各异）。
     """
     if algo_code not in SPECS and algo_code not in CANDIDATE_SPECS:
         raise UnknownAlgoError(f"未知策略: {algo_code}",

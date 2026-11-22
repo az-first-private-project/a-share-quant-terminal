@@ -53,8 +53,6 @@ const SCORE_META: Record<string, { key: string; header: string }> = {
   c1: { key: 'float_cap', header: '流通市值' },
   c2: { key: 'range40_ratio', header: '40日区间比' },
   c3: { key: 'rps', header: 'RPS' },
-  c4: { key: 'amount', header: '成交额' },
-  c5: { key: 'vol_ratio_20', header: '20日量比' },
   c6: { key: 'boll_width_pct60', header: '带宽分位(%)' },
 }
 

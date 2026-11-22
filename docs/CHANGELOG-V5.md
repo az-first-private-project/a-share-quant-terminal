@@ -36,6 +36,20 @@
 
 ---
 
+## 0. 策略精简：C4/C5 永久移除（2026-11-22）
+
+| 变更 | 文件 |
+|---|---|
+| 从 `CANDIDATE_SPECS` 永久移除 C4（涨停洗盘）、C5（均线放量突破），`/algo/list?include_observation=true`、回测/OOS/观察运行不再接受这两个代码 | `backend/app/strategy/specs.py` |
+| 删除参数默认值、条件分支、窗口特征、排序/指标字段、推送归因分支 | `core/config.py`、`strategy/conditions.py`、`strategy/data.py`、`strategy/specs.py`、`notify/push.py` |
+| 删除 C4/C5 单测与观察候选断言，更新契约集合 | `backend/tests/test_candidates.py`、`test_api_v5.py`、`test_strategy.py`、`test_push.py`、`test_consensus.py` |
+| 前端移除 C4/C5 表格列、导出表头、演示清单条目 | `AlgoDataTable.tsx`、`AlgoCenter.tsx`、`SignalExplanation.tsx`、`frontend/public/demo/algo_list.json` |
+| README / 因子清单 / Wiki / 契约同步；历史诊断报告加存档说明 | `README.md`、`docs/STRATEGY-FACTORS.md`、`docs/V5-API-CONTRACT.md`、`docs/wiki/*`、`docs/FACTOR-OPTIMIZATION-2026-11.md`、`docs/WASHOUT-FACTORS.md` |
+
+前置校验：C4/C5 实际不在正式启用池 `SPECS`（A3/A4），而在观察候选池 `CANDIDATE_SPECS`；历史诊断为「无正向边际」（C4 -0.80%/10 日、C5 全窗口 -57.2%），因此按精简要求永久移除。剩余启用策略仅 A3/A4，均为已回测验证的稳健策略；C1/C2/C3/C6 保持观察候选，不进入正式信号输出。
+
+---
+
 ## 0. 垃圾代码与冗余文件清理（2026-11-21）
 
 | 变更 | 范围 |

@@ -193,42 +193,6 @@ SPECS: dict[str, StrategySpec] = {
             _param("roc20_max", "20日涨幅上限", 0.08, 0.0, 1.0),
         ],
     ),
-    "c4": StrategySpec(
-        code="c4",
-        name="涨停洗盘",
-        algo_type="reversal",
-        sort_order=6,
-        short_desc="昨日涨停后今日放量收阴但不破昨收，按成交额降序",
-        full_desc=(
-            "昨日 is_limit_up（板块口径，10%/20%/5% 由数据标志决定）；今日 close < open；"
-            "今日成交量 > vol_mult（默认 2.0）× 昨日成交量；今日最低 >= 昨收；"
-            "20 日均额达标；按今日成交额降序取前 limit 只。"
-        ),
-        defaults=dict(STRATEGY_DEFAULTS["c4"]),
-        params_schema=[
-            _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
-            _param("vol_mult", "放量倍数", 2.0, 0.5, 10.0),
-            _param("min_amount", "20日均额下限(元)", 5.0e7, 0.0, 1.0e12),
-        ],
-    ),
-    "c5": StrategySpec(
-        code="c5",
-        name="均线放量突破",
-        algo_type="breakout",
-        sort_order=7,
-        short_desc="MA5/MA20 金叉 + 20 日均量 1.5 倍，按放量比降序",
-        full_desc=(
-            "前一日 MA5 < MA20 且今日 MA5 > MA20（金叉）；今日成交量 > vol_mult（默认 1.5）"
-            "× 前 20 日均量；20 日均额达标；按今日量比（成交量/前 20 日均量）降序。"
-        ),
-        defaults=dict(STRATEGY_DEFAULTS["c5"]),
-        params_schema=[
-            _param("limit", "返回数量上限", 20, 1, 1000, kind="integer"),
-            _param("lookback", "均线窗口(日)", 20, 10, 60, kind="integer"),
-            _param("vol_mult", "放量倍数", 1.5, 0.5, 10.0),
-            _param("min_amount", "20日均额下限(元)", 5.0e7, 0.0, 1.0e12),
-        ],
-    ),
     "c6": StrategySpec(
         code="c6",
         name="布林挤压突破",
@@ -254,7 +218,7 @@ SPECS: dict[str, StrategySpec] = {
 #: 未启用候选策略：可回测/测试，但不进入 list_specs/每日任务/API；
 #: 通过回测门槛后再显式加入 SPECS。
 CANDIDATE_SPECS: dict[str, StrategySpec] = {
-    code: SPECS.pop(code) for code in ("c1", "c2", "c3", "c4", "c5", "c6")
+    code: SPECS.pop(code) for code in ("c1", "c2", "c3", "c6")
 }
 
 #: 排序口径： (字段, 是否升序)
@@ -264,8 +228,6 @@ _SORT_SPEC: dict[str, tuple[str, bool]] = {
     "c1": ("float_cap", False),            # 流通市值降序
     "c2": ("range40_ratio", False),        # 40日区间比降序
     "c3": ("rps", False),                  # RPS 降序
-    "c4": ("amount", False),               # 成交额降序
-    "c5": ("vol_ratio_20", False),         # 放量比降序
     "c6": ("boll_width_pct60", True),      # 带宽分位升序
 }
 
@@ -291,15 +253,6 @@ _METRIC_FIELDS: dict[str, tuple[str, ...]] = {
     "c3": (
         "rps", "roc120", "roc20", "vol20", "high120", "adj_close", "close", "pct_chg",
         "amount_ma20", "industry_l1",
-    ),
-    "c4": (
-        "prev_is_limit_up", "prev_volume", "prev_adj_close",
-        "adj_close", "adj_open", "adj_low", "volume", "amount",
-        "close", "pct_chg", "industry_l1",
-    ),
-    "c5": (
-        "ma5_today", "ma20_today", "ma5_prev", "ma20_prev",
-        "vol_ma20_prev", "vol_ratio_20", "volume", "close", "pct_chg", "industry_l1",
     ),
     "c6": (
         "boll_width_pct60", "boll_upper", "high20_close", "range20_pct",

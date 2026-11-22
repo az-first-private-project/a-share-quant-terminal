@@ -73,12 +73,6 @@ def _summary_for(algo_code: str, score: Any, metrics: dict[str, Any]) -> str:
     if algo_code == "c3":
         rps = _num(metrics.get("rps"))
         return f"RPS {rps:.1f}" if rps is not None else "RPS 突破"
-    if algo_code == "c4":
-        amount = _num(metrics.get("amount"))
-        return f"成交额 {amount / 1e8:.1f}亿" if amount is not None else "涨停洗盘"
-    if algo_code == "c5":
-        ratio = _num(metrics.get("vol_ratio_20"))
-        return f"放量比 {ratio:.2f}" if ratio is not None else "均线放量"
     if algo_code == "c6":
         band = _num(metrics.get("boll_width_pct60"))
         return f"带宽分位 {band:.1f}%" if band is not None else "布林挤压"
