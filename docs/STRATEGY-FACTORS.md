@@ -299,12 +299,12 @@
 
 ---
 
-## 12. 维护约定
+## 10. 维护约定
 
 1. 新增/修改策略时，先改 `specs.py` 的 `StrategySpec.params_schema` 与 `defaults`，再同步
    `config.py:STRATEGY_DEFAULTS`，最后更新本清单。
 2. 新策略默认进入 `CANDIDATE_SPECS`；通过样本外验证并人工确认后才可移入 `SPECS`。
-3. 已移除策略（A1/A2/B1–B5）不得重新引用其参数键或排序字段；历史 run 只读。
+3. 已移除策略（A1/A2/B1–B5/C4/C5）不得重新引用其参数键或排序字段；历史 run 只读。
 4. 排序字段必须在 `_SORT_SPEC` 中登记，输出指标必须在 `_METRIC_FIELDS` 中登记，
    否则前端列与回测缓存会出现口径不一致。
 5. 本清单仅列策略层因子；指标计算口径见 `docs/wiki/05-engine.md` 与 `backend/app/engine/indicators.py`。
